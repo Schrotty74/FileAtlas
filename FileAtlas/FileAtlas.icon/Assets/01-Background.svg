@@ -1,0 +1,19 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0E3338"/>
+      <stop offset="100%" stop-color="#071B1F"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Vollflächiger Hintergrund (Icon Composer schneidet automatisch die Squircle-Maske) -->
+  <rect x="0" y="0" width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- Atlas-Gitterlinien -->
+  <g opacity="0.12" stroke="#1D9E75" stroke-width="2">
+    <line x1="260" y1="180" x2="260" y2="844"/>
+    <line x1="764" y1="180" x2="764" y2="844"/>
+    <line x1="180" y1="350" x2="844" y2="350"/>
+    <line x1="180" y1="674" x2="844" y2="674"/>
+  </g>
+</svg>

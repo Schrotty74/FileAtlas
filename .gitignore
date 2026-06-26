@@ -1,0 +1,8 @@
+.DS_Store
+xcuserdata/
+DerivedData/
+*.xccheckout
+*.moved-aside
+*.hmap
+Pods/
+.build/

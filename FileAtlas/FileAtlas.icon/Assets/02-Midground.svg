@@ -1,0 +1,8 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Kompassnadel / gefaltetes Dokument - reine Linienform, kein Schatten/Glow (das übernimmt Icon Composer) -->
+  <path d="M390 780 L512 330 L634 780 Z" fill="none" stroke="#1D9E75" stroke-width="22" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="512" y1="330" x2="512" y2="780" stroke="#1D9E75" stroke-width="12"/>
+
+  <!-- innere Facette als eigene Fläche, ohne Opacity (wird in Icon Composer gesteuert) -->
+  <path d="M512 330 L580 600 L444 600 Z" fill="#5DCAA5"/>
+</svg>
