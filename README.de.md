@@ -1,0 +1,51 @@
+# FileAtlas
+
+![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue) ![Swift 6](https://img.shields.io/badge/Swift-6-orange) ![Lizenz: GPLv3](https://img.shields.io/badge/Lizenz-GPLv3-green)
+
+FileAtlas ist eine native macOS-App zum Indizieren und Vergleichen von Dateien, entwickelt ausschliesslich mit Apple-Frameworks. Die App hilft beim Scannen von Ordnern, Pruefen von Metadaten, Finden von Duplikaten, Vergleichen von Snapshots, Exportieren von Berichten und Verwalten von Backups ohne externe Abhaengigkeiten.
+
+![Screenshot-Platzhalter](docs/screenshot-placeholder.png)
+
+[🇬🇧 English Description](README.md)
+
+## Funktionen
+
+- Lokale Dateiindizierung mit rekursivem Ordnerscan und Live-Fortschritt (AsyncStream)
+- Mehrere Ordner gleichzeitig scannen
+- Security-Scoped Bookmarks (Zugriff bleibt nach App-Neustart erhalten)
+- Liquid-Glass-Seitenleiste (Desktop scheint durch)
+- Umschalter fuer Hell / Dunkel / System (unabhaengig von der macOS-Einstellung)
+- DE/EN-Lokalisierung mit DACH-Regel (de_AT, de_DE, de_CH immer Deutsch)
+- Sortierbare, neu anordenbare Spalten (Name, Typ, Status, Tags, Groesse, Geaendert)
+- Einstellbare Zeilenhoehe (Kompakt / Normal / Gross)
+- QuickLook-Vorschau (Leertaste)
+- Schnellsuche nach Name, Endung und Groesse (`> 10 MB`, `< 500 KB`)
+- Speicherbare Filtersaetze mit Einschluss- und Ausschlusslisten
+- Ignorierte Ordner (beim Scan uebersprungen, als einzelner Eintrag mit Gesamtgroesse angezeigt)
+- Bundle-Erkennung (`.app`, `.framework`, `.xcodeproj` werden als einzelne Eintraege behandelt)
+- Duplikaterkennung (Groessengruppierung -> SHA-256-Hash, goldenes Abzeichen)
+- Snapshots nach jedem Scan (max. 10, JSON) mit Diff-Vergleich und Loeschen
+- Ordnervergleich (zwei Ordner direkt)
+- Tags (vordefiniert + benutzerdefiniert, farbcodierte Pills)
+- Schnellzugriff (letzte 5 gescannte Ordner in der Seitenleiste, manuell verwaltet)
+- Export: Excel (`.xlsx`), PDF, CSV
+- Backup: Index-Backup (JSON) und Vollbackup (ZIP, optional AES-256, Passwort im Schluesselbund)
+- Backup-Zeitplan: Aus / Taeglich / Woechentlich pro Speicherort
+- Einstellungsfenster mit Seitenleistennavigation (im Stil der macOS-Systemeinstellungen)
+- Keine externen Abhaengigkeiten - nur reine Apple-Frameworks
+
+## Voraussetzungen
+
+- macOS 26.5+
+- Xcode mit Swift-6-Unterstuetzung
+- Keine externen Abhaengigkeiten
+
+## Installation
+
+1. Repository klonen.
+2. `FileAtlas.xcodeproj` in Xcode oeffnen.
+3. App bauen und starten.
+
+## Lizenz
+
+FileAtlas ist unter der GNU General Public License v3.0 lizenziert. Der vollstaendige Lizenztext steht in [LICENSE](LICENSE).
