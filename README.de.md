@@ -1,10 +1,10 @@
 # FileAtlas
 
+![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue) ![Swift 6](https://img.shields.io/badge/Swift-6-orange) ![Lizenz: GPLv3](https://img.shields.io/badge/Lizenz-GPLv3-green)
+
 <p align="center">
   <img src="FileAtlas/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" width="128" alt="FileAtlas App Icon">
 </p>
-
-![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue) ![Swift 6](https://img.shields.io/badge/Swift-6-orange) ![Lizenz: GPLv3](https://img.shields.io/badge/Lizenz-GPLv3-green)
 
 FileAtlas ist eine native macOS-App zum Indizieren und Vergleichen von Dateien, entwickelt ausschliesslich mit Apple-Frameworks. Die App hilft beim Scannen von Ordnern, Pruefen von Metadaten, Finden von Duplikaten, Vergleichen von Snapshots, Exportieren von Berichten und Verwalten von Backups ohne externe Abhaengigkeiten.
 
