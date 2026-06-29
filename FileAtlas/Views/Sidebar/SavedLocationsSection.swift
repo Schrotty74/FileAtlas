@@ -17,7 +17,7 @@ struct SavedLocationsSection: View {
                 HStack(spacing: 6) {
                     Button {
                         // Klick auf einen Ort lädt gezielt dessen Inhalt.
-                        vm.startScan(roots: [url])
+                        vm.selectOrScanRoot(url)
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "folder.fill")

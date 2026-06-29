@@ -27,9 +27,9 @@ struct MainToolbar: ToolbarContent {
                 }
             } else {
                 Button {
-                    vm.startScan()
+                    vm.rescanSelectedRoot()
                 } label: {
-                    Label("Scan", systemImage: "arrow.clockwise")
+                    Label(vm.entries.isEmpty ? "Scan" : "Rescan", systemImage: "arrow.clockwise")
                 }
                 .disabled(vm.scanRoots.isEmpty)
             }
