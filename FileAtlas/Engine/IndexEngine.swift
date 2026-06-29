@@ -51,6 +51,18 @@ actor IndexEngine {
             let scoped = root.startAccessingSecurityScopedResource()
             defer { if scoped { root.stopAccessingSecurityScopedResource() } }
 
+            if let values = try? root.resourceValues(forKeys: Set(keys)) {
+                let isDir = values.isDirectory ?? false
+                let ext = root.pathExtension.lowercased()
+                let isPackageLike = isDir
+                    && ((values.isPackage ?? false) || Self.packageExtensions.contains(ext))
+                if isPackageLike {
+                    count += 1
+                    continuation.yield(.found(Self.packageEntry(for: root, values: values)))
+                    continue
+                }
+            }
+
             guard let enumerator = fm.enumerator(
                 at: root,
                 includingPropertiesForKeys: keys,
@@ -117,7 +129,8 @@ actor IndexEngine {
         "app", "bundle", "framework", "xcodeproj", "xcworkspace", "playground",
         "plugin", "kext", "appex", "xpc", "qlgenerator", "prefpane", "component",
         "mdimporter", "photoslibrary", "fcpbundle", "tvlibrary", "rtfd", "scptd",
-        "pkg", "mpkg",
+        "pkg", "mpkg", "dmg", "zip", "ipa", "tar", "gz", "rar", "7z", "docx",
+        "xlsx", "pptx",
     ]
 
     /// Ein Paket als einzelne „Datei" mit korrekter Gesamtgröße.
