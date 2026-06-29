@@ -35,6 +35,12 @@ final class IndexViewModel {
     var dateFrom: Date? = nil
     var dateTo: Date? = nil
     var selectedTagFilter: FileTag? = nil
+    var isExtensionWhitelistEnabled: Bool {
+        didSet { UserDefaults.standard.set(isExtensionWhitelistEnabled, forKey: Self.extensionWhitelistEnabledKey) }
+    }
+    var extensionWhitelistText: String {
+        didSet { UserDefaults.standard.set(extensionWhitelistText, forKey: Self.extensionWhitelistTextKey) }
+    }
 
     var rowDensity: FileRowDensity {
         didSet { UserDefaults.standard.set(rowDensity.rawValue, forKey: Self.rowDensityKey) }
@@ -72,6 +78,8 @@ final class IndexViewModel {
     private static let recentScanRootsKey = "FileAtlas.recentScanRoots"
     private static let fileTagsKey = "FileAtlas.fileTags"
     private static let customTagsKey = "FileAtlas.customTags"
+    private static let extensionWhitelistEnabledKey = "FileAtlas.extensionWhitelistEnabled"
+    private static let extensionWhitelistTextKey = "FileAtlas.extensionWhitelistText"
     /// Bei neuen Default-Einträgen erhöhen, damit die Migration erneut läuft.
     private static let skippedFoldersMigrationVersion = 1
     static let defaultSkippedFolders = ["node_modules", ".git", "Firmware", "Cache", "Caches", ".Trashes", "__MACOSX"]
@@ -128,6 +136,8 @@ final class IndexViewModel {
     init() {
         let defaults = UserDefaults.standard
         self.rowDensity = defaults.string(forKey: Self.rowDensityKey).flatMap(FileRowDensity.init(rawValue:)) ?? .normal
+        self.isExtensionWhitelistEnabled = defaults.bool(forKey: Self.extensionWhitelistEnabledKey)
+        self.extensionWhitelistText = defaults.string(forKey: Self.extensionWhitelistTextKey) ?? ""
 
         if let stored = defaults.stringArray(forKey: Self.skippedFoldersKey) {
             // Einmalige Migration: fehlende Default-Einträge ergänzen.
@@ -177,6 +187,20 @@ final class IndexViewModel {
         return result
     }
 
+    private static func parseExtensionWhitelist(_ text: String) -> Set<String> {
+        Set(
+            text.split(separator: ",")
+                .map { raw in
+                    var ext = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if ext.hasPrefix(".") {
+                        ext.removeFirst()
+                    }
+                    return ext.lowercased()
+                }
+                .filter { !$0.isEmpty }
+        )
+    }
+
     // MARK: - Abgeleitete Liste (gefiltert + sortiert)
 
     var displayedEntries: [FileEntry] {
@@ -190,6 +214,12 @@ final class IndexViewModel {
         }
         if let selectedTagFilter {
             list = list.filter { tags(for: $0).contains(selectedTagFilter) }
+        }
+        if isExtensionWhitelistEnabled {
+            let allowedExtensions = Self.parseExtensionWhitelist(extensionWhitelistText)
+            if !allowedExtensions.isEmpty {
+                list = list.filter { allowedExtensions.contains($0.fileExtension.lowercased()) }
+            }
         }
 
         let trimmed = searchText.trimmingCharacters(in: .whitespaces)
