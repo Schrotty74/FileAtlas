@@ -25,7 +25,9 @@ FileAtlas is a native macOS file indexing and comparison app built with pure App
 - Quick search by name, extension, size (`> 10 MB`, `< 500 KB`)
 - Saveable filter sets with include/exclude lists
 - Ignored folders (skipped during scan, shown as single entry with total size)
-- Bundle recognition (`.app`, `.framework`, `.xcodeproj` treated as single entries)
+- Bundle recognition (`.app`, `.framework`, `.xcodeproj` treated as single entries, descendants skipped)
+- Extension whitelist filter (only index specific file types)
+- No auto-rescan if folder is already indexed
 - Duplicate detection (size grouping -> SHA-256 hash, gold badge)
 - Snapshots after each scan (max. 10, JSON) with diff comparison and delete
 - Folder comparison (two folders directly)
