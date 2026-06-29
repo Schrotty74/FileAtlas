@@ -17,6 +17,8 @@ struct PresetEditorView: View {
     @State private var name: String = ""
     @State private var included: [String] = []
     @State private var excluded: [String] = []
+    @State private var extensionWhitelistEnabled = false
+    @State private var extensionWhitelistText = ""
     @State private var newIncluded: String = ""
     @State private var newExcluded: String = ""
 
@@ -50,6 +52,13 @@ struct PresetEditorView: View {
                 Section("Excluded extensions") {
                     extensionEditor(items: $excluded, newValue: $newExcluded,
                                     suggestions: FilterPreset.suggestedExclusions)
+                }
+
+                Section("Formats") {
+                    Toggle("Show only these formats", isOn: $extensionWhitelistEnabled)
+                        .tint(AppTheme.theme.accentColor)
+                    TextField("app, zip, dmg", text: $extensionWhitelistText)
+                        .disabled(!extensionWhitelistEnabled)
                 }
             }
             .formStyle(.grouped)
@@ -93,11 +102,24 @@ struct PresetEditorView: View {
         field.wrappedValue = ""
     }
 
+    private func parseExtensionWhitelist(_ text: String) -> [String] {
+        var seen = Set<String>()
+        var result: [String] = []
+        for raw in text.components(separatedBy: ",") {
+            let ext = FilterPreset.normalize(raw)
+            guard !ext.isEmpty, seen.insert(ext).inserted else { continue }
+            result.append(ext)
+        }
+        return result
+    }
+
     private func load() {
         if let original {
             name = original.name
             included = original.includedExtensions
             excluded = original.excludedExtensions
+            extensionWhitelistEnabled = original.extensionWhitelistEnabled
+            extensionWhitelistText = original.extensionWhitelist.joined(separator: ", ")
         }
     }
 
@@ -106,6 +128,8 @@ struct PresetEditorView: View {
         preset.name = name.trimmingCharacters(in: .whitespaces)
         preset.includedExtensions = included
         preset.excludedExtensions = excluded
+        preset.extensionWhitelistEnabled = extensionWhitelistEnabled
+        preset.extensionWhitelist = parseExtensionWhitelist(extensionWhitelistText)
         vm.savePreset(preset)
         dismiss()
     }
