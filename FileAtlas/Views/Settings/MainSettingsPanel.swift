@@ -188,7 +188,9 @@ struct MainSettingsPanel: View {
     }
 
     private var filterSetsSection: some View {
-        Form {
+        @Bindable var vm = vm
+
+        return Form {
             Section("Filter Sets") {
                 Picker("Active filter set", selection: activePresetBinding) {
                     Text("None").tag(FilterPreset.ID?.none)
@@ -225,6 +227,13 @@ struct MainSettingsPanel: View {
                 } label: {
                     Label("New Filter Set…", systemImage: "plus")
                 }
+            }
+
+            Section("Formats") {
+                Toggle("Show only these formats", isOn: $vm.isExtensionWhitelistEnabled)
+                    .tint(AppTheme.theme.accentColor)
+                TextField("app, zip, dmg", text: $vm.extensionWhitelistText)
+                    .disabled(!vm.isExtensionWhitelistEnabled)
             }
         }
         .formStyle(.grouped)
@@ -267,13 +276,6 @@ struct MainSettingsPanel: View {
                         Text(tag.title).tag(FileTag?.some(tag))
                     }
                 }
-            }
-
-            Section("Formats") {
-                Toggle("Show only these formats", isOn: $vm.isExtensionWhitelistEnabled)
-                    .tint(AppTheme.theme.accentColor)
-                TextField("app, zip, dmg", text: $vm.extensionWhitelistText)
-                    .disabled(!vm.isExtensionWhitelistEnabled)
             }
 
             Section {
