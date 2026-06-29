@@ -269,6 +269,13 @@ struct MainSettingsPanel: View {
                 }
             }
 
+            Section("Formats") {
+                Toggle("Show only these formats", isOn: $vm.isExtensionWhitelistEnabled)
+                    .tint(AppTheme.theme.accentColor)
+                TextField("app, zip, dmg", text: $vm.extensionWhitelistText)
+                    .disabled(!vm.isExtensionWhitelistEnabled)
+            }
+
             Section {
                 Text("Tip: type “> 10 MB” or “< 500 KB” in the search field to filter by size.")
                     .font(.caption)
