@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build
+      - name: Build (Release, stripped)
         run: |
           xcodebuild \
             -project FileAtlas.xcodeproj \
@@ -22,12 +22,40 @@ jobs:
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY=""
+            CODE_SIGN_IDENTITY="" \
+            STRIP_INSTALLED_PRODUCT=YES \
+            STRIP_SWIFT_SYMBOLS=YES \
+            DEPLOYMENT_POSTPROCESSING=YES \
+            DEBUG_INFORMATION_FORMAT=dwarf-with-dsym
 
       - name: Find .app
         run: |
-          APP=$(find build -name "*.app" -type d | head -1)
+          APP=$(find build/Build/Products/Release -name "*.app" -maxdepth 1 -type d | head -1)
           echo "APP_PATH=$APP" >> $GITHUB_ENV
+
+      - name: Security check — no local paths or private data
+        run: |
+          echo "Checking for local user paths in binary..."
+          BINARY="$APP_PATH/Contents/MacOS/FileAtlas"
+
+          if strings "$BINARY" | grep -E "/Users/[a-zA-Z0-9_]+" | grep -v "/Users/runner"; then
+            echo "ERROR: Local user paths found in binary!"
+            exit 1
+          fi
+
+          echo "Checking for potential secrets..."
+          if strings "$BINARY" | grep -iE "(password|secret|api_key|token)\s*=\s*['\"][^'\"]{8,}"; then
+            echo "ERROR: Potential secrets found in binary!"
+            exit 1
+          fi
+
+          echo "Checking that .dSYM is excluded from package..."
+          if find "$APP_PATH" -name "*.dSYM" | grep -q .; then
+            echo "ERROR: Debug symbols (.dSYM) found inside .app!"
+            exit 1
+          fi
+
+          echo "Security check passed — no private data found."
 
       - name: Create ZIP
         run: |
