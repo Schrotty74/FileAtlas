@@ -189,7 +189,7 @@ final class IndexViewModel {
 
     private static func parseExtensionWhitelist(_ text: String) -> Set<String> {
         Set(
-            text.split(separator: ",")
+            text.components(separatedBy: ",")
                 .map { raw in
                     var ext = raw.trimmingCharacters(in: .whitespacesAndNewlines)
                     if ext.hasPrefix(".") {
