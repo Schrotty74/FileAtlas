@@ -782,6 +782,7 @@ private final class FolderChangeMonitor {
         self.onChange = onChange
     }
 
+    @MainActor
     deinit { stop() }
 
     func start() {
