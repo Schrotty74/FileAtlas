@@ -11,14 +11,29 @@ nonisolated struct FilterPreset: Identifiable, Codable, Hashable, Sendable {
     var name: String
     var includedExtensions: [String]   // leer = alle erlaubt
     var excludedExtensions: [String]   // z. B. ["DS_Store", "log", "tmp"]
+    var extensionWhitelistEnabled: Bool
+    var extensionWhitelist: [String]
     var minSize: Int64?
     var maxSize: Int64?
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case includedExtensions
+        case excludedExtensions
+        case extensionWhitelistEnabled
+        case extensionWhitelist
+        case minSize
+        case maxSize
+    }
 
     init(
         id: UUID = UUID(),
         name: String,
         includedExtensions: [String] = [],
         excludedExtensions: [String] = [],
+        extensionWhitelistEnabled: Bool = false,
+        extensionWhitelist: [String] = [],
         minSize: Int64? = nil,
         maxSize: Int64? = nil
     ) {
@@ -26,8 +41,23 @@ nonisolated struct FilterPreset: Identifiable, Codable, Hashable, Sendable {
         self.name = name
         self.includedExtensions = includedExtensions
         self.excludedExtensions = excludedExtensions
+        self.extensionWhitelistEnabled = extensionWhitelistEnabled
+        self.extensionWhitelist = extensionWhitelist.map(FilterPreset.normalize).filter { !$0.isEmpty }
         self.minSize = minSize
         self.maxSize = maxSize
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        includedExtensions = try container.decodeIfPresent([String].self, forKey: .includedExtensions) ?? []
+        excludedExtensions = try container.decodeIfPresent([String].self, forKey: .excludedExtensions) ?? []
+        extensionWhitelistEnabled = try container.decodeIfPresent(Bool.self, forKey: .extensionWhitelistEnabled) ?? false
+        let whitelist = try container.decodeIfPresent([String].self, forKey: .extensionWhitelist) ?? []
+        extensionWhitelist = whitelist.map(FilterPreset.normalize).filter { !$0.isEmpty }
+        minSize = try container.decodeIfPresent(Int64.self, forKey: .minSize) ?? nil
+        maxSize = try container.decodeIfPresent(Int64.self, forKey: .maxSize) ?? nil
     }
 
     /// Normalisiert eine Erweiterung (klein, ohne führenden Punkt).
@@ -45,6 +75,11 @@ nonisolated struct FilterPreset: Identifiable, Codable, Hashable, Sendable {
             let included = Set(includedExtensions.map(FilterPreset.normalize))
             // Datei muss eine der eingeschlossenen Erweiterungen haben.
             if !entry.isDirectory && !included.contains(ext) { return false }
+        }
+
+        if extensionWhitelistEnabled {
+            let whitelisted = Set(extensionWhitelist.map(FilterPreset.normalize))
+            if !whitelisted.isEmpty && !whitelisted.contains(ext) { return false }
         }
 
         let excluded = Set(excludedExtensions.map(FilterPreset.normalize))
