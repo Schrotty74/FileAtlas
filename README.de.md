@@ -49,6 +49,20 @@ FileAtlas ist eine native macOS-App zum Indizieren und Vergleichen von Dateien, 
 2. `FileAtlas.xcodeproj` in Xcode oeffnen.
 3. App bauen und starten.
 
+Alternativ das aktuelle DMG oder ZIP von der [Releases](../../releases)-Seite herunterladen.
+
+## macOS Gatekeeper Hinweis
+
+FileAtlas ist nicht mit einem Apple-Entwicklerzertifikat signiert. Beim ersten Start kann macOS die App mit der Meldung *„FileAtlas kann nicht geoeffnet werden, weil es von einem nicht verifizierten Entwickler stammt."* blockieren.
+
+**So oeffnest du die App dennoch:**
+
+1. Rechtsklick auf `FileAtlas.app`
+2. **Oeffnen** auswaehlen
+3. Im Dialog erneut **Oeffnen** klicken
+
+macOS merkt sich die Entscheidung — dieser Schritt ist nur einmalig notwendig.
+
 ## Lizenz
 
 FileAtlas ist unter der GNU General Public License v3.0 lizenziert. Der vollstaendige Lizenztext steht in [LICENSE](LICENSE).

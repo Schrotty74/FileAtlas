@@ -49,6 +49,20 @@ FileAtlas is a native macOS file indexing and comparison app built with pure App
 2. Open `FileAtlas.xcodeproj` in Xcode.
 3. Build and run the app.
 
+Alternatively, download the latest DMG or ZIP from the [Releases](../../releases) page.
+
+## macOS Gatekeeper Notice
+
+FileAtlas is not signed with an Apple Developer certificate. On first launch macOS may block the app with the message *"FileAtlas cannot be opened because it is from an unidentified developer."*
+
+**To open the app anyway:**
+
+1. Right-click (or Control-click) `FileAtlas.app`
+2. Select **Open**
+3. Click **Open** in the dialog that appears
+
+macOS remembers your choice — this step is only required once.
+
 ## License
 
 FileAtlas is licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for the full license text.
