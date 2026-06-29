@@ -52,11 +52,13 @@ actor IndexEngine {
             defer { if scoped { root.stopAccessingSecurityScopedResource() } }
 
             if let values = try? root.resourceValues(forKeys: Set(keys)) {
-                let isDir = values.isDirectory ?? false
                 let ext = root.pathExtension.lowercased()
-                let isPackageLike = isDir
-                    && ((values.isPackage ?? false) || Self.packageExtensions.contains(ext))
-                if isPackageLike {
+                let isSingleEntry = Self.isSingleEntryPackageOrArchive(
+                    isPackage: values.isPackage ?? false,
+                    pathExtension: ext
+                )
+                if isSingleEntry {
+                    print("FileAtlas scanner skipped descendants for root: \(root.path(percentEncoded: false))")
                     count += 1
                     continuation.yield(.found(Self.packageEntry(for: root, values: values)))
                     continue
@@ -87,8 +89,10 @@ actor IndexEngine {
                 let isDir = values.isDirectory ?? false
                 let name = values.name ?? fileURL.lastPathComponent
                 let ext = fileURL.pathExtension.lowercased()
-                let isPackageLike = isDir
-                    && ((values.isPackage ?? false) || Self.packageExtensions.contains(ext))
+                let isSingleEntry = Self.isSingleEntryPackageOrArchive(
+                    isPackage: values.isPackage ?? false,
+                    pathExtension: ext
+                )
                 // Präfix-Abgleich: greift auch bei „Firmware.19.0.1.Rebootless" o. Ä.
                 let lowerName = name.lowercased()
                 let isSkippedFolder = isDir
@@ -100,10 +104,11 @@ actor IndexEngine {
                     // als ein Ordner-Eintrag mit Gesamtgröße, ohne hineinzugehen.
                     enumerator.skipDescendants()
                     entry = Self.folderEntry(for: fileURL, values: values)
-                } else if isPackageLike {
+                } else if isSingleEntry {
                     // Hart abbrechen: nicht in das Paket hineingehen – unabhängig vom
                     // (unzuverlässigen) LaunchServices-Package-Bit, auf jeder Ebene.
                     enumerator.skipDescendants()
+                    print("FileAtlas scanner skipped descendants for: \(fileURL.path(percentEncoded: false))")
                     entry = Self.packageEntry(for: fileURL, values: values)
                 } else {
                     entry = Self.fileEntry(for: fileURL, values: values, isDirectory: isDir)
@@ -133,12 +138,19 @@ actor IndexEngine {
         "xlsx", "pptx",
     ]
 
-    /// Ein Paket als einzelne „Datei" mit korrekter Gesamtgröße.
+    private static func isSingleEntryPackageOrArchive(
+        isPackage: Bool,
+        pathExtension ext: String
+    ) -> Bool {
+        isPackage || packageExtensions.contains(ext)
+    }
+
+    /// Ein Paket/Archiv als einzelne „Datei", ohne dessen Inhalt während des Scans zu lesen.
     private static func packageEntry(for url: URL, values: URLResourceValues) -> FileEntry {
         FileEntry(
             name: values.name ?? url.lastPathComponent,
             path: url,
-            size: directorySize(of: url),
+            size: Int64(values.fileSize ?? 0),
             created: values.creationDate ?? .distantPast,
             modified: values.contentModificationDate ?? .distantPast,
             fileExtension: url.pathExtension,
