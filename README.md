@@ -1,12 +1,14 @@
 # FileAtlas
 
-![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue) ![Swift 6](https://img.shields.io/badge/Swift-6-orange) ![License: GPLv3](https://img.shields.io/badge/License-GPLv3-green)
+![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue) ![Swift 6](https://img.shields.io/badge/Swift-6-orange) ![License: GPLv3](https://img.shields.io/badge/License-GPLv3-green) ![Security: Clean](https://img.shields.io/badge/Security-Clean-brightgreen)
 
 <p align="center">
   <img src="FileAtlas/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" width="150" alt="FileAtlas App Icon">
 </p>
 
 FileAtlas is a native macOS file indexing and comparison app built with pure Apple frameworks. It helps scan folders, inspect metadata, detect duplicates, compare snapshots, export reports, and manage backups without external dependencies.
+
+> **Security:** No private data, API keys, or certificates have been published in this repository. The app makes no network requests and stores all data locally. See [SECURITY.md](SECURITY.md) for the full audit.
 
 
 [🇩🇪 Deutsche Beschreibung](README.de.md)
