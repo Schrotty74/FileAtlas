@@ -19,6 +19,7 @@ final class IndexViewModel {
 
     private(set) var entries: [FileEntry] = []
     var scanRoots: [URL] = []
+    private(set) var selectedScanRoot: URL? = nil
 
     // Scan-Fortschritt
     private(set) var isScanning = false
@@ -182,6 +183,10 @@ final class IndexViewModel {
     var displayedEntries: [FileEntry] {
         var list = entries
 
+        if let selectedScanRoot {
+            list = list.filter { Self.isPath($0.path, inside: selectedScanRoot) }
+        }
+
         if let preset = activePreset {
             list = list.filter { preset.allows($0) }
         }
@@ -261,15 +266,15 @@ final class IndexViewModel {
 
     func removeRoot(_ url: URL) {
         scanRoots.removeAll { sameFilePath($0, url) }
+        if selectedScanRoot.map({ sameFilePath($0, url) }) == true {
+            selectedScanRoot = nil
+        }
         removeRecentScanRoot(url)
         removeBookmark(for: url)
     }
 
     func stats(for root: URL) -> (count: Int, size: Int64)? {
-        let rootPath = root.standardizedFileURL.path(percentEncoded: false)
-        let matches = entries.filter { entry in
-            entry.path.standardizedFileURL.path(percentEncoded: false).hasPrefix(rootPath)
-        }
+        let matches = indexedEntries(for: root)
         guard !matches.isEmpty else { return nil }
         return (matches.count, matches.reduce(0) { $0 + $1.size })
     }
@@ -336,7 +341,25 @@ final class IndexViewModel {
 
     func startRecentScan(root: URL) {
         let scopedRoot = scanRoots.first { sameFilePath($0, root) } ?? root
-        startScan(roots: [scopedRoot])
+        selectOrScanRoot(scopedRoot)
+    }
+
+    func selectOrScanRoot(_ root: URL) {
+        if indexedEntries(for: root).isEmpty {
+            startScan(roots: [root])
+        } else {
+            selectedScanRoot = root
+            selection = []
+            currentDiff = nil
+        }
+    }
+
+    func rescanSelectedRoot() {
+        if let selectedScanRoot {
+            startScan(roots: [selectedScanRoot])
+        } else {
+            startScan()
+        }
     }
 
     func addRecentScanRoot(_ root: URL) {
@@ -376,6 +399,16 @@ final class IndexViewModel {
 
     private func normalizedPath(for url: URL) -> String {
         url.standardizedFileURL.path(percentEncoded: false)
+    }
+
+    private func indexedEntries(for root: URL) -> [FileEntry] {
+        entries.filter { Self.isPath($0.path, inside: root) }
+    }
+
+    private static func isPath(_ url: URL, inside root: URL) -> Bool {
+        let path = url.standardizedFileURL.path(percentEncoded: false)
+        let rootPath = root.standardizedFileURL.path(percentEncoded: false)
+        return path == rootPath || path.hasPrefix(rootPath + "/")
     }
 
     private func loadRecentScanRoots() {
@@ -424,6 +457,7 @@ final class IndexViewModel {
         let roots = roots ?? scanRoots
         guard !roots.isEmpty, !isScanning else { return }
         cancelScan()
+        selectedScanRoot = roots.count == 1 ? roots[0] : nil
 
         if rememberInQuickAccess {
             rememberRecentScanRoots(roots)
