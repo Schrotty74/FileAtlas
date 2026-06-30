@@ -532,6 +532,10 @@ final class IndexViewModel {
         Self.normalizedPath(for: url)
     }
 
+    func securityScopedAccessRoot(for url: URL) -> URL {
+        scanRoots.first { Self.isPath(url, inside: $0) } ?? url
+    }
+
     private func activePresetAppliesToCurrentFolder(_ preset: FilterPreset) -> Bool {
         guard !preset.appliesToAllFolders else { return true }
         guard let selectedScanRoot else { return false }

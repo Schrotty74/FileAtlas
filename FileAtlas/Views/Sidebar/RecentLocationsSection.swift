@@ -7,60 +7,62 @@ import SwiftUI
 
 struct RecentLocationsSection: View {
     @Environment(IndexViewModel.self) private var vm
-    @State private var hoveredRoot: URL?
+    @State private var expandedPaths: Set<String> = []
+    @State private var childrenByPath: [String: [URL]] = [:]
+    @State private var loadingPaths: Set<String> = []
+    @State private var hoveredPath: String?
 
     var body: some View {
         if !vm.recentScanRoots.isEmpty {
             Section {
-                ForEach(vm.recentScanRoots, id: \.self) { url in
-                    HStack(spacing: 6) {
-                        Button {
-                            vm.startRecentScan(root: url)
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "clock.fill")
-                                    .foregroundStyle(AppTheme.theme.accentColor)
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(url.lastPathComponent)
-                                        .lineLimit(1)
-                                        .truncationMode(.middle)
-                                    Text(url.deletingLastPathComponent().path(percentEncoded: false))
-                                        .font(.caption2)
-                                        .foregroundStyle(AppTheme.theme.textSecondary)
-                                        .lineLimit(1)
-                                        .truncationMode(.middle)
-                                }
-                                Spacer(minLength: 0)
-                            }
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(vm.isScanning)
-
-                        if hoveredRoot == url {
-                            Button {
-                                vm.removeRecentScanRoot(url)
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.caption)
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(AppTheme.theme.textSecondary)
-                            .help("Remove from Quick Access")
-                        }
-                    }
-                    .onHover { inside in hoveredRoot = inside ? url : nil }
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            vm.removeRecentScanRoot(url)
-                        } label: {
-                            Label("Remove from Quick Access", systemImage: "xmark.circle")
-                        }
-                    }
+                ForEach(visibleNodes) { node in
+                    LocationTreeRow(
+                        url: node.url,
+                        level: node.level,
+                        isSavedRoot: node.isSavedRoot,
+                        kind: .quickAccess,
+                        accessRoot: node.accessRoot,
+                        expandedPaths: $expandedPaths,
+                        childrenByPath: $childrenByPath,
+                        loadingPaths: $loadingPaths,
+                        hoveredPath: $hoveredPath
+                    )
                 }
             } header: {
                 Text("Schnellzugriff")
             }
         }
+    }
+
+    private var visibleNodes: [LocationTreeNode] {
+        vm.recentScanRoots.flatMap { url in
+            nodes(for: url, level: 0, isSavedRoot: true, accessRoot: vm.securityScopedAccessRoot(for: url))
+        }
+    }
+
+    private func nodes(for url: URL, level: Int, isSavedRoot: Bool, accessRoot: URL) -> [LocationTreeNode] {
+        let key = pathKey(for: url)
+        var nodes = [
+            LocationTreeNode(
+                id: key,
+                url: url,
+                level: level,
+                isSavedRoot: isSavedRoot,
+                accessRoot: accessRoot
+            )
+        ]
+
+        guard expandedPaths.contains(key),
+              let children = childrenByPath[key] else { return nodes }
+
+        for child in children {
+            nodes.append(contentsOf: self.nodes(for: child, level: level + 1, isSavedRoot: false, accessRoot: accessRoot))
+        }
+
+        return nodes
+    }
+
+    private func pathKey(for url: URL) -> String {
+        url.path(percentEncoded: false)
     }
 }
