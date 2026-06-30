@@ -21,6 +21,7 @@ struct SavedLocationsSection: View {
                     url: node.url,
                     level: node.level,
                     isSavedRoot: node.isSavedRoot,
+                    accessRoot: node.accessRoot,
                     expandedPaths: $expandedPaths,
                     childrenByPath: $childrenByPath,
                     loadingPaths: $loadingPaths,
@@ -41,17 +42,18 @@ struct SavedLocationsSection: View {
     }
 
     private var visibleNodes: [LocationTreeNode] {
-        vm.scanRoots.flatMap { nodes(for: $0, level: 0, isSavedRoot: true) }
+        vm.scanRoots.flatMap { nodes(for: $0, level: 0, isSavedRoot: true, accessRoot: $0) }
     }
 
-    private func nodes(for url: URL, level: Int, isSavedRoot: Bool) -> [LocationTreeNode] {
+    private func nodes(for url: URL, level: Int, isSavedRoot: Bool, accessRoot: URL) -> [LocationTreeNode] {
         let key = pathKey(for: url)
         var nodes = [
             LocationTreeNode(
                 id: key,
                 url: url,
                 level: level,
-                isSavedRoot: isSavedRoot
+                isSavedRoot: isSavedRoot,
+                accessRoot: accessRoot
             )
         ]
 
@@ -59,7 +61,7 @@ struct SavedLocationsSection: View {
               let children = childrenByPath[key] else { return nodes }
 
         for child in children {
-            nodes.append(contentsOf: self.nodes(for: child, level: level + 1, isSavedRoot: false))
+            nodes.append(contentsOf: self.nodes(for: child, level: level + 1, isSavedRoot: false, accessRoot: accessRoot))
         }
 
         return nodes
@@ -75,6 +77,7 @@ private struct LocationTreeNode: Identifiable {
     let url: URL
     let level: Int
     let isSavedRoot: Bool
+    let accessRoot: URL
 }
 
 private struct LocationTreeRow: View {
@@ -85,6 +88,7 @@ private struct LocationTreeRow: View {
     let url: URL
     let level: Int
     let isSavedRoot: Bool
+    let accessRoot: URL
     @Binding var expandedPaths: Set<String>
     @Binding var childrenByPath: [String: [URL]]
     @Binding var loadingPaths: Set<String>
@@ -240,13 +244,14 @@ private struct LocationTreeRow: View {
         loadingPaths.insert(pathKey)
 
         let url = url
+        let accessRoot = accessRoot
         let pathKey = pathKey
         let skippedFolderNames = vm.skippedFolderNames.map { $0.lowercased() }
         let keys: [URLResourceKey] = [.isDirectoryKey, .isHiddenKey, .nameKey]
 
         Task.detached(priority: .userInitiated) {
-            let scoped = url.startAccessingSecurityScopedResource()
-            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            let scoped = accessRoot.startAccessingSecurityScopedResource()
+            defer { if scoped { accessRoot.stopAccessingSecurityScopedResource() } }
 
             let urls = (try? FileManager.default.contentsOfDirectory(
                 at: url,
