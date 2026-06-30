@@ -16,11 +16,11 @@ struct SavedLocationsSection: View {
 
     var body: some View {
         Section {
-            ForEach(vm.scanRoots, id: \.self) { url in
+            ForEach(visibleNodes) { node in
                 LocationTreeRow(
-                    url: url,
-                    level: 0,
-                    isSavedRoot: true,
+                    url: node.url,
+                    level: node.level,
+                    isSavedRoot: node.isSavedRoot,
                     expandedPaths: $expandedPaths,
                     childrenByPath: $childrenByPath,
                     loadingPaths: $loadingPaths,
@@ -39,6 +39,42 @@ struct SavedLocationsSection: View {
             Text("Locations")
         }
     }
+
+    private var visibleNodes: [LocationTreeNode] {
+        vm.scanRoots.flatMap { nodes(for: $0, level: 0, isSavedRoot: true) }
+    }
+
+    private func nodes(for url: URL, level: Int, isSavedRoot: Bool) -> [LocationTreeNode] {
+        let key = pathKey(for: url)
+        var nodes = [
+            LocationTreeNode(
+                id: key,
+                url: url,
+                level: level,
+                isSavedRoot: isSavedRoot
+            )
+        ]
+
+        guard expandedPaths.contains(key),
+              let children = childrenByPath[key] else { return nodes }
+
+        for child in children {
+            nodes.append(contentsOf: self.nodes(for: child, level: level + 1, isSavedRoot: false))
+        }
+
+        return nodes
+    }
+
+    private func pathKey(for url: URL) -> String {
+        url.path(percentEncoded: false)
+    }
+}
+
+private struct LocationTreeNode: Identifiable {
+    let id: String
+    let url: URL
+    let level: Int
+    let isSavedRoot: Bool
 }
 
 private struct LocationTreeRow: View {
@@ -55,7 +91,7 @@ private struct LocationTreeRow: View {
     @Binding var hoveredPath: String?
 
     private var pathKey: String {
-        url.standardizedFileURL.resolvingSymlinksInPath().path(percentEncoded: false)
+        url.path(percentEncoded: false)
     }
 
     private var isExpanded: Bool {
@@ -71,23 +107,7 @@ private struct LocationTreeRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            row
-
-            if isExpanded, let children {
-                ForEach(children, id: \.self) { child in
-                    LocationTreeRow(
-                        url: child,
-                        level: level + 1,
-                        isSavedRoot: false,
-                        expandedPaths: $expandedPaths,
-                        childrenByPath: $childrenByPath,
-                        loadingPaths: $loadingPaths,
-                        hoveredPath: $hoveredPath
-                    )
-                }
-            }
-        }
+        row
     }
 
     private var row: some View {
