@@ -88,42 +88,40 @@ private struct LocationTreeRow: View {
                 .font(.caption2)
                 .frame(width: 18, height: 22)
                 .contentShape(Rectangle())
-                .onTapGesture {
+                .highPriorityGesture(TapGesture().onEnded {
                     toggleExpanded()
-                }
-            .foregroundStyle(AppTheme.theme.textSecondary)
+                })
+                .foregroundStyle(AppTheme.theme.textSecondary)
 
-            Button {
-                vm.selectOrScanRoot(url)
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "folder.fill")
-                        .foregroundStyle(AppTheme.theme.accentColor)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(url.lastPathComponent)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        if let stats = vm.stats(for: url) {
-                            Text("\(stats.count) Dateien · \(ByteCountFormatter.string(fromByteCount: stats.size, countStyle: .file))")
-                                .font(.caption2)
-                                .foregroundStyle(AppTheme.theme.textSecondary)
-                        }
-                        if isSavedRoot, let last = backup.lastBackup(for: url) {
-                            Text("Backup: \(last.formatted(date: .abbreviated, time: .shortened))")
-                                .font(.caption2)
-                                .foregroundStyle(AppTheme.theme.textSecondary)
-                        }
+            HStack(spacing: 8) {
+                Image(systemName: "folder.fill")
+                    .foregroundStyle(AppTheme.theme.accentColor)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(url.lastPathComponent)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    if let stats = vm.stats(for: url) {
+                        Text("\(stats.count) Dateien · \(ByteCountFormatter.string(fromByteCount: stats.size, countStyle: .file))")
+                            .font(.caption2)
+                            .foregroundStyle(AppTheme.theme.textSecondary)
                     }
-                    Spacer(minLength: 0)
-                    if isSavedRoot, backup.config(for: url).schedule != .off {
-                        Image(systemName: "clock.arrow.circlepath")
+                    if isSavedRoot, let last = backup.lastBackup(for: url) {
+                        Text("Backup: \(last.formatted(date: .abbreviated, time: .shortened))")
                             .font(.caption2)
                             .foregroundStyle(AppTheme.theme.textSecondary)
                     }
                 }
-                .contentShape(Rectangle())
+                Spacer(minLength: 0)
+                if isSavedRoot, backup.config(for: url).schedule != .off {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.caption2)
+                        .foregroundStyle(AppTheme.theme.textSecondary)
+                }
             }
-            .buttonStyle(.plain)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                vm.selectOrScanRoot(url)
+            }
             .disabled(vm.isScanning)
 
             if hoveredPath == pathKey {
@@ -201,6 +199,9 @@ private struct LocationTreeRow: View {
         guard childrenByPath[pathKey] == nil else { return }
 
         let keys: [URLResourceKey] = [.isDirectoryKey, .isHiddenKey, .nameKey]
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+
         let urls = (try? FileManager.default.contentsOfDirectory(
             at: url,
             includingPropertiesForKeys: keys,
