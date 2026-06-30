@@ -21,6 +21,7 @@ struct SavedLocationsSection: View {
                     url: node.url,
                     level: node.level,
                     isSavedRoot: node.isSavedRoot,
+                    kind: .savedLocation,
                     accessRoot: node.accessRoot,
                     expandedPaths: $expandedPaths,
                     childrenByPath: $childrenByPath,
@@ -72,7 +73,7 @@ struct SavedLocationsSection: View {
     }
 }
 
-private struct LocationTreeNode: Identifiable {
+struct LocationTreeNode: Identifiable {
     let id: String
     let url: URL
     let level: Int
@@ -80,7 +81,12 @@ private struct LocationTreeNode: Identifiable {
     let accessRoot: URL
 }
 
-private struct LocationTreeRow: View {
+enum LocationTreeRowKind {
+    case savedLocation
+    case quickAccess
+}
+
+struct LocationTreeRow: View {
     @Environment(IndexViewModel.self) private var vm
     @Environment(BackupManager.self) private var backup
     @Environment(UIState.self) private var ui
@@ -88,6 +94,7 @@ private struct LocationTreeRow: View {
     let url: URL
     let level: Int
     let isSavedRoot: Bool
+    let kind: LocationTreeRowKind
     let accessRoot: URL
     @Binding var expandedPaths: Set<String>
     @Binding var childrenByPath: [String: [URL]]
@@ -119,25 +126,31 @@ private struct LocationTreeRow: View {
             disclosureControl
 
             HStack(spacing: 8) {
-                Image(systemName: "folder.fill")
+                Image(systemName: rowIconName)
                     .foregroundStyle(AppTheme.theme.accentColor)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(url.lastPathComponent)
                         .lineLimit(1)
                         .truncationMode(.middle)
-                    if let stats = vm.stats(for: url) {
+                    if kind == .quickAccess && isSavedRoot {
+                        Text(url.deletingLastPathComponent().path(percentEncoded: false))
+                            .font(.caption2)
+                            .foregroundStyle(AppTheme.theme.textSecondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    } else if let stats = vm.stats(for: url) {
                         Text("\(stats.count) Dateien · \(ByteCountFormatter.string(fromByteCount: stats.size, countStyle: .file))")
                             .font(.caption2)
                             .foregroundStyle(AppTheme.theme.textSecondary)
                     }
-                    if isSavedRoot, let last = backup.lastBackup(for: url) {
+                    if isSavedRoot && kind == .savedLocation, let last = backup.lastBackup(for: url) {
                         Text("Backup: \(last.formatted(date: .abbreviated, time: .shortened))")
                             .font(.caption2)
                             .foregroundStyle(AppTheme.theme.textSecondary)
                     }
                 }
                 Spacer(minLength: 0)
-                if isSavedRoot, backup.config(for: url).schedule != .off {
+                if isSavedRoot && kind == .savedLocation && backup.config(for: url).schedule != .off {
                     Image(systemName: "clock.arrow.circlepath")
                         .font(.caption2)
                         .foregroundStyle(AppTheme.theme.textSecondary)
@@ -145,7 +158,7 @@ private struct LocationTreeRow: View {
             }
             .contentShape(Rectangle())
             .onTapGesture {
-                vm.selectOrScanRoot(url)
+                selectRow()
             }
             .disabled(vm.isScanning)
 
@@ -156,6 +169,10 @@ private struct LocationTreeRow: View {
         .padding(.leading, CGFloat(level) * 16)
         .onHover { inside in hoveredPath = inside ? pathKey : nil }
         .contextMenu { contextMenu }
+    }
+
+    private var rowIconName: String {
+        kind == .quickAccess && isSavedRoot ? "clock.fill" : "folder.fill"
     }
 
     private var disclosureIcon: String {
@@ -185,7 +202,7 @@ private struct LocationTreeRow: View {
 
     @ViewBuilder
     private var hoverAction: some View {
-        if isSavedRoot {
+        if isSavedRoot && kind == .savedLocation {
             Button(role: .destructive) {
                 vm.removeRoot(url)
             } label: {
@@ -195,37 +212,78 @@ private struct LocationTreeRow: View {
             .buttonStyle(.plain)
             .foregroundStyle(AppTheme.theme.textSecondary)
             .help("Remove Location")
+        } else if isSavedRoot && kind == .quickAccess {
+            Button {
+                vm.removeRecentScanRoot(url)
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.caption)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(AppTheme.theme.textSecondary)
+            .help("Remove from Quick Access")
         }
     }
 
     @ViewBuilder
     private var contextMenu: some View {
-        if vm.isRecentScanRoot(url) {
-            Button {
-            } label: {
-                Label("Already in Quick Access", systemImage: "bookmark.fill")
+        switch kind {
+        case .savedLocation:
+            if vm.isRecentScanRoot(url) {
+                Button {
+                } label: {
+                    Label("Already in Quick Access", systemImage: "bookmark.fill")
+                }
+                .disabled(true)
+            } else {
+                Button {
+                    vm.addRecentScanRoot(url)
+                } label: {
+                    Label("Add to Quick Access", systemImage: "bookmark")
+                }
             }
-            .disabled(true)
+            Button {
+                ui.backupLocation = url
+                ui.showBackupSettings = true
+            } label: {
+                Label("Backup Settings…", systemImage: "arrow.down.doc")
+            }
+            if isSavedRoot {
+                Divider()
+                Button(role: .destructive) {
+                    vm.removeRoot(url)
+                } label: {
+                    Label("Remove Location", systemImage: "minus.circle")
+                }
+            }
+        case .quickAccess:
+            if isSavedRoot {
+                Button(role: .destructive) {
+                    vm.removeRecentScanRoot(url)
+                } label: {
+                    Label("Remove from Quick Access", systemImage: "xmark.circle")
+                }
+            } else if vm.isRecentScanRoot(url) {
+                Button {
+                } label: {
+                    Label("Already in Quick Access", systemImage: "bookmark.fill")
+                }
+                .disabled(true)
+            } else {
+                Button {
+                    vm.addRecentScanRoot(url)
+                } label: {
+                    Label("Add to Quick Access", systemImage: "bookmark")
+                }
+            }
+        }
+    }
+
+    private func selectRow() {
+        if kind == .quickAccess && isSavedRoot {
+            vm.startRecentScan(root: url)
         } else {
-            Button {
-                vm.addRecentScanRoot(url)
-            } label: {
-                Label("Add to Quick Access", systemImage: "bookmark")
-            }
-        }
-        Button {
-            ui.backupLocation = url
-            ui.showBackupSettings = true
-        } label: {
-            Label("Backup Settings…", systemImage: "arrow.down.doc")
-        }
-        if isSavedRoot {
-            Divider()
-            Button(role: .destructive) {
-                vm.removeRoot(url)
-            } label: {
-                Label("Remove Location", systemImage: "minus.circle")
-            }
+            vm.selectOrScanRoot(url)
         }
     }
 
