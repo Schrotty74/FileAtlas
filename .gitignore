@@ -6,3 +6,4 @@ DerivedData/
 *.hmap
 Pods/
 .build/
+.build-release/
