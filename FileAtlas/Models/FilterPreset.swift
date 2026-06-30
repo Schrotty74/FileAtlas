@@ -13,6 +13,8 @@ nonisolated struct FilterPreset: Identifiable, Codable, Hashable, Sendable {
     var excludedExtensions: [String]   // z. B. ["DS_Store", "log", "tmp"]
     var extensionWhitelistEnabled: Bool
     var extensionWhitelist: [String]
+    var appliesToAllFolders: Bool
+    var scopedFolderPaths: [String]
     var minSize: Int64?
     var maxSize: Int64?
 
@@ -23,6 +25,8 @@ nonisolated struct FilterPreset: Identifiable, Codable, Hashable, Sendable {
         case excludedExtensions
         case extensionWhitelistEnabled
         case extensionWhitelist
+        case appliesToAllFolders
+        case scopedFolderPaths
         case minSize
         case maxSize
     }
@@ -34,6 +38,8 @@ nonisolated struct FilterPreset: Identifiable, Codable, Hashable, Sendable {
         excludedExtensions: [String] = [],
         extensionWhitelistEnabled: Bool = false,
         extensionWhitelist: [String] = [],
+        appliesToAllFolders: Bool = true,
+        scopedFolderPaths: [String] = [],
         minSize: Int64? = nil,
         maxSize: Int64? = nil
     ) {
@@ -43,6 +49,8 @@ nonisolated struct FilterPreset: Identifiable, Codable, Hashable, Sendable {
         self.excludedExtensions = excludedExtensions
         self.extensionWhitelistEnabled = extensionWhitelistEnabled
         self.extensionWhitelist = extensionWhitelist.map(FilterPreset.normalize).filter { !$0.isEmpty }
+        self.appliesToAllFolders = appliesToAllFolders
+        self.scopedFolderPaths = scopedFolderPaths
         self.minSize = minSize
         self.maxSize = maxSize
     }
@@ -56,6 +64,8 @@ nonisolated struct FilterPreset: Identifiable, Codable, Hashable, Sendable {
         extensionWhitelistEnabled = try container.decodeIfPresent(Bool.self, forKey: .extensionWhitelistEnabled) ?? false
         let whitelist = try container.decodeIfPresent([String].self, forKey: .extensionWhitelist) ?? []
         extensionWhitelist = whitelist.map(FilterPreset.normalize).filter { !$0.isEmpty }
+        appliesToAllFolders = try container.decodeIfPresent(Bool.self, forKey: .appliesToAllFolders) ?? true
+        scopedFolderPaths = try container.decodeIfPresent([String].self, forKey: .scopedFolderPaths) ?? []
         minSize = try container.decodeIfPresent(Int64.self, forKey: .minSize) ?? nil
         maxSize = try container.decodeIfPresent(Int64.self, forKey: .maxSize) ?? nil
     }

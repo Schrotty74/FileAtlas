@@ -51,6 +51,15 @@ final class IndexViewModel {
         (FileTag.predefined + customTags).uniquedByTitle()
     }
 
+    var knownFilterScopeFolders: [URL] {
+        var folders = scanRoots + recentScanRoots
+        var seen = Set<String>()
+        folders.removeAll { url in
+            !seen.insert(Self.normalizedPath(for: url)).inserted
+        }
+        return folders
+    }
+
     // MARK: - Presets
 
     private(set) var presets: [FilterPreset] = []
@@ -188,7 +197,7 @@ final class IndexViewModel {
             list = list.filter { Self.isPath($0.path, inside: selectedScanRoot) }
         }
 
-        if let preset = activePreset {
+        if let preset = activePreset, activePresetAppliesToCurrentFolder(preset) {
             list = list.filter { preset.allows($0) }
         }
         if showOnlyDuplicates {
@@ -430,6 +439,16 @@ final class IndexViewModel {
         let path = normalizedPath(for: url)
         let rootPath = normalizedPath(for: root)
         return path == rootPath || path.hasPrefix(rootPath + "/")
+    }
+
+    func filterScopePath(for url: URL) -> String {
+        Self.normalizedPath(for: url)
+    }
+
+    private func activePresetAppliesToCurrentFolder(_ preset: FilterPreset) -> Bool {
+        guard !preset.appliesToAllFolders else { return true }
+        guard let selectedScanRoot else { return false }
+        return preset.scopedFolderPaths.contains(Self.normalizedPath(for: selectedScanRoot))
     }
 
     private func loadRecentScanRoots() {
