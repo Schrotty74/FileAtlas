@@ -63,7 +63,7 @@ GitHub Actions hat noch keinen macOS 26 Runner. Releases werden daher lokal auf 
 
 **Release erstellen:**
 ```bash
-cd /Users/martin/Documents/FileAtlas-main
+cd <Projektordner>
 git pull
 ./build-release.sh v1.0.1
 ```
