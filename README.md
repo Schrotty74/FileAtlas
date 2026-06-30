@@ -61,13 +61,15 @@ FileAtlas is not signed with an Apple Developer certificate. On first launch mac
 
 **To open the app anyway:**
 
-1. Right-click (or Control-click) `FileAtlas.app`
-2. Select **Open**
-3. Click **Open** in the dialog that appears
+1. Double-click `FileAtlas.app` — macOS will block it and show a warning
+2. Click **Done**
+3. Open **System Settings → Privacy & Security**
+4. Scroll down and click **Open Anyway** next to FileAtlas
+5. Confirm by clicking **Open** in the final dialog
 
 macOS remembers your choice — this step is only required once.
 
-> If macOS shows **"FileAtlas.app is damaged"** instead, open Terminal and run:
+> If macOS shows **"FileAtlas.app is damaged"** instead of the security warning, open Terminal and run:
 > ```bash
 > xattr -cr FileAtlas.app
 > ```

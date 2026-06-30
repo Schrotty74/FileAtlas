@@ -61,17 +61,19 @@ FileAtlas ist nicht mit einem Apple-Entwicklerzertifikat signiert. Beim ersten S
 
 **So oeffnest du die App dennoch:**
 
-1. Rechtsklick auf `FileAtlas.app`
-2. **Oeffnen** auswaehlen
-3. Im Dialog erneut **Oeffnen** klicken
+1. `FileAtlas.app` doppelklicken — macOS blockiert sie und zeigt eine Warnung
+2. **Fertig** klicken
+3. **Systemeinstellungen → Datenschutz & Sicherheit** oeffnen
+4. Nach unten scrollen und neben FileAtlas auf **Trotzdem oeffnen** klicken
+5. Im letzten Dialog mit **Oeffnen** bestaetigen
 
 macOS merkt sich die Entscheidung — dieser Schritt ist nur einmalig notwendig.
 
-> Falls macOS **„FileAtlas.app ist beschädigt"** anzeigt, Terminal öffnen und eingeben:
+> Falls macOS **„FileAtlas.app ist beschaedigt"** anzeigt statt der Sicherheitswarnung, Terminal oeffnen und eingeben:
 > ```bash
 > xattr -cr FileAtlas.app
 > ```
-> Danach die App normal öffnen.
+> Danach die App normal oeffnen.
 
 ## Lizenz
 
