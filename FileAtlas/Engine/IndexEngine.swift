@@ -59,7 +59,6 @@ actor IndexEngine {
                     pathExtension: ext
                 )
                 if isSingleEntry {
-                    print("FileAtlas scanner skipped descendants for root: \(root.path(percentEncoded: false))")
                     count += 1
                     continuation.yield(.found(Self.packageEntry(for: root, values: values)))
                     continue
@@ -110,7 +109,6 @@ actor IndexEngine {
                     // Hart abbrechen: nicht in das Paket hineingehen – unabhängig vom
                     // (unzuverlässigen) LaunchServices-Package-Bit, auf jeder Ebene.
                     enumerator.skipDescendants()
-                    print("FileAtlas scanner skipped descendants for: \(fileURL.path(percentEncoded: false))")
                     entry = Self.packageEntry(for: fileURL, values: values)
                 } else {
                     entry = Self.fileEntry(for: fileURL, values: values, isDirectory: isDir)
