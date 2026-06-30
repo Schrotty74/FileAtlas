@@ -314,6 +314,16 @@ final class IndexViewModel {
     func stats(for root: URL) -> (count: Int, size: Int64)? {
         let matches = indexedEntries(for: root)
         guard !matches.isEmpty else { return nil }
+
+        if selectedScanRoot.map({ sameFilePath($0, root) }) == true {
+            return (displayedEntries.count, displayedEntries.reduce(0) { $0 + $1.size })
+        }
+
+        if selectedScanRoot == nil {
+            let visibleMatches = displayedEntries.filter { Self.isPath($0.path, inside: root) }
+            return (visibleMatches.count, visibleMatches.reduce(0) { $0 + $1.size })
+        }
+
         return (matches.count, matches.reduce(0) { $0 + $1.size })
     }
 
