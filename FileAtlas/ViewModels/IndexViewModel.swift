@@ -469,12 +469,38 @@ final class IndexViewModel {
         if let cachedEntries = indexedEntriesByRootPath[key], !cachedEntries.isEmpty {
             return cachedEntries
         }
+        if let cachedEntries = indexedEntriesFromCoveringRoot(forNormalizedPath: key) {
+            return cachedEntries
+        }
         return entries.filter { Self.isPath($0.path, inside: root) }
+    }
+
+    private func indexedEntriesFromCoveringRoot(forNormalizedPath rootPath: String) -> [FileEntry]? {
+        let coveringCaches = indexedEntriesByRootPath
+            .filter { cachedRootPath, cachedEntries in
+                !cachedEntries.isEmpty && Self.normalizedPath(rootPath, isInsideNormalizedPath: cachedRootPath)
+            }
+            .sorted { $0.key.count > $1.key.count }
+
+        for (_, cachedEntries) in coveringCaches {
+            let matchingEntries = cachedEntries.filter {
+                Self.normalizedPath(Self.normalizedPath(for: $0.path), isInsideNormalizedPath: rootPath)
+            }
+            if !matchingEntries.isEmpty {
+                return matchingEntries
+            }
+        }
+
+        return nil
     }
 
     private static func isPath(_ url: URL, inside root: URL) -> Bool {
         let path = normalizedPath(for: url)
         let rootPath = normalizedPath(for: root)
+        return normalizedPath(path, isInsideNormalizedPath: rootPath)
+    }
+
+    private static func normalizedPath(_ path: String, isInsideNormalizedPath rootPath: String) -> Bool {
         return path == rootPath || path.hasPrefix(rootPath + "/")
     }
 
