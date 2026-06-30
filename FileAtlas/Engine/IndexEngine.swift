@@ -54,6 +54,7 @@ actor IndexEngine {
             if let values = try? root.resourceValues(forKeys: Set(keys)) {
                 let ext = root.pathExtension.lowercased()
                 let isSingleEntry = Self.isSingleEntryPackageOrArchive(
+                    isDirectory: values.isDirectory ?? false,
                     isPackage: values.isPackage ?? false,
                     pathExtension: ext
                 )
@@ -90,6 +91,7 @@ actor IndexEngine {
                 let name = values.name ?? fileURL.lastPathComponent
                 let ext = fileURL.pathExtension.lowercased()
                 let isSingleEntry = Self.isSingleEntryPackageOrArchive(
+                    isDirectory: isDir,
                     isPackage: values.isPackage ?? false,
                     pathExtension: ext
                 )
@@ -138,11 +140,23 @@ actor IndexEngine {
         "xlsx", "pptx",
     ]
 
+    private static let bundleDirectoryExtensions: Set<String> = [
+        "app", "bundle", "framework", "xcodeproj", "xcworkspace", "playground",
+        "plugin", "kext", "appex", "xpc", "qlgenerator", "prefpane", "component",
+        "mdimporter", "photoslibrary", "fcpbundle", "tvlibrary", "rtfd", "scptd",
+        "pkg", "mpkg",
+    ]
+
     private static func isSingleEntryPackageOrArchive(
+        isDirectory: Bool,
         isPackage: Bool,
         pathExtension ext: String
     ) -> Bool {
-        isPackage || packageExtensions.contains(ext)
+        guard packageExtensions.contains(ext) else { return false }
+        if isDirectory {
+            return isPackage || bundleDirectoryExtensions.contains(ext)
+        }
+        return true
     }
 
     /// Ein Paket/Archiv als einzelne „Datei", ohne dessen Inhalt während des Scans zu lesen.

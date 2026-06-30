@@ -386,7 +386,7 @@ final class IndexViewModel {
         var combined = roots + recentScanRoots
         var seen = Set<String>()
         combined.removeAll { url in
-            let key = normalizedPath(for: url)
+            let key = Self.normalizedPath(for: url)
             return !seen.insert(key).inserted
         }
         recentScanRoots = Array(combined.prefix(5))
@@ -394,11 +394,15 @@ final class IndexViewModel {
     }
 
     private func sameFilePath(_ lhs: URL, _ rhs: URL) -> Bool {
-        normalizedPath(for: lhs) == normalizedPath(for: rhs)
+        Self.normalizedPath(for: lhs) == Self.normalizedPath(for: rhs)
     }
 
-    private func normalizedPath(for url: URL) -> String {
-        url.standardizedFileURL.path(percentEncoded: false)
+    private static func normalizedPath(for url: URL) -> String {
+        var path = url.standardizedFileURL.resolvingSymlinksInPath().path(percentEncoded: false)
+        while path.count > 1 && path.hasSuffix("/") {
+            path.removeLast()
+        }
+        return path
     }
 
     private func indexedEntries(for root: URL) -> [FileEntry] {
@@ -406,8 +410,8 @@ final class IndexViewModel {
     }
 
     private static func isPath(_ url: URL, inside root: URL) -> Bool {
-        let path = url.standardizedFileURL.path(percentEncoded: false)
-        let rootPath = root.standardizedFileURL.path(percentEncoded: false)
+        let path = normalizedPath(for: url)
+        let rootPath = normalizedPath(for: root)
         return path == rootPath || path.hasPrefix(rootPath + "/")
     }
 
