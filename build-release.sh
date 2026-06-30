@@ -67,6 +67,12 @@ fi
 
 echo "Sicherheitsprüfung bestanden — keine privaten Daten gefunden."
 
+# --- Ad-hoc Signatur ---
+echo ""
+echo "[2b/5] Ad-hoc Signatur (verhindert 'beschädigt'-Meldung)..."
+codesign --force --deep --sign - "$APP_PATH"
+echo "Signatur gesetzt."
+
 # --- ZIP ---
 echo ""
 echo "[3/5] Erstelle ZIP..."

@@ -67,6 +67,12 @@ FileAtlas ist nicht mit einem Apple-Entwicklerzertifikat signiert. Beim ersten S
 
 macOS merkt sich die Entscheidung — dieser Schritt ist nur einmalig notwendig.
 
+> Falls macOS **„FileAtlas.app ist beschädigt"** anzeigt, Terminal öffnen und eingeben:
+> ```bash
+> xattr -cr FileAtlas.app
+> ```
+> Danach die App normal öffnen.
+
 ## Lizenz
 
 FileAtlas ist unter der GNU General Public License v3.0 lizenziert. Der vollstaendige Lizenztext steht in [LICENSE](LICENSE).
