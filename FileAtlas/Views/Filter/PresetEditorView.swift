@@ -19,6 +19,8 @@ struct PresetEditorView: View {
     @State private var excluded: [String] = []
     @State private var extensionWhitelistEnabled = false
     @State private var extensionWhitelist: [String] = []
+    @State private var appliesToAllFolders = true
+    @State private var scopedFolderPaths: Set<String> = []
     @State private var newIncluded: String = ""
     @State private var newExcluded: String = ""
     @State private var newWhitelistExtension: String = ""
@@ -60,6 +62,33 @@ struct PresetEditorView: View {
                         .tint(AppTheme.theme.accentColor)
                     extensionEditor(items: $extensionWhitelist, newValue: $newWhitelistExtension, suggestions: [])
                         .disabled(!extensionWhitelistEnabled)
+                }
+
+                Section("Applies to") {
+                    Picker("Applies to", selection: $appliesToAllFolders) {
+                        Text("All folders").tag(true)
+                        Text("Only selected folders").tag(false)
+                    }
+                    .pickerStyle(.radioGroup)
+
+                    if !appliesToAllFolders {
+                        if vm.knownFilterScopeFolders.isEmpty {
+                            Text("No folders available")
+                                .font(.caption)
+                                .foregroundStyle(AppTheme.theme.textSecondary)
+                        } else {
+                            ForEach(vm.knownFilterScopeFolders, id: \.self) { folder in
+                                Toggle(isOn: scopeBinding(for: folder)) {
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text(folder.lastPathComponent)
+                                        Text(folder.deletingLastPathComponent().path(percentEncoded: false))
+                                            .font(.caption2)
+                                            .foregroundStyle(AppTheme.theme.textSecondary)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
             .formStyle(.grouped)
@@ -103,6 +132,20 @@ struct PresetEditorView: View {
         field.wrappedValue = ""
     }
 
+    private func scopeBinding(for folder: URL) -> Binding<Bool> {
+        let path = vm.filterScopePath(for: folder)
+        return Binding(
+            get: { scopedFolderPaths.contains(path) },
+            set: { isOn in
+                if isOn {
+                    scopedFolderPaths.insert(path)
+                } else {
+                    scopedFolderPaths.remove(path)
+                }
+            }
+        )
+    }
+
     private func load() {
         if let original {
             name = original.name
@@ -110,6 +153,8 @@ struct PresetEditorView: View {
             excluded = original.excludedExtensions
             extensionWhitelistEnabled = original.extensionWhitelistEnabled
             extensionWhitelist = original.extensionWhitelist
+            appliesToAllFolders = original.appliesToAllFolders
+            scopedFolderPaths = Set(original.scopedFolderPaths)
         }
     }
 
@@ -120,6 +165,8 @@ struct PresetEditorView: View {
         preset.excludedExtensions = excluded
         preset.extensionWhitelistEnabled = extensionWhitelistEnabled
         preset.extensionWhitelist = extensionWhitelist
+        preset.appliesToAllFolders = appliesToAllFolders
+        preset.scopedFolderPaths = appliesToAllFolders ? [] : Array(scopedFolderPaths).sorted()
         vm.savePreset(preset)
         dismiss()
     }

@@ -16,7 +16,11 @@ nonisolated struct DuplicateDetector {
         var result = entries
 
         // Index der Dateien (keine Ordner) nach Position merken.
-        let fileIndices = entries.indices.filter { !entries[$0].isDirectory && entries[$0].size > 0 }
+        let fileIndices = entries.indices.filter {
+            !entries[$0].isDirectory
+                && entries[$0].size > 0
+                && !Self.nonHashablePackageExtensions.contains(entries[$0].fileExtension.lowercased())
+        }
 
         // Stufe 1: nach Größe gruppieren.
         var bySize: [Int64: [Int]] = [:]
@@ -46,6 +50,14 @@ nonisolated struct DuplicateDetector {
 
         return result
     }
+
+    private static let nonHashablePackageExtensions: Set<String> = [
+        "app", "bundle", "framework", "xcodeproj", "xcworkspace", "playground",
+        "plugin", "kext", "appex", "xpc", "qlgenerator", "prefpane", "component",
+        "mdimporter", "photoslibrary", "fcpbundle", "tvlibrary", "rtfd", "scptd",
+        "pkg", "mpkg", "dmg", "zip", "ipa", "tar", "gz", "rar", "7z", "docx",
+        "xlsx", "pptx",
+    ]
 
     /// Streamt die Datei in 1-MB-Blöcken durch SHA-256 (speicherschonend).
     private static func sha256(of url: URL) -> String? {
