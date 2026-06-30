@@ -84,14 +84,13 @@ private struct LocationTreeRow: View {
 
     private var row: some View {
         HStack(spacing: 6) {
-            Button {
-                toggleExpanded()
-            } label: {
-                Image(systemName: disclosureIcon)
-                    .font(.caption2)
-                    .frame(width: 12)
-            }
-            .buttonStyle(.plain)
+            Image(systemName: disclosureIcon)
+                .font(.caption2)
+                .frame(width: 18, height: 22)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    toggleExpanded()
+                }
             .foregroundStyle(AppTheme.theme.textSecondary)
 
             Button {
