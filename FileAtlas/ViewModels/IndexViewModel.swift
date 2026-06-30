@@ -83,6 +83,8 @@ final class IndexViewModel {
     private static let recentScanRootsKey = "FileAtlas.recentScanRoots"
     private static let fileTagsKey = "FileAtlas.fileTags"
     private static let customTagsKey = "FileAtlas.customTags"
+    private nonisolated static let scanPublishInterval: Duration = .milliseconds(200)
+    private nonisolated static let scanPublishBatchSize = 200
     /// Bei neuen Default-Einträgen erhöhen, damit die Migration erneut läuft.
     private static let skippedFoldersMigrationVersion = 1
     static let defaultSkippedFolders = ["node_modules", ".git", "Firmware", "Cache", "Caches", ".Trashes", "__MACOSX"]
@@ -508,15 +510,44 @@ final class IndexViewModel {
         currentScanPath = ""
         scanErrors = []
         currentDiff = nil
-        var buffer: [FileEntry] = []
         // Robust gegen Leerzeichen/Leereinträge: trimmen, leere verwerfen.
         let skipped = Set(
             skippedFolderNames
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
                 .filter { !$0.isEmpty }
         )
-        scanTask = Task { [weak self] in
-            guard let self else { return }
+        let engine = engine
+        scanTask = Task.detached(priority: .userInitiated) { [weak self] in
+            var buffer: [FileEntry] = []
+            var pendingFailures: [ScanFailure] = []
+            var latestPath = ""
+            var latestCount = 0
+            var lastPublishCount = 0
+            var lastPublish = ContinuousClock.now
+
+            func publishIfNeeded(force: Bool = false) async {
+                guard force
+                    || buffer.count - lastPublishCount >= Self.scanPublishBatchSize
+                    || lastPublish.duration(to: .now) >= Self.scanPublishInterval
+                else { return }
+
+                let snapshot = buffer
+                let failures = pendingFailures
+                pendingFailures.removeAll(keepingCapacity: true)
+                lastPublishCount = buffer.count
+                lastPublish = .now
+
+                await MainActor.run { [weak self] in
+                    guard let self, self.isScanning else { return }
+                    self.currentScanPath = latestPath
+                    self.scanProgressCount = latestCount
+                    self.entries = snapshot
+                    if !failures.isEmpty {
+                        self.scanErrors.append(contentsOf: failures)
+                    }
+                }
+            }
+
             let scopedRoots = roots.map { ($0, $0.startAccessingSecurityScopedResource()) }
             defer {
                 for (url, scoped) in scopedRoots where scoped {
@@ -529,21 +560,38 @@ final class IndexViewModel {
                 switch event {
                 case .found(let entry):
                     buffer.append(entry)
+                    latestPath = entry.path.path(percentEncoded: false)
+                    latestCount = buffer.count
+                    await publishIfNeeded()
                 case .progress(let path, let count):
-                    self.currentScanPath = path
-                    self.scanProgressCount = count
-                    self.entries = buffer
+                    latestPath = path
+                    latestCount = count
+                    await publishIfNeeded()
                 case .failed(let path, let reason):
-                    self.scanErrors.append(ScanFailure(path: path, reason: reason))
+                    pendingFailures.append(ScanFailure(path: path, reason: reason))
+                    await publishIfNeeded()
                 case .finished(let total):
-                    self.scanProgressCount = total
-                    self.entries = buffer
+                    latestCount = total
+                    await publishIfNeeded(force: true)
                 }
             }
-            // Duplikate erst nach vollständigem Scan ermitteln, solange die Root-Scopes noch aktiv sind.
-            await self.detectDuplicates()
-            self.storeIndexedEntries(for: roots)
-            self.isScanning = false
+
+            guard !Task.isCancelled else { return }
+            let detector = DuplicateDetector()
+            let marked = await detector.markDuplicates(in: buffer)
+            guard !Task.isCancelled else { return }
+
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                self.entries = marked
+                self.scanProgressCount = marked.count
+                if !pendingFailures.isEmpty {
+                    self.scanErrors.append(contentsOf: pendingFailures)
+                }
+                self.storeIndexedEntries(for: roots, entries: marked)
+                self.isScanning = false
+                self.scanTask = nil
+            }
         }
     }
 
@@ -579,17 +627,7 @@ final class IndexViewModel {
         }
     }
 
-    private func detectDuplicates() async {
-        guard !entries.isEmpty else { return }
-        let detector = DuplicateDetector()
-        let snapshot = entries
-        let marked = await detector.markDuplicates(in: snapshot)
-        if !Task.isCancelled {
-            entries = marked
-        }
-    }
-
-    private func storeIndexedEntries(for roots: [URL]) {
+    private func storeIndexedEntries(for roots: [URL], entries: [FileEntry]) {
         for root in roots {
             let rootEntries = entries.filter { Self.isPath($0.path, inside: root) }
             if !rootEntries.isEmpty {
