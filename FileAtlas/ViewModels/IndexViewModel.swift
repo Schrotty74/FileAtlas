@@ -510,6 +510,8 @@ final class IndexViewModel {
         currentScanPath = ""
         scanErrors = []
         currentDiff = nil
+        entries = []
+        selection = []
         // Robust gegen Leerzeichen/Leereinträge: trimmen, leere verwerfen.
         let skipped = Set(
             skippedFolderNames
