@@ -34,6 +34,7 @@ FileAtlas is a native macOS file indexing and comparison app built with pure App
 - Snapshots after each scan (max. 10, JSON) with diff comparison and delete
 - Folder comparison (two folders directly)
 - Tags (predefined + custom, color-coded pills)
+- Subfolder expansion in sidebar (multi-level, lazy-loaded without UI freeze)
 - Quick access (last 5 scanned folders in sidebar, manually managed)
 - Export: Excel (`.xlsx`), PDF, CSV
 - Backup: Index backup (JSON) and full backup (ZIP, optional AES-256, password in Keychain)
