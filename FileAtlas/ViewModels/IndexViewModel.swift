@@ -17,9 +17,14 @@ final class IndexViewModel {
 
     // MARK: - Index-Zustand
 
-    private(set) var entries: [FileEntry] = []
+    private(set) var entries: [FileEntry] = [] {
+        didSet { recomputeDisplayedEntries() }
+    }
+    private(set) var displayedEntries: [FileEntry] = []
     var scanRoots: [URL] = []
-    private(set) var selectedScanRoot: URL? = nil
+    private(set) var selectedScanRoot: URL? = nil {
+        didSet { recomputeDisplayedEntries() }
+    }
     private var indexedEntriesByRootPath: [String: [FileEntry]] = [:]
 
     // Scan-Fortschritt
@@ -30,20 +35,36 @@ final class IndexViewModel {
 
     // MARK: - Suche / Filter / Sortierung
 
-    var searchText = ""
-    var sortField: SortField = .name
-    var sortDirection: SortDirection = .ascending
-    var showOnlyDuplicates = false
-    var dateFrom: Date? = nil
-    var dateTo: Date? = nil
-    var selectedTagFilter: FileTag? = nil
+    var searchText = "" {
+        didSet { recomputeDisplayedEntries() }
+    }
+    var sortField: SortField = .name {
+        didSet { recomputeDisplayedEntries() }
+    }
+    var sortDirection: SortDirection = .ascending {
+        didSet { recomputeDisplayedEntries() }
+    }
+    var showOnlyDuplicates = false {
+        didSet { recomputeDisplayedEntries() }
+    }
+    var dateFrom: Date? = nil {
+        didSet { recomputeDisplayedEntries() }
+    }
+    var dateTo: Date? = nil {
+        didSet { recomputeDisplayedEntries() }
+    }
+    var selectedTagFilter: FileTag? = nil {
+        didSet { recomputeDisplayedEntries() }
+    }
 
     var rowDensity: FileRowDensity {
         didSet { UserDefaults.standard.set(rowDensity.rawValue, forKey: Self.rowDensityKey) }
     }
 
     private(set) var recentScanRoots: [URL] = []
-    private(set) var fileTags: [String: Set<FileTag>] = [:]
+    private(set) var fileTags: [String: Set<FileTag>] = [:] {
+        didSet { recomputeDisplayedEntries() }
+    }
     private(set) var customTags: [FileTag] = []
     private(set) var lastAutoRescanMessage: String? = nil
 
@@ -62,8 +83,12 @@ final class IndexViewModel {
 
     // MARK: - Presets
 
-    private(set) var presets: [FilterPreset] = []
-    var activePresetID: FilterPreset.ID? = nil
+    private(set) var presets: [FilterPreset] = [] {
+        didSet { recomputeDisplayedEntries() }
+    }
+    var activePresetID: FilterPreset.ID? = nil {
+        didSet { recomputeDisplayedEntries() }
+    }
 
     var activePreset: FilterPreset? {
         guard let id = activePresetID else { return nil }
@@ -192,7 +217,7 @@ final class IndexViewModel {
 
     // MARK: - Abgeleitete Liste (gefiltert + sortiert)
 
-    var displayedEntries: [FileEntry] {
+    private func recomputeDisplayedEntries() {
         var list = entries
 
         if let selectedScanRoot {
@@ -230,7 +255,7 @@ final class IndexViewModel {
             list = list.filter { $0.modified <= to }
         }
 
-        return list.sorted(by: comparator)
+        displayedEntries = list.sorted(by: comparator)
     }
 
     private var comparator: (FileEntry, FileEntry) -> Bool {
