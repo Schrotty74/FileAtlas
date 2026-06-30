@@ -20,6 +20,7 @@ final class IndexViewModel {
     private(set) var entries: [FileEntry] = []
     var scanRoots: [URL] = []
     private(set) var selectedScanRoot: URL? = nil
+    private var indexedEntriesByRootPath: [String: [FileEntry]] = [:]
 
     // Scan-Fortschritt
     private(set) var isScanning = false
@@ -269,6 +270,7 @@ final class IndexViewModel {
         if selectedScanRoot.map({ sameFilePath($0, url) }) == true {
             selectedScanRoot = nil
         }
+        indexedEntriesByRootPath.removeValue(forKey: Self.normalizedPath(for: url))
         removeRecentScanRoot(url)
         removeBookmark(for: url)
     }
@@ -345,12 +347,23 @@ final class IndexViewModel {
     }
 
     func selectOrScanRoot(_ root: URL) {
-        if indexedEntries(for: root).isEmpty {
-            startScan(roots: [root])
-        } else {
+        let key = Self.normalizedPath(for: root)
+        if let cachedEntries = indexedEntriesByRootPath[key], !cachedEntries.isEmpty {
+            entries = cachedEntries
             selectedScanRoot = root
             selection = []
             currentDiff = nil
+        } else {
+            let currentEntries = indexedEntries(for: root)
+            if currentEntries.isEmpty {
+                startScan(roots: [root])
+            } else {
+                indexedEntriesByRootPath[key] = currentEntries
+                entries = currentEntries
+                selectedScanRoot = root
+                selection = []
+                currentDiff = nil
+            }
         }
     }
 
@@ -406,7 +419,11 @@ final class IndexViewModel {
     }
 
     private func indexedEntries(for root: URL) -> [FileEntry] {
-        entries.filter { Self.isPath($0.path, inside: root) }
+        let key = Self.normalizedPath(for: root)
+        if let cachedEntries = indexedEntriesByRootPath[key], !cachedEntries.isEmpty {
+            return cachedEntries
+        }
+        return entries.filter { Self.isPath($0.path, inside: root) }
     }
 
     private static func isPath(_ url: URL, inside root: URL) -> Bool {
@@ -506,6 +523,7 @@ final class IndexViewModel {
             }
             // Duplikate erst nach vollständigem Scan ermitteln, solange die Root-Scopes noch aktiv sind.
             await self.detectDuplicates()
+            self.storeIndexedEntries(for: roots)
             self.isScanning = false
         }
     }
@@ -549,6 +567,15 @@ final class IndexViewModel {
         let marked = await detector.markDuplicates(in: snapshot)
         if !Task.isCancelled {
             entries = marked
+        }
+    }
+
+    private func storeIndexedEntries(for roots: [URL]) {
+        for root in roots {
+            let rootEntries = entries.filter { Self.isPath($0.path, inside: root) }
+            if !rootEntries.isEmpty {
+                indexedEntriesByRootPath[Self.normalizedPath(for: root)] = rootEntries
+            }
         }
     }
 
