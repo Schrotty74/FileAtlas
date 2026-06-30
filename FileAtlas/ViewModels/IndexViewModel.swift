@@ -18,14 +18,21 @@ final class IndexViewModel {
     // MARK: - Index-Zustand
 
     private(set) var entries: [FileEntry] = [] {
-        didSet { recomputeDisplayedEntries() }
+        didSet {
+            guard !isUpdatingSelectionEntries else { return }
+            recomputeDisplayedEntries()
+        }
     }
     private(set) var displayedEntries: [FileEntry] = []
     var scanRoots: [URL] = []
     private(set) var selectedScanRoot: URL? = nil {
-        didSet { recomputeDisplayedEntries() }
+        didSet {
+            guard !isUpdatingSelectionEntries else { return }
+            recomputeDisplayedEntries()
+        }
     }
     private var indexedEntriesByRootPath: [String: [FileEntry]] = [:]
+    private var isUpdatingSelectionEntries = false
 
     // Scan-Fortschritt
     private(set) var isScanning = false
@@ -312,18 +319,18 @@ final class IndexViewModel {
     }
 
     func stats(for root: URL) -> (count: Int, size: Int64)? {
-        let matches = indexedEntries(for: root)
-        guard !matches.isEmpty else { return nil }
-
         if selectedScanRoot.map({ sameFilePath($0, root) }) == true {
             return (displayedEntries.count, displayedEntries.reduce(0) { $0 + $1.size })
         }
 
         if selectedScanRoot == nil {
-            let visibleMatches = displayedEntries.filter { Self.isPath($0.path, inside: root) }
+            let rootPath = Self.displayPath(for: root)
+            let visibleMatches = displayedEntries.filter { Self.path($0.pathKey, isInsidePath: rootPath) }
             return (visibleMatches.count, visibleMatches.reduce(0) { $0 + $1.size })
         }
 
+        let key = Self.normalizedPath(for: root)
+        guard let matches = indexedEntriesByRootPath[key], !matches.isEmpty else { return nil }
         return (matches.count, matches.reduce(0) { $0 + $1.size })
     }
 
@@ -395,22 +402,26 @@ final class IndexViewModel {
     func selectOrScanRoot(_ root: URL) {
         let key = Self.normalizedPath(for: root)
         if let cachedEntries = indexedEntriesByRootPath[key], !cachedEntries.isEmpty {
-            entries = cachedEntries
-            selectedScanRoot = root
-            selection = []
-            currentDiff = nil
+            showIndexedEntries(cachedEntries, for: root)
         } else {
             let currentEntries = indexedEntries(for: root)
             if currentEntries.isEmpty {
                 startScan(roots: [root])
             } else {
                 indexedEntriesByRootPath[key] = currentEntries
-                entries = currentEntries
-                selectedScanRoot = root
-                selection = []
-                currentDiff = nil
+                showIndexedEntries(currentEntries, for: root)
             }
         }
+    }
+
+    private func showIndexedEntries(_ indexedEntries: [FileEntry], for root: URL) {
+        isUpdatingSelectionEntries = true
+        entries = indexedEntries
+        selectedScanRoot = root
+        isUpdatingSelectionEntries = false
+        selection = []
+        currentDiff = nil
+        recomputeDisplayedEntries()
     }
 
     func rescanSelectedRoot() {
@@ -464,18 +475,27 @@ final class IndexViewModel {
         return path
     }
 
+    private static func displayPath(for url: URL) -> String {
+        var path = url.path(percentEncoded: false)
+        while path.count > 1 && path.hasSuffix("/") {
+            path.removeLast()
+        }
+        return path
+    }
+
     private func indexedEntries(for root: URL) -> [FileEntry] {
         let key = Self.normalizedPath(for: root)
         if let cachedEntries = indexedEntriesByRootPath[key], !cachedEntries.isEmpty {
             return cachedEntries
         }
-        if let cachedEntries = indexedEntriesFromCoveringRoot(forNormalizedPath: key) {
+        if let cachedEntries = indexedEntriesFromCoveringRoot(for: root, normalizedPath: key) {
             return cachedEntries
         }
         return entries.filter { Self.isPath($0.path, inside: root) }
     }
 
-    private func indexedEntriesFromCoveringRoot(forNormalizedPath rootPath: String) -> [FileEntry]? {
+    private func indexedEntriesFromCoveringRoot(for root: URL, normalizedPath rootPath: String) -> [FileEntry]? {
+        let displayRootPath = Self.displayPath(for: root)
         let coveringCaches = indexedEntriesByRootPath
             .filter { cachedRootPath, cachedEntries in
                 !cachedEntries.isEmpty && Self.normalizedPath(rootPath, isInsideNormalizedPath: cachedRootPath)
@@ -484,7 +504,7 @@ final class IndexViewModel {
 
         for (_, cachedEntries) in coveringCaches {
             let matchingEntries = cachedEntries.filter {
-                Self.normalizedPath(Self.normalizedPath(for: $0.path), isInsideNormalizedPath: rootPath)
+                Self.path($0.pathKey, isInsidePath: displayRootPath)
             }
             if !matchingEntries.isEmpty {
                 return matchingEntries
@@ -501,6 +521,10 @@ final class IndexViewModel {
     }
 
     private static func normalizedPath(_ path: String, isInsideNormalizedPath rootPath: String) -> Bool {
+        return path == rootPath || path.hasPrefix(rootPath + "/")
+    }
+
+    private static func path(_ path: String, isInsidePath rootPath: String) -> Bool {
         return path == rootPath || path.hasPrefix(rootPath + "/")
     }
 
