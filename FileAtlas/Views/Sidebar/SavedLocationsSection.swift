@@ -11,6 +11,7 @@ struct SavedLocationsSection: View {
     @Environment(UIState.self) private var ui
     @State private var expandedPaths: Set<String> = []
     @State private var childrenByPath: [String: [URL]] = [:]
+    @State private var loadingPaths: Set<String> = []
     @State private var hoveredPath: String?
 
     var body: some View {
@@ -22,6 +23,7 @@ struct SavedLocationsSection: View {
                     isSavedRoot: true,
                     expandedPaths: $expandedPaths,
                     childrenByPath: $childrenByPath,
+                    loadingPaths: $loadingPaths,
                     hoveredPath: $hoveredPath
                 )
             }
@@ -49,6 +51,7 @@ private struct LocationTreeRow: View {
     let isSavedRoot: Bool
     @Binding var expandedPaths: Set<String>
     @Binding var childrenByPath: [String: [URL]]
+    @Binding var loadingPaths: Set<String>
     @Binding var hoveredPath: String?
 
     private var pathKey: String {
@@ -63,6 +66,10 @@ private struct LocationTreeRow: View {
         childrenByPath[pathKey]
     }
 
+    private var isLoadingChildren: Bool {
+        loadingPaths.contains(pathKey)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             row
@@ -75,6 +82,7 @@ private struct LocationTreeRow: View {
                         isSavedRoot: false,
                         expandedPaths: $expandedPaths,
                         childrenByPath: $childrenByPath,
+                        loadingPaths: $loadingPaths,
                         hoveredPath: $hoveredPath
                     )
                 }
@@ -84,14 +92,7 @@ private struct LocationTreeRow: View {
 
     private var row: some View {
         HStack(spacing: 6) {
-            Image(systemName: disclosureIcon)
-                .font(.caption2)
-                .frame(width: 18, height: 22)
-                .contentShape(Rectangle())
-                .highPriorityGesture(TapGesture().onEnded {
-                    toggleExpanded()
-                })
-                .foregroundStyle(AppTheme.theme.textSecondary)
+            disclosureControl
 
             HStack(spacing: 8) {
                 Image(systemName: "folder.fill")
@@ -138,6 +139,24 @@ private struct LocationTreeRow: View {
             return "chevron.right"
         }
         return isExpanded ? "chevron.down" : "chevron.right"
+    }
+
+    @ViewBuilder
+    private var disclosureControl: some View {
+        if isLoadingChildren {
+            ProgressView()
+                .controlSize(.mini)
+                .frame(width: 18, height: 22)
+        } else {
+            Image(systemName: disclosureIcon)
+                .font(.caption2)
+                .frame(width: 18, height: 22)
+                .contentShape(Rectangle())
+                .highPriorityGesture(TapGesture().onEnded {
+                    toggleExpanded()
+                })
+                .foregroundStyle(AppTheme.theme.textSecondary)
+        }
     }
 
     @ViewBuilder
@@ -196,29 +215,42 @@ private struct LocationTreeRow: View {
     }
 
     private func loadChildrenIfNeeded() {
-        guard childrenByPath[pathKey] == nil else { return }
+        guard childrenByPath[pathKey] == nil,
+              !loadingPaths.contains(pathKey) else { return }
+        loadingPaths.insert(pathKey)
 
+        let url = url
+        let pathKey = pathKey
+        let skippedFolderNames = vm.skippedFolderNames.map { $0.lowercased() }
         let keys: [URLResourceKey] = [.isDirectoryKey, .isHiddenKey, .nameKey]
-        let scoped = url.startAccessingSecurityScopedResource()
-        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
 
-        let urls = (try? FileManager.default.contentsOfDirectory(
-            at: url,
-            includingPropertiesForKeys: keys,
-            options: [.skipsHiddenFiles]
-        )) ?? []
+        Task.detached(priority: .userInitiated) {
+            let scoped = url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
 
-        childrenByPath[pathKey] = urls
-            .filter { child in
-                guard let values = try? child.resourceValues(forKeys: Set(keys)),
-                      values.isDirectory == true,
-                      values.isHidden != true else { return false }
-                let name = values.name ?? child.lastPathComponent
-                let lowerName = name.lowercased()
-                return !vm.skippedFolderNames.contains { lowerName.hasPrefix($0.lowercased()) }
+            let urls = (try? FileManager.default.contentsOfDirectory(
+                at: url,
+                includingPropertiesForKeys: keys,
+                options: [.skipsHiddenFiles]
+            )) ?? []
+
+            let children = urls
+                .filter { child in
+                    guard let values = try? child.resourceValues(forKeys: Set(keys)),
+                          values.isDirectory == true,
+                          values.isHidden != true else { return false }
+                    let name = values.name ?? child.lastPathComponent
+                    let lowerName = name.lowercased()
+                    return !skippedFolderNames.contains { lowerName.hasPrefix($0) }
+                }
+                .sorted {
+                    $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending
+                }
+
+            await MainActor.run {
+                childrenByPath[pathKey] = children
+                loadingPaths.remove(pathKey)
             }
-            .sorted {
-                $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending
-            }
+        }
     }
 }
