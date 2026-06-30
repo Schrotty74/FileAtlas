@@ -531,7 +531,6 @@ final class IndexViewModel {
                     || lastPublish.duration(to: .now) >= Self.scanPublishInterval
                 else { return }
 
-                let snapshot = buffer
                 let failures = pendingFailures
                 pendingFailures.removeAll(keepingCapacity: true)
                 lastPublishCount = buffer.count
@@ -541,7 +540,6 @@ final class IndexViewModel {
                     guard let self, self.isScanning else { return }
                     self.currentScanPath = latestPath
                     self.scanProgressCount = latestCount
-                    self.entries = snapshot
                     if !failures.isEmpty {
                         self.scanErrors.append(contentsOf: failures)
                     }
