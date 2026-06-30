@@ -55,6 +55,21 @@ git tag v1.0.0                       # neu setzen (auf aktuellen Commit)
 git push origin v1.0.0               # pushen
 ```
 
+## Lokaler Release (macOS 26 — solange kein GitHub Actions Runner verfügbar)
+
+GitHub Actions hat noch keinen macOS 26 Runner. Releases werden daher lokal auf dem Mac gebaut und hochgeladen.
+
+**Voraussetzung:** `gh` CLI installiert (`brew install gh`) und eingeloggt (`gh auth login`)
+
+**Release erstellen:**
+```bash
+cd /Users/martin/Documents/FileAtlas-main
+git pull
+./build-release.sh v1.0.1
+```
+
+Versionsnummer anpassen — das Skript baut, prüft auf private Daten, erstellt DMG + ZIP und lädt alles automatisch auf GitHub hoch.
+
 ## Gatekeeper-Hinweis
 
 Unsigned macOS Apps immer mit einem Gatekeeper-Hinweis in der README versehen:
