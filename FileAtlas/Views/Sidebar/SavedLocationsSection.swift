@@ -158,7 +158,7 @@ struct LocationTreeRow: View {
             }
             .contentShape(Rectangle())
             .onTapGesture {
-                selectRow()
+                vm.selectOrScanRoot(url)
             }
             .disabled(vm.isScanning)
 
@@ -276,14 +276,6 @@ struct LocationTreeRow: View {
                     Label("Add to Quick Access", systemImage: "bookmark")
                 }
             }
-        }
-    }
-
-    private func selectRow() {
-        if kind == .quickAccess && isSavedRoot {
-            vm.startRecentScan(root: url)
-        } else {
-            vm.selectOrScanRoot(url)
         }
     }
 
