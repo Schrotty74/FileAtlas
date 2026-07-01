@@ -40,6 +40,8 @@ FileAtlas ist eine native macOS-App zum Indizieren und Vergleichen von Dateien, 
 - Backup: Index-Backup (JSON) und Vollbackup (ZIP, optional AES-256, Passwort im Schluesselbund)
 - Backup-Zeitplan: Aus / Taeglich / Woechentlich pro Speicherort
 - Einstellungsfenster mit Seitenleistennavigation (im Stil der macOS-Systemeinstellungen)
+- Info & Kontakt-Bereich in den Einstellungen
+- Cache leeren in den Einstellungen
 - Keine externen Abhaengigkeiten - nur reine Apple-Frameworks
 
 ## Voraussetzungen
