@@ -48,8 +48,18 @@ struct SavedLocationsSection: View {
     }
 
     private func nodes(for url: URL, level: Int, isSavedRoot: Bool, accessRoot: URL) -> [LocationTreeNode] {
-        guard matchesSearch(url) else { return [] }
         let key = pathKey(for: url)
+        var childNodes: [LocationTreeNode] = []
+
+        if expandedPaths.contains(key),
+           let children = childrenByPath[key] {
+            for child in children {
+                childNodes.append(contentsOf: self.nodes(for: child, level: level + 1, isSavedRoot: false, accessRoot: accessRoot))
+            }
+        }
+
+        guard matchesSearch(url) || !childNodes.isEmpty else { return [] }
+
         var nodes = [
             LocationTreeNode(
                 id: key,
@@ -60,13 +70,7 @@ struct SavedLocationsSection: View {
             )
         ]
 
-        guard expandedPaths.contains(key),
-              let children = childrenByPath[key] else { return nodes }
-
-        for child in children {
-            nodes.append(contentsOf: self.nodes(for: child, level: level + 1, isSavedRoot: false, accessRoot: accessRoot))
-        }
-
+        nodes.append(contentsOf: childNodes)
         return nodes
     }
 
@@ -75,9 +79,13 @@ struct SavedLocationsSection: View {
     }
 
     private func matchesSearch(_ url: URL) -> Bool {
-        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let query = normalized(searchText.trimmingCharacters(in: .whitespacesAndNewlines))
         guard !query.isEmpty else { return true }
-        return url.lastPathComponent.localizedCaseInsensitiveContains(query)
+        return normalized(url.lastPathComponent).contains(query)
+    }
+
+    private func normalized(_ value: String) -> String {
+        value.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
     }
 }
 
