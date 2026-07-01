@@ -290,7 +290,18 @@ final class IndexViewModel {
 
     var totalSize: Int64 { displayedEntries.reduce(0) { $0 + $1.size } }
     var duplicateCount: Int { entries.filter { $0.isDuplicate }.count }
+    var displayedDuplicateCount: Int { displayedEntries.filter { $0.isDuplicate }.count }
     var hasExportableContent: Bool { currentDiff != nil || !entries.isEmpty }
+    var hasActiveDisplayFilter: Bool {
+        if let preset = activePreset, activePresetAppliesToCurrentFolder(preset) {
+            return true
+        }
+        return showOnlyDuplicates
+            || selectedTagFilter != nil
+            || !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || dateFrom != nil
+            || dateTo != nil
+    }
 
     // MARK: - Ordnerauswahl
 
