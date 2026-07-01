@@ -368,6 +368,25 @@ final class IndexViewModel {
         persistFileTags()
     }
 
+    func applyTagToDisplayedEntriesWithSameExtension(_ tag: FileTag, as entry: FileEntry) {
+        let targetExtension = FilterPreset.normalize(entry.fileExtension)
+        guard !targetExtension.isEmpty else { return }
+
+        addCustomTag(tag.title)
+        var didChange = false
+        for candidate in displayedEntries where FilterPreset.normalize(candidate.fileExtension) == targetExtension {
+            var tags = fileTags[candidate.pathKey] ?? []
+            if tags.insert(tag).inserted {
+                fileTags[candidate.pathKey] = tags
+                didChange = true
+            }
+        }
+
+        if didChange {
+            persistFileTags()
+        }
+    }
+
     func addCustomTag(_ title: String) {
         let tag = FileTag(title)
         guard !tag.title.isEmpty,
