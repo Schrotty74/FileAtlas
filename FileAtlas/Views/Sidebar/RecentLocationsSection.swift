@@ -36,6 +36,13 @@ struct RecentLocationsSection: View {
     }
 
     private var visibleNodes: [LocationTreeNode] {
+        let nodes = unfilteredNodes
+        let query = normalized(searchText.trimmingCharacters(in: .whitespacesAndNewlines))
+        guard !query.isEmpty else { return nodes }
+        return nodes.filter { normalized($0.url.lastPathComponent).contains(query) }
+    }
+
+    private var unfilteredNodes: [LocationTreeNode] {
         vm.recentScanRoots.flatMap { url in
             nodes(for: url, level: 0, isSavedRoot: true, accessRoot: vm.securityScopedAccessRoot(for: url))
         }
@@ -43,17 +50,6 @@ struct RecentLocationsSection: View {
 
     private func nodes(for url: URL, level: Int, isSavedRoot: Bool, accessRoot: URL) -> [LocationTreeNode] {
         let key = pathKey(for: url)
-        var childNodes: [LocationTreeNode] = []
-
-        if expandedPaths.contains(key),
-           let children = childrenByPath[key] {
-            for child in children {
-                childNodes.append(contentsOf: self.nodes(for: child, level: level + 1, isSavedRoot: false, accessRoot: accessRoot))
-            }
-        }
-
-        guard matchesSearch(url) || !childNodes.isEmpty else { return [] }
-
         var nodes = [
             LocationTreeNode(
                 id: key,
@@ -64,18 +60,18 @@ struct RecentLocationsSection: View {
             )
         ]
 
-        nodes.append(contentsOf: childNodes)
+        guard expandedPaths.contains(key),
+              let children = childrenByPath[key] else { return nodes }
+
+        for child in children {
+            nodes.append(contentsOf: self.nodes(for: child, level: level + 1, isSavedRoot: false, accessRoot: accessRoot))
+        }
+
         return nodes
     }
 
     private func pathKey(for url: URL) -> String {
         url.path(percentEncoded: false)
-    }
-
-    private func matchesSearch(_ url: URL) -> Bool {
-        let query = normalized(searchText.trimmingCharacters(in: .whitespacesAndNewlines))
-        guard !query.isEmpty else { return true }
-        return normalized(url.lastPathComponent).contains(query)
     }
 
     private func normalized(_ value: String) -> String {
