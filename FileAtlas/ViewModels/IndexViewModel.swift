@@ -507,6 +507,17 @@ final class IndexViewModel {
         lastAutoRescanMessage = nil
     }
 
+    func clearIndexCache() {
+        indexedEntriesByRootPath.removeAll()
+        isUpdatingSelectionEntries = true
+        entries = []
+        selectedScanRoot = nil
+        displayedEntries = []
+        isUpdatingSelectionEntries = false
+        selection = []
+        currentDiff = nil
+    }
+
     private func rememberRecentScanRoots(_ roots: [URL]) {
         var combined = roots + recentScanRoots
         var seen = Set<String>()

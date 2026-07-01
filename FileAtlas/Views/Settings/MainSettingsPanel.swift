@@ -19,6 +19,8 @@ struct MainSettingsPanel: View {
     @State private var showBackupSettings = false
     @State private var editingPreset: FilterPreset?
     @State private var showPresetEditor = false
+    @State private var showClearCacheConfirmation = false
+    @State private var cacheClearMessage: String?
 
     var body: some View {
         HStack(spacing: 0) {
@@ -139,6 +141,24 @@ struct MainSettingsPanel: View {
             Section("Scan Settings") {
                 Button("Rescan now") { vm.startScan() }
                     .disabled(vm.scanRoots.isEmpty || vm.isScanning)
+                Button("Clear Cache", role: .destructive) {
+                    showClearCacheConfirmation = true
+                }
+                .disabled(vm.isScanning)
+                .confirmationDialog("Clear Cache?", isPresented: $showClearCacheConfirmation, titleVisibility: .visible) {
+                    Button("Clear Cache", role: .destructive) {
+                        vm.clearIndexCache()
+                        cacheClearMessage = NSLocalizedString("Cache cleared.", comment: "")
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("This clears cached scan results. Files on disk are not changed.")
+                }
+                if let cacheClearMessage {
+                    Text(cacheClearMessage)
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.theme.accentColor)
+                }
                 Text("Ignored folder rules apply on the next scan.")
                     .font(.caption)
                     .foregroundStyle(AppTheme.theme.textSecondary)
