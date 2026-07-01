@@ -15,12 +15,14 @@ if [ -z "$VERSION" ]; then
   echo "Verwendung: ./build-release.sh v1.0.0"
   exit 1
 fi
+APP_VERSION="${VERSION#v}"
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BUILD_DIR="$PROJECT_DIR/.build-release"
 APP_NAME="FileAtlas"
 
 echo "=== FileAtlas Release Build $VERSION ==="
+echo "App-Version: $APP_VERSION"
 echo ""
 
 # Aufräumen
@@ -40,6 +42,7 @@ xcodebuild \
   STRIP_INSTALLED_PRODUCT=YES \
   STRIP_SWIFT_SYMBOLS=YES \
   DEPLOYMENT_POSTPROCESSING=YES \
+  MARKETING_VERSION="$APP_VERSION" \
   | grep -E "^(Build|error:|warning: |CompileSwift|Ld )" || true
 
 APP_PATH=$(find "$BUILD_DIR/derived/Build/Products/Release" -name "*.app" -maxdepth 1 -type d | head -1)
@@ -48,6 +51,13 @@ if [ -z "$APP_PATH" ]; then
   exit 1
 fi
 echo "App gefunden: $APP_PATH"
+
+BUILT_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_PATH/Contents/Info.plist")
+if [ "$BUILT_VERSION" != "$APP_VERSION" ]; then
+  echo "FEHLER: App-Version ist $BUILT_VERSION, erwartet $APP_VERSION"
+  exit 1
+fi
+echo "Bundle-Version geprüft: $BUILT_VERSION"
 
 # --- Security Check ---
 echo ""
