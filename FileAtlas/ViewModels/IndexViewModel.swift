@@ -815,25 +815,49 @@ final class IndexViewModel {
 
     func export(format: ExportFormat) {
         do {
-            let data: Data
             if let diff = currentDiff {
-                data = try ExportManager.exportDiff(diff, format: format)
+                let data = try ExportManager.exportDiff(diff, format: format)
+                presentSavePanel(data: data, format: format)
             } else {
-                data = try ExportManager.export(displayedEntries, format: format, roots: scanRoots)
+                guard let options = presentExportSavePanel(format: format) else { return }
+                let exportEntries = options.visibleEntriesOnly ? displayedEntries : entries
+                let data = try ExportManager.export(exportEntries, format: format, roots: scanRoots)
+                writeExportData(data, to: options.url)
             }
-            presentSavePanel(data: data, format: format)
         } catch {
             presentError(error.localizedDescription)
         }
     }
 
     private func presentSavePanel(data: Data, format: ExportFormat) {
+        let panel = configuredSavePanel(format: format)
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        writeExportData(data, to: url)
+    }
+
+    private func presentExportSavePanel(format: ExportFormat) -> (url: URL, visibleEntriesOnly: Bool)? {
+        let panel = configuredSavePanel(format: format)
+        let visibleOnlyCheckbox = NSButton(
+            checkboxWithTitle: NSLocalizedString("Visible entries only", comment: "Export option to include only currently displayed entries."),
+            target: nil,
+            action: nil
+        )
+        visibleOnlyCheckbox.state = .on
+        panel.accessoryView = visibleOnlyCheckbox
+        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        return (url, visibleOnlyCheckbox.state == .on)
+    }
+
+    private func configuredSavePanel(format: ExportFormat) -> NSSavePanel {
         let panel = NSSavePanel()
         panel.nameFieldStringValue = ExportManager.suggestedFilename(format: format)
         if let type = UTType(filenameExtension: format.fileExtension) {
             panel.allowedContentTypes = [type]
         }
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        return panel
+    }
+
+    private func writeExportData(_ data: Data, to url: URL) {
         do {
             try data.write(to: url, options: .atomic)
         } catch {
