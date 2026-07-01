@@ -407,15 +407,31 @@ final class IndexViewModel {
 
     func removeCustomTag(_ tag: FileTag) {
         customTags.removeAll { $0 == tag }
-        for key in fileTags.keys {
-            fileTags[key]?.remove(tag)
-            if fileTags[key]?.isEmpty == true {
-                fileTags.removeValue(forKey: key)
-            }
-        }
         if selectedTagFilter == tag { selectedTagFilter = nil }
         persistCustomTags()
-        persistFileTags()
+
+        let currentFileTags = fileTags
+        Task.detached(priority: .userInitiated) { [weak self] in
+            var updatedFileTags = currentFileTags
+            var didChange = false
+
+            for key in currentFileTags.keys {
+                guard var tags = updatedFileTags[key],
+                      tags.remove(tag) != nil else { continue }
+                if tags.isEmpty {
+                    updatedFileTags.removeValue(forKey: key)
+                } else {
+                    updatedFileTags[key] = tags
+                }
+                didChange = true
+            }
+
+            guard didChange else { return }
+            await MainActor.run { [weak self] in
+                self?.fileTags = updatedFileTags
+                self?.persistFileTags()
+            }
+        }
     }
 
     func openSelectedEntry() {
