@@ -814,12 +814,16 @@ final class IndexViewModel {
     // MARK: - Export
 
     func export(format: ExportFormat) {
+        let preservedState = makeIndexStateSnapshot()
+        defer { restoreIndexState(from: preservedState) }
+
         do {
             if let diff = currentDiff {
                 let data = try ExportManager.exportDiff(diff, format: format)
                 presentSavePanel(data: data, format: format)
             } else {
                 guard let options = presentExportSavePanel(format: format) else { return }
+                restoreIndexState(from: preservedState)
                 let exportEntries = options.visibleEntriesOnly ? displayedEntries : entries
                 let data = try ExportManager.export(exportEntries, format: format, roots: scanRoots)
                 writeExportData(data, to: options.url)
@@ -827,6 +831,34 @@ final class IndexViewModel {
         } catch {
             presentError(error.localizedDescription)
         }
+    }
+
+    private struct IndexStateSnapshot {
+        let entries: [FileEntry]
+        let displayedEntries: [FileEntry]
+        let selectedScanRoot: URL?
+        let selection: Set<FileEntry.ID>
+        let currentDiff: SnapshotDiff?
+    }
+
+    private func makeIndexStateSnapshot() -> IndexStateSnapshot {
+        IndexStateSnapshot(
+            entries: entries,
+            displayedEntries: displayedEntries,
+            selectedScanRoot: selectedScanRoot,
+            selection: selection,
+            currentDiff: currentDiff
+        )
+    }
+
+    private func restoreIndexState(from snapshot: IndexStateSnapshot) {
+        isUpdatingSelectionEntries = true
+        entries = snapshot.entries
+        selectedScanRoot = snapshot.selectedScanRoot
+        displayedEntries = snapshot.displayedEntries
+        isUpdatingSelectionEntries = false
+        selection = snapshot.selection
+        currentDiff = snapshot.currentDiff
     }
 
     private func presentSavePanel(data: Data, format: ExportFormat) {
