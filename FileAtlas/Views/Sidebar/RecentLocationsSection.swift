@@ -7,6 +7,7 @@ import SwiftUI
 
 struct RecentLocationsSection: View {
     @Environment(IndexViewModel.self) private var vm
+    let searchText: String
     @State private var expandedPaths: Set<String> = []
     @State private var childrenByPath: [String: [URL]] = [:]
     @State private var loadingPaths: Set<String> = []
@@ -41,6 +42,7 @@ struct RecentLocationsSection: View {
     }
 
     private func nodes(for url: URL, level: Int, isSavedRoot: Bool, accessRoot: URL) -> [LocationTreeNode] {
+        guard matchesSearch(url) else { return [] }
         let key = pathKey(for: url)
         var nodes = [
             LocationTreeNode(
@@ -64,5 +66,11 @@ struct RecentLocationsSection: View {
 
     private func pathKey(for url: URL) -> String {
         url.path(percentEncoded: false)
+    }
+
+    private func matchesSearch(_ url: URL) -> Bool {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return true }
+        return url.lastPathComponent.localizedCaseInsensitiveContains(query)
     }
 }
