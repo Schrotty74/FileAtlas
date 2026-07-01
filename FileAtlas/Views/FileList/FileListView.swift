@@ -513,29 +513,35 @@ private struct TagPickerPopover: View {
     }
 
     private func applySuggestedTag(_ tag: FileTag) {
-        vm.addCustomTag(tag.title)
-        if !vm.hasTag(tag, for: entry) {
-            vm.toggleTag(tag, for: entry)
-            pendingBulkTag = extensionLabel == nil ? nil : tag
-        }
+        applyTag(tag, addToCustomTags: true)
     }
 
     private func toggleTag(_ tag: FileTag) {
-        let wasApplied = vm.hasTag(tag, for: entry)
-        vm.toggleTag(tag, for: entry)
-        pendingBulkTag = !wasApplied && extensionLabel != nil ? tag : nil
+        applyTag(tag, addToCustomTags: false)
     }
 
     private func addTag() {
         let tag = FileTag(newTagName)
-        vm.addCustomTag(newTagName)
-        if !tag.title.isEmpty && !vm.hasTag(tag, for: entry) {
-            vm.toggleTag(tag, for: entry)
-            pendingBulkTag = extensionLabel == nil ? nil : tag
-        } else {
-            pendingBulkTag = nil
-        }
+        applyTag(tag, addToCustomTags: true)
         newTagName = ""
+    }
+
+    private func applyTag(_ tag: FileTag, addToCustomTags: Bool) {
+        guard !tag.title.isEmpty else {
+            pendingBulkTag = nil
+            return
+        }
+
+        let isNewlyApplied = !vm.hasTag(tag, for: entry)
+        pendingBulkTag = isNewlyApplied && extensionLabel != nil ? tag : nil
+
+        if addToCustomTags {
+            vm.addCustomTag(tag.title)
+        }
+
+        if isNewlyApplied || !addToCustomTags {
+            vm.toggleTag(tag, for: entry)
+        }
     }
 }
 
