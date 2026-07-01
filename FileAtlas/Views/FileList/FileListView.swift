@@ -359,6 +359,26 @@ private struct TagPickerPopover: View {
             Text("Tags")
                 .font(.headline)
 
+            if !suggestedTags.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Suggested")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(AppTheme.theme.textSecondary)
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 6)], alignment: .leading, spacing: 6) {
+                        ForEach(suggestedTags) { tag in
+                            Button {
+                                applySuggestedTag(tag)
+                            } label: {
+                                TagPill(tag: tag)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+
+                Divider()
+            }
+
             ForEach(vm.availableTags) { tag in
                 HStack {
                     Button {
@@ -398,6 +418,64 @@ private struct TagPickerPopover: View {
         }
         .padding(14)
         .frame(width: 260)
+    }
+
+    private var suggestedTags: [FileTag] {
+        var titles: [String] = []
+
+        switch FilterPreset.normalize(entry.fileExtension) {
+        case "mp4", "mov", "avi", "mkv", "m4v":
+            titles.append("Video")
+        case "mp3", "aac", "flac", "wav", "m4a":
+            titles.append("Audio")
+        case "jpg", "jpeg", "png", "gif", "heic", "raw", "cr2", "arw":
+            titles.append("Foto")
+        case "pdf", "docx", "doc", "pages":
+            titles.append("Dokument")
+        case "xlsx", "xls", "numbers", "csv":
+            titles.append("Tabelle")
+        case "pptx", "ppt", "key":
+            titles.append("Präsentation")
+        case "zip", "dmg", "pkg", "rar", "7z":
+            titles.append("Archiv")
+        case "app":
+            titles.append("App")
+        case "swift", "py", "js", "ts", "html", "css", "json":
+            titles.append("Code")
+        default:
+            break
+        }
+
+        let folderPath = entry.path.deletingLastPathComponent().path(percentEncoded: false)
+        let normalizedPath = folderPath.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+        if normalizedPath.contains("rechnung") || normalizedPath.contains("invoice") {
+            titles.append("Rechnung")
+        }
+        if normalizedPath.contains("backup") {
+            titles.append("Backup")
+        }
+        if normalizedPath.contains("download") {
+            titles.append("Download")
+        }
+        if normalizedPath.contains("desktop") {
+            titles.append("Desktop")
+        }
+
+        var seen = Set<String>()
+        return titles
+            .map { FileTag($0) }
+            .filter { !$0.title.isEmpty }
+            .filter { tag in
+                seen.insert(tag.title.lowercased()).inserted
+                    && !vm.hasTag(tag, for: entry)
+            }
+    }
+
+    private func applySuggestedTag(_ tag: FileTag) {
+        vm.addCustomTag(tag.title)
+        if !vm.hasTag(tag, for: entry) {
+            vm.toggleTag(tag, for: entry)
+        }
     }
 
     private func addTag() {
