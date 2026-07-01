@@ -373,17 +373,26 @@ final class IndexViewModel {
         guard !targetExtension.isEmpty else { return }
 
         addCustomTag(tag.title)
-        var didChange = false
-        for candidate in displayedEntries where FilterPreset.normalize(candidate.fileExtension) == targetExtension {
-            var tags = fileTags[candidate.pathKey] ?? []
-            if tags.insert(tag).inserted {
-                fileTags[candidate.pathKey] = tags
-                didChange = true
-            }
-        }
+        let displayedEntries = displayedEntries
+        let currentFileTags = fileTags
 
-        if didChange {
-            persistFileTags()
+        Task.detached(priority: .userInitiated) { [weak self] in
+            var updatedFileTags = currentFileTags
+            var didChange = false
+
+            for candidate in displayedEntries where FilterPreset.normalize(candidate.fileExtension) == targetExtension {
+                var tags = updatedFileTags[candidate.pathKey] ?? []
+                if tags.insert(tag).inserted {
+                    updatedFileTags[candidate.pathKey] = tags
+                    didChange = true
+                }
+            }
+
+            guard didChange else { return }
+            await MainActor.run { [weak self] in
+                self?.fileTags = updatedFileTags
+                self?.persistFileTags()
+            }
         }
     }
 
