@@ -292,21 +292,44 @@ struct FileListView: View {
     // MARK: - Fußleiste
 
     private var footer: some View {
-        HStack {
-            Text("\(vm.displayedEntries.count) items")
-            if vm.duplicateCount > 0 {
+        HStack(spacing: 8) {
+            Text(fileCountText)
+            Text("·")
+            Text(ByteCountFormatter.string(fromByteCount: vm.totalSize, countStyle: .file))
+            if vm.displayedDuplicateCount > 0 {
                 Text("·")
-                Text("\(vm.duplicateCount) duplicates")
+                Text(duplicateCountText)
                     .foregroundStyle(AppTheme.gold)
             }
             Spacer()
-            Text(ByteCountFormatter.string(fromByteCount: vm.totalSize, countStyle: .file))
         }
-        .font(.caption.monospacedDigit())
+        .font(.caption2.monospacedDigit())
         .foregroundStyle(AppTheme.theme.textSecondary)
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .background(.thinMaterial)
+    }
+
+    private var fileCountText: String {
+        let visibleCount = vm.displayedEntries.count.formatted()
+        if vm.hasActiveDisplayFilter {
+            return String(
+                format: NSLocalizedString("%@ of %@ files", comment: "Visible file count compared to total file count when filters are active."),
+                visibleCount,
+                vm.entries.count.formatted()
+            )
+        }
+        return String(
+            format: NSLocalizedString("%@ files", comment: "Visible file count."),
+            visibleCount
+        )
+    }
+
+    private var duplicateCountText: String {
+        String(
+            format: NSLocalizedString("%@ duplicates", comment: "Visible duplicate file count."),
+            vm.displayedDuplicateCount.formatted()
+        )
     }
 
     // MARK: - Fehlerliste
