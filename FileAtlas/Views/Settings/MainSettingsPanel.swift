@@ -96,6 +96,8 @@ struct MainSettingsPanel: View {
             backupSection
         case .export:
             exportSection
+        case .infoContact:
+            infoContactSection
         }
     }
 
@@ -346,6 +348,30 @@ struct MainSettingsPanel: View {
         .formStyle(.grouped)
     }
 
+    private var infoContactSection: some View {
+        Form {
+            Section("Info & Contact") {
+                Text(appVersionText)
+                    .foregroundStyle(AppTheme.theme.textPrimary)
+
+                if let issuesURL = URL(string: "https://github.com/Schrotty74/FileAtlas/issues") {
+                    Link("Report a bug on GitHub", destination: issuesURL)
+                }
+
+                Text("Please report bugs and suggestions directly on GitHub.")
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.theme.textSecondary)
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private var appVersionText: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+        return "Version \(version ?? build ?? "-")"
+    }
+
     private var activePresetBinding: Binding<FilterPreset.ID?> {
         Binding(
             get: { vm.activePresetID },
@@ -369,6 +395,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable, Hashable {
     case snapshots
     case backup
     case export
+    case infoContact
 
     var id: String { rawValue }
 
@@ -383,6 +410,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable, Hashable {
         case .snapshots: return "Snapshots"
         case .backup: return "Backup"
         case .export: return "Export"
+        case .infoContact: return "Info & Contact"
         }
     }
 
@@ -397,6 +425,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable, Hashable {
         case .snapshots: return "camera"
         case .backup: return "externaldrive"
         case .export: return "square.and.arrow.up"
+        case .infoContact: return "info.circle"
         }
     }
 }
