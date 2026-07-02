@@ -141,6 +141,13 @@ final class QuickLookPresenter: NSObject, QLPreviewPanelDataSource, QLPreviewPan
     private var accessedURL: URL?
     private var isAccessing = false
 
+    var isPreviewVisible: Bool {
+        guard QLPreviewPanel.sharedPreviewPanelExists(),
+              let panel = QLPreviewPanel.shared()
+        else { return false }
+        return panel.isVisible
+    }
+
     func present(_ url: URL, accessURL: URL? = nil) {
         stopAccessing()
         self.url = url
@@ -153,6 +160,12 @@ final class QuickLookPresenter: NSObject, QLPreviewPanelDataSource, QLPreviewPan
         panel.delegate = self
         panel.reloadData()
         panel.makeKeyAndOrderFront(nil)
+    }
+
+    func close() {
+        QLPreviewPanel.shared()?.orderOut(nil)
+        stopAccessing()
+        url = nil
     }
 
     func numberOfPreviewItems(in panel: QLPreviewPanel!) -> Int {
