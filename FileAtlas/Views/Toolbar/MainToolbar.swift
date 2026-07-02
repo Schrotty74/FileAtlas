@@ -13,12 +13,24 @@ struct MainToolbar: ToolbarContent {
     @Binding var searchText: String
 
     var body: some ToolbarContent {
+        @Bindable var ui = ui
+
         ToolbarItem(placement: .principal) {
             SearchField(text: $searchText)
                 .frame(maxWidth: 340)
         }
 
         ToolbarItemGroup(placement: .primaryAction) {
+            Picker("View Mode", selection: $ui.fileListViewMode) {
+                ForEach(FileListViewMode.allCases) { mode in
+                    Label(viewModeTitle(for: mode), systemImage: mode.systemImage)
+                        .tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .frame(width: 92)
+
             if vm.isScanning {
                 Button(role: .cancel) {
                     vm.cancelScan()
@@ -48,6 +60,13 @@ struct MainToolbar: ToolbarContent {
                 Label("Export", systemImage: "square.and.arrow.up")
             }
             .disabled(vm.displayedEntries.isEmpty)
+        }
+    }
+
+    private func viewModeTitle(for mode: FileListViewMode) -> LocalizedStringKey {
+        switch mode {
+        case .table: return "Table"
+        case .list: return "List"
         }
     }
 }

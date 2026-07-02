@@ -10,6 +10,7 @@ import AppKit
 
 struct FileListView: View {
     @Environment(IndexViewModel.self) private var vm
+    @Environment(UIState.self) private var ui
     @AppStorage("FileListColumnCustomization") private var columnCustomizationData = Data()
     @State private var columnCustomization = TableColumnCustomization<FileEntry>()
     @State private var tagPickerEntry: FileEntry?
@@ -25,7 +26,12 @@ struct FileListView: View {
             if vm.entries.isEmpty && !vm.isScanning {
                 onboarding
             } else {
-                fileTable
+                switch ui.fileListViewMode {
+                case .table:
+                    fileTable
+                case .list:
+                    compactList
+                }
 
                 footer
             }
@@ -131,6 +137,49 @@ struct FileListView: View {
             .disabledCustomizationBehavior(.visibility)
         }
         .scrollContentBackground(.hidden)
+    }
+
+    private var compactList: some View {
+        @Bindable var vm = vm
+
+        return List(selection: $vm.selection) {
+            ForEach(vm.displayedEntries) { entry in
+                compactRow(for: entry)
+                    .tag(entry.id)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 10, bottom: 0, trailing: 10))
+                    .listRowBackground(Color.clear)
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+    }
+
+    private func compactRow(for entry: FileEntry) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: FileRowView.icon(for: entry))
+                .font(.system(size: 12))
+                .foregroundStyle(AppTheme.theme.accentColor)
+                .frame(width: 16)
+
+            Text(entry.name)
+                .font(.callout)
+                .tracking(-0.2)
+                .foregroundStyle(AppTheme.theme.textPrimary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+
+            tagMenu(for: entry)
+                .frame(maxWidth: 150, alignment: .leading)
+
+            Spacer(minLength: 8)
+
+            Text(entry.formattedSize)
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(AppTheme.theme.textSecondary)
+                .lineLimit(1)
+        }
+        .frame(height: vm.rowDensity.rowHeight)
+        .contentShape(Rectangle())
     }
 
     private func tagMenu(for entry: FileEntry) -> some View {
