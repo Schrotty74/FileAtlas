@@ -40,6 +40,28 @@ nonisolated enum SortDirection: String, Codable, Sendable {
     }
 }
 
+/// Darstellung der Dateiliste.
+nonisolated enum FileListViewMode: String, CaseIterable, Codable, Sendable, Identifiable {
+    case table
+    case list
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .table: return "Table"
+        case .list: return "List"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .table: return "tablecells"
+        case .list: return "list.bullet"
+        }
+    }
+}
+
 /// Änderungsstatus im Snapshot-Vergleich.
 nonisolated enum ChangeStatus: String, Codable, Sendable {
     case added       // 🟢 Neu

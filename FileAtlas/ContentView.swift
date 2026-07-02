@@ -11,6 +11,8 @@ import SwiftUI
 @Observable
 @MainActor
 final class UIState {
+    private static let fileListViewModeKey = "FileAtlas.fileListViewMode"
+
     var showFilterPanel = false
     var showSnapshotPicker = false
     var showDiff = false
@@ -19,10 +21,18 @@ final class UIState {
     var isPresentingPresetEditor = false
     var editingPreset: FilterPreset? = nil
     var isSidebarVisible = true
+    var fileListViewMode: FileListViewMode {
+        didSet { UserDefaults.standard.set(fileListViewMode.rawValue, forKey: Self.fileListViewModeKey) }
+    }
 
     // Backup
     var backupLocation: URL? = nil
     var showBackupSettings = false
+
+    init() {
+        let rawMode = UserDefaults.standard.string(forKey: Self.fileListViewModeKey)
+        self.fileListViewMode = rawMode.flatMap(FileListViewMode.init(rawValue:)) ?? .table
+    }
 }
 
 struct ContentView: View {
