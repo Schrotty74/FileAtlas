@@ -23,7 +23,8 @@ FileAtlas is a native macOS file indexing and comparison app built with pure App
 - DE/EN localization with DACH rule (de_AT, de_DE, de_CH always German)
 - Sortable, reorderable columns (Name, Type, Status, Tags, Size, Modified)
 - Adjustable row height (Compact / Normal / Large)
-- QuickLook preview (Space bar)
+- QuickLook preview (Space bar) with inline file preview in detail panel
+- Compact list view mode, switchable with table view
 - Quick search by name, extension, size (`> 10 MB`, `< 500 KB`)
 - Saveable filter sets with include/exclude lists
 - Ignored folders (skipped during scan, shown as single entry with total size)
