@@ -73,7 +73,6 @@ struct FileAtlasCommands: Commands {
                 .keyboardShortcut("r", modifiers: [.command, .shift])
                 .disabled(vm.selectedEntry == nil)
             Button("Quick Look") { vm.quickLookSelectedEntry() }
-                .keyboardShortcut(.space, modifiers: [])
                 .disabled(vm.selectedEntry == nil)
 
             Divider()

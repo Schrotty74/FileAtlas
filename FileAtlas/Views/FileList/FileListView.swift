@@ -7,7 +7,6 @@
 
 import SwiftUI
 import AppKit
-import Quartz
 
 struct FileListView: View {
     @Environment(IndexViewModel.self) private var vm
@@ -42,6 +41,10 @@ struct FileListView: View {
             persistColumnCustomization(newValue)
         }
         .background(SpaceKeyMonitor {
+            if QuickLookPresenter.shared.isPreviewVisible {
+                QuickLookPresenter.shared.close()
+                return true
+            }
             guard vm.selectedEntry != nil else { return true }
             vm.quickLookSelectedEntry()
             return true
@@ -390,7 +393,6 @@ private struct SpaceKeyMonitor: NSViewRepresentable {
             monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
                 guard event.charactersIgnoringModifiers == " ",
                       !Self.isTextInputActive(),
-                      !Self.isQuickLookPanelActive(),
                       event.modifierFlags.intersection([.command, .option, .control]).isEmpty
                 else {
                     return event
@@ -410,13 +412,6 @@ private struct SpaceKeyMonitor: NSViewRepresentable {
 
         private static func isTextInputActive() -> Bool {
             NSApp.keyWindow?.firstResponder is NSTextView
-        }
-
-        private static func isQuickLookPanelActive() -> Bool {
-            guard QLPreviewPanel.sharedPreviewPanelExists(),
-                  let panel = QLPreviewPanel.shared()
-            else { return false }
-            return NSApp.keyWindow === panel
         }
     }
 }
