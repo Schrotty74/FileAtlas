@@ -23,7 +23,8 @@ FileAtlas ist eine native macOS-App zum Indizieren und Vergleichen von Dateien, 
 - DE/EN-Lokalisierung mit DACH-Regel (de_AT, de_DE, de_CH immer Deutsch)
 - Sortierbare, neu anordenbare Spalten (Name, Typ, Status, Tags, Groesse, Geaendert)
 - Einstellbare Zeilenhoehe (Kompakt / Normal / Gross)
-- QuickLook-Vorschau (Leertaste)
+- QuickLook-Vorschau (Leertaste) mit inline Dateivorschau im Detailbereich
+- Kompakte Listenansicht, umschaltbar mit Tabellenansicht
 - Schnellsuche nach Name, Endung und Groesse (`> 10 MB`, `< 500 KB`)
 - Speicherbare Filtersaetze mit Einschluss- und Ausschlusslisten
 - Ignorierte Ordner (beim Scan uebersprungen, als einzelner Eintrag mit Gesamtgroesse angezeigt)
