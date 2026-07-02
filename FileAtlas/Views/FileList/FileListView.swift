@@ -78,6 +78,7 @@ struct FileListView: View {
                         .truncationMode(.middle)
                 }
                 .frame(height: vm.rowDensity.rowHeight)
+                .contextMenu { rowContextMenu(for: entry) }
             }
             .width(min: 180, ideal: 280, max: .infinity)
             .customizationID("name")
@@ -89,20 +90,23 @@ struct FileListView: View {
                     .foregroundStyle(AppTheme.theme.textSecondary)
                     .lineLimit(1)
                     .frame(height: vm.rowDensity.rowHeight)
+                    .contextMenu { rowContextMenu(for: entry) }
             }
             .width(min: 64, ideal: FileColumnWidth.kind, max: 160)
             .customizationID("kind")
             .disabledCustomizationBehavior(.visibility)
 
             TableColumn("Status") { entry in
-                if entry.isDuplicate {
-                    DuplicateBadge()
-                        .frame(height: vm.rowDensity.rowHeight)
-                } else {
-                    Text("—")
-                        .foregroundStyle(AppTheme.theme.textSecondary.opacity(0.5))
-                        .frame(height: vm.rowDensity.rowHeight)
+                Group {
+                    if entry.isDuplicate {
+                        DuplicateBadge()
+                    } else {
+                        Text("—")
+                            .foregroundStyle(AppTheme.theme.textSecondary.opacity(0.5))
+                    }
                 }
+                .frame(height: vm.rowDensity.rowHeight)
+                .contextMenu { rowContextMenu(for: entry) }
             }
             .width(min: 72, ideal: FileColumnWidth.status, max: 180)
             .customizationID("status")
@@ -111,6 +115,7 @@ struct FileListView: View {
             TableColumn("Tags") { entry in
                 tagMenu(for: entry)
                     .frame(height: vm.rowDensity.rowHeight)
+                    .contextMenu { rowContextMenu(for: entry) }
             }
             .width(min: 96, ideal: 140, max: 220)
             .customizationID("tags")
@@ -121,6 +126,7 @@ struct FileListView: View {
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(AppTheme.theme.textSecondary)
                     .frame(maxWidth: .infinity, minHeight: vm.rowDensity.rowHeight, alignment: .trailing)
+                    .contextMenu { rowContextMenu(for: entry) }
             }
             .width(min: 64, ideal: FileColumnWidth.size, max: 150)
             .customizationID("size")
@@ -131,6 +137,7 @@ struct FileListView: View {
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(AppTheme.theme.textSecondary)
                     .frame(maxWidth: .infinity, minHeight: vm.rowDensity.rowHeight, alignment: .trailing)
+                    .contextMenu { rowContextMenu(for: entry) }
             }
             .width(min: 110, ideal: FileColumnWidth.modified, max: 240)
             .customizationID("modified")
@@ -148,6 +155,7 @@ struct FileListView: View {
                     .tag(entry.id)
                     .listRowInsets(EdgeInsets(top: 0, leading: 10, bottom: 0, trailing: 10))
                     .listRowBackground(Color.clear)
+                    .contextMenu { rowContextMenu(for: entry) }
             }
         }
         .listStyle(.plain)
@@ -169,7 +177,8 @@ struct FileListView: View {
                 .truncationMode(.middle)
 
             tagMenu(for: entry)
-                .frame(maxWidth: 150, alignment: .leading)
+                .frame(minWidth: 72, idealWidth: 120, maxWidth: 160, alignment: .leading)
+                .layoutPriority(1)
 
             Spacer(minLength: 8)
 
@@ -180,6 +189,57 @@ struct FileListView: View {
         }
         .frame(height: vm.rowDensity.rowHeight)
         .contentShape(Rectangle())
+    }
+
+    @ViewBuilder
+    private func rowContextMenu(for entry: FileEntry) -> some View {
+        Button("Open Selected File") {
+            NSWorkspace.shared.open(entry.path)
+        }
+
+        Button {
+            NSWorkspace.shared.activateFileViewerSelecting([entry.path])
+        } label: {
+            Label("Show in Finder", systemImage: "folder")
+        }
+
+        if !entry.isDirectory {
+            Button {
+                vm.selection = [entry.id]
+                vm.quickLookSelectedEntry()
+            } label: {
+                Label("Open Quick Look", systemImage: "eye")
+            }
+        }
+
+        Button {
+            copyPath(for: entry)
+        } label: {
+            Label("Copy", systemImage: "doc.on.doc")
+        }
+
+        Divider()
+
+        Button {
+            tagPickerEntry = entry
+        } label: {
+            Label("Add tag", systemImage: "tag")
+        }
+
+        Menu("Tags") {
+            ForEach(vm.availableTags) { tag in
+                Button {
+                    vm.toggleTag(tag, for: entry)
+                } label: {
+                    Label(tag.title, systemImage: vm.hasTag(tag, for: entry) ? "checkmark.circle.fill" : "circle")
+                }
+            }
+        }
+    }
+
+    private func copyPath(for entry: FileEntry) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(entry.pathKey, forType: .string)
     }
 
     private func tagMenu(for entry: FileEntry) -> some View {
