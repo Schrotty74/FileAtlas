@@ -11,7 +11,14 @@ import QuickLookThumbnailing
 
 struct QuickLookPreview: View {
     let url: URL
+    let accessURL: URL?
     let fallbackIcon: String
+
+    init(url: URL, accessURL: URL? = nil, fallbackIcon: String) {
+        self.url = url
+        self.accessURL = accessURL
+        self.fallbackIcon = fallbackIcon
+    }
 
     private static let unsupportedPreviewExtensions: Set<String> = [
         "app", "bundle", "framework", "xcodeproj", "xcworkspace", "playground",
@@ -29,7 +36,7 @@ struct QuickLookPreview: View {
                 .fill(AppTheme.surfaceRaised)
 
             if canPreview {
-                InlineQuickLookPreview(url: url)
+                InlineQuickLookPreview(url: url, accessURL: accessURL ?? url)
                     .clipShape(.rect(cornerRadius: AppTheme.theme.cornerRadius))
             } else if didFail {
                 Image(systemName: fallbackIcon)
@@ -53,14 +60,15 @@ struct QuickLookPreview: View {
             return
         }
 
-        let scoped = url.startAccessingSecurityScopedResource()
-        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        let accessURL = accessURL ?? url
+        let scoped = accessURL.startAccessingSecurityScopedResource()
+        defer { if scoped { accessURL.stopAccessingSecurityScopedResource() } }
 
         let request = QLThumbnailGenerator.Request(
             fileAt: url,
             size: CGSize(width: 400, height: 400),
             scale: 2,
-            representationTypes: .all
+            representationTypes: .thumbnail
         )
         do {
             _ = try await QLThumbnailGenerator.shared.generateBestRepresentation(for: request)
@@ -75,6 +83,7 @@ struct QuickLookPreview: View {
 
 private struct InlineQuickLookPreview: NSViewRepresentable {
     let url: URL
+    let accessURL: URL
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -98,7 +107,7 @@ private struct InlineQuickLookPreview: NSViewRepresentable {
 
     private func configure(_ previewView: QLPreviewView?, context: Context) {
         guard let previewView else { return }
-        context.coordinator.updateAccess(for: url)
+        context.coordinator.updateAccess(for: accessURL)
         previewView.previewItem = url as NSURL
         previewView.refreshPreviewItem()
     }
@@ -126,14 +135,22 @@ private struct InlineQuickLookPreview: NSViewRepresentable {
 
 /// Präsentiert die native Vollbild-Vorschau (Quick Look).
 @MainActor
-final class QuickLookPresenter: NSObject, QLPreviewPanelDataSource {
+final class QuickLookPresenter: NSObject, QLPreviewPanelDataSource, QLPreviewPanelDelegate {
     static let shared = QuickLookPresenter()
     private var url: URL?
+    private var accessedURL: URL?
+    private var isAccessing = false
 
-    func present(_ url: URL) {
+    func present(_ url: URL, accessURL: URL? = nil) {
+        stopAccessing()
         self.url = url
+        let accessURL = accessURL ?? url
+        accessedURL = accessURL
+        isAccessing = accessURL.startAccessingSecurityScopedResource()
+
         guard let panel = QLPreviewPanel.shared() else { return }
         panel.dataSource = self
+        panel.delegate = self
         panel.reloadData()
         panel.makeKeyAndOrderFront(nil)
     }
@@ -144,5 +161,18 @@ final class QuickLookPresenter: NSObject, QLPreviewPanelDataSource {
 
     func previewPanel(_ panel: QLPreviewPanel!, previewItemAt index: Int) -> (any QLPreviewItem)! {
         url.map { $0 as NSURL }
+    }
+
+    func previewPanelWillClose(_ panel: QLPreviewPanel!) {
+        stopAccessing()
+        url = nil
+    }
+
+    private func stopAccessing() {
+        if isAccessing {
+            accessedURL?.stopAccessingSecurityScopedResource()
+        }
+        accessedURL = nil
+        isAccessing = false
     }
 }

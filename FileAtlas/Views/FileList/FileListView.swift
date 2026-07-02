@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 struct FileListView: View {
     @Environment(IndexViewModel.self) private var vm
@@ -39,6 +40,11 @@ struct FileListView: View {
         .onChange(of: columnCustomization) { _, newValue in
             persistColumnCustomization(newValue)
         }
+        .background(SpaceKeyMonitor {
+            guard vm.selectedEntry != nil else { return false }
+            vm.quickLookSelectedEntry()
+            return true
+        })
     }
 
     // MARK: - Tabelle
@@ -346,6 +352,62 @@ struct FileListView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .background(AppTheme.gold.opacity(0.08))
+    }
+}
+
+private struct SpaceKeyMonitor: NSViewRepresentable {
+    let onSpace: () -> Bool
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onSpace: onSpace)
+    }
+
+    func makeNSView(context: Context) -> NSView {
+        context.coordinator.install()
+        return NSView(frame: .zero)
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        context.coordinator.onSpace = onSpace
+        context.coordinator.install()
+    }
+
+    static func dismantleNSView(_ nsView: NSView, coordinator: Coordinator) {
+        coordinator.uninstall()
+    }
+
+    final class Coordinator {
+        var onSpace: () -> Bool
+        private var monitor: Any?
+
+        init(onSpace: @escaping () -> Bool) {
+            self.onSpace = onSpace
+        }
+
+        func install() {
+            guard monitor == nil else { return }
+            monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                guard event.charactersIgnoringModifiers == " ",
+                      !Self.isTextInputActive(),
+                      event.modifierFlags.intersection([.command, .option, .control]).isEmpty
+                else {
+                    return event
+                }
+
+                return self?.onSpace() == true ? nil : event
+            }
+        }
+
+        func uninstall() {
+            if let monitor {
+                NSEvent.removeMonitor(monitor)
+            }
+            monitor = nil
+        }
+
+        private static func isTextInputActive() -> Bool {
+            NSApp.keyWindow?.firstResponder is NSTextView
+        }
     }
 }
 

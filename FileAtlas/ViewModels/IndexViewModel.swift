@@ -457,7 +457,7 @@ final class IndexViewModel {
 
     func quickLookSelectedEntry() {
         guard let selectedEntry else { return }
-        QuickLookPresenter.shared.present(selectedEntry.path)
+        QuickLookPresenter.shared.present(selectedEntry.path, accessURL: securityScopedAccessRoot(for: selectedEntry.path))
     }
 
     func startRecentScan(root: URL) {
