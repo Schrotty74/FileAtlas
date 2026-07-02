@@ -43,7 +43,7 @@ final class IndexViewModel {
     // MARK: - Suche / Filter / Sortierung
 
     var searchText = "" {
-        didSet { recomputeDisplayedEntries() }
+        didSet { scheduleSearchRecompute() }
     }
     var sortField: SortField = .name {
         didSet { recomputeDisplayedEntries() }
@@ -115,6 +115,7 @@ final class IndexViewModel {
     private static let recentScanRootsKey = "FileAtlas.recentScanRoots"
     private static let fileTagsKey = "FileAtlas.fileTags"
     private static let customTagsKey = "FileAtlas.customTags"
+    private nonisolated static let searchDebounceDelay: Duration = .milliseconds(150)
     private nonisolated static let scanPublishInterval: Duration = .milliseconds(200)
     private nonisolated static let scanPublishBatchSize = 200
     /// Bei neuen Default-Einträgen erhöhen, damit die Migration erneut läuft.
@@ -164,6 +165,7 @@ final class IndexViewModel {
 
     private let engine = IndexEngine()
     private let snapshotStore = SnapshotStore()
+    private var searchDebounceTask: Task<Void, Never>? = nil
     private var scanTask: Task<Void, Never>? = nil
     private var folderMonitor: FolderChangeMonitor? = nil
     private var pendingAutoRescanTask: Task<Void, Never>? = nil
@@ -223,6 +225,15 @@ final class IndexViewModel {
     }
 
     // MARK: - Abgeleitete Liste (gefiltert + sortiert)
+
+    private func scheduleSearchRecompute() {
+        searchDebounceTask?.cancel()
+        searchDebounceTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.searchDebounceDelay)
+            guard !Task.isCancelled else { return }
+            self?.recomputeDisplayedEntries()
+        }
+    }
 
     private func recomputeDisplayedEntries() {
         var list = entries
