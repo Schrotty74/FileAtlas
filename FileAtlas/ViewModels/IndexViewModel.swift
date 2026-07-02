@@ -169,6 +169,7 @@ final class IndexViewModel {
     private var scanTask: Task<Void, Never>? = nil
     private var folderMonitor: FolderChangeMonitor? = nil
     private var pendingAutoRescanTask: Task<Void, Never>? = nil
+    private var suppressAutoRescanUntil: Date? = nil
 
     // MARK: - Init
 
@@ -457,6 +458,7 @@ final class IndexViewModel {
 
     func quickLookSelectedEntry() {
         guard let selectedEntry else { return }
+        suppressAutoRescanForPreview()
         QuickLookPresenter.shared.present(selectedEntry.path, accessURL: securityScopedAccessRoot(for: selectedEntry.path))
     }
 
@@ -781,16 +783,29 @@ final class IndexViewModel {
 
     private func scheduleAutoRescan() {
         guard !isScanning, !scanRoots.isEmpty else { return }
+        if let suppressAutoRescanUntil, Date() < suppressAutoRescanUntil {
+            return
+        }
         pendingAutoRescanTask?.cancel()
         pendingAutoRescanTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(1.5))
             guard !Task.isCancelled else { return }
             await MainActor.run {
                 guard let self, !self.isScanning else { return }
+                if let suppressAutoRescanUntil = self.suppressAutoRescanUntil,
+                   Date() < suppressAutoRescanUntil {
+                    return
+                }
                 self.lastAutoRescanMessage = "Folder changed — rescanning…"
                 self.startScan()
             }
         }
+    }
+
+    private func suppressAutoRescanForPreview() {
+        suppressAutoRescanUntil = Date().addingTimeInterval(5)
+        pendingAutoRescanTask?.cancel()
+        pendingAutoRescanTask = nil
     }
 
     private func storeIndexedEntries(for roots: [URL], entries: [FileEntry]) {

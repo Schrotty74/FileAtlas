@@ -145,7 +145,7 @@ struct DetailPanelView: View {
 
             if !entry.isDirectory {
                 Button {
-                    QuickLookPresenter.shared.present(entry.path, accessURL: vm.securityScopedAccessRoot(for: entry.path))
+                    vm.quickLookSelectedEntry()
                 } label: {
                     Label("Open Quick Look", systemImage: "eye")
                         .frame(maxWidth: .infinity)
