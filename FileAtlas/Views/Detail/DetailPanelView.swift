@@ -30,7 +30,11 @@ struct DetailPanelView: View {
                 if entry.isDirectory {
                     folderHeader(entry)
                 } else {
-                    QuickLookPreview(url: entry.path, fallbackIcon: FileRowView.icon(for: entry))
+                    QuickLookPreview(
+                        url: entry.path,
+                        accessURL: vm.securityScopedAccessRoot(for: entry.path),
+                        fallbackIcon: FileRowView.icon(for: entry)
+                    )
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -141,7 +145,7 @@ struct DetailPanelView: View {
 
             if !entry.isDirectory {
                 Button {
-                    QuickLookPresenter.shared.present(entry.path)
+                    QuickLookPresenter.shared.present(entry.path, accessURL: vm.securityScopedAccessRoot(for: entry.path))
                 } label: {
                     Label("Open Quick Look", systemImage: "eye")
                         .frame(maxWidth: .infinity)
