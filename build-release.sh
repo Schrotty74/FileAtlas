@@ -119,11 +119,31 @@ if ! command -v gh &> /dev/null; then
   exit 0
 fi
 
+NOTES_PATH="$BUILD_DIR/release-notes.md"
+DEDUPED_NOTES_PATH="$BUILD_DIR/release-notes-deduped.md"
+
+echo "Generiere Release Notes..."
+gh api \
+  -X POST \
+  "repos/Schrotty74/FileAtlas/releases/generate-notes" \
+  -f tag_name="$VERSION" \
+  -f target_commitish=main \
+  --jq .body > "$NOTES_PATH"
+
+awk '
+  /^\*\*Full Changelog\*\*:/ {
+    if (seenFullChangelog++) {
+      next
+    }
+  }
+  { print }
+' "$NOTES_PATH" > "$DEDUPED_NOTES_PATH"
+
 gh release create "$VERSION" \
   "$DMG_PATH#FileAtlas.dmg" \
   "$ZIP_PATH#FileAtlas.zip" \
   --title "FileAtlas $VERSION" \
-  --generate-notes \
+  --notes-file "$DEDUPED_NOTES_PATH" \
   --repo Schrotty74/FileAtlas
 
 echo ""
