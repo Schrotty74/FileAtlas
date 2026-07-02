@@ -2,18 +2,25 @@
 //  QuickLookPreview.swift
 //  FileAtlas
 //
-//  Thumbnail via QLThumbnailGenerator + Vollbild-Vorschau via QLPreviewPanel.
+//  Inline-Vorschau via QLPreviewView + Vollbild-Vorschau via QLPreviewPanel.
 //
 
 import SwiftUI
-import QuickLookThumbnailing
 import Quartz
+import QuickLookThumbnailing
 
 struct QuickLookPreview: View {
     let url: URL
     let fallbackIcon: String
 
-    @State private var thumbnail: NSImage?
+    private static let unsupportedPreviewExtensions: Set<String> = [
+        "app", "bundle", "framework", "xcodeproj", "xcworkspace", "playground",
+        "plugin", "kext", "appex", "xpc", "qlgenerator", "prefpane", "component",
+        "mdimporter", "photoslibrary", "fcpbundle", "tvlibrary", "scptd", "pkg",
+        "mpkg", "dmg", "zip", "ipa", "tar", "gz", "rar", "7z"
+    ]
+
+    @State private var canPreview = false
     @State private var didFail = false
 
     var body: some View {
@@ -21,11 +28,9 @@ struct QuickLookPreview: View {
             RoundedRectangle(cornerRadius: AppTheme.theme.cornerRadius)
                 .fill(AppTheme.surfaceRaised)
 
-            if let thumbnail {
-                Image(nsImage: thumbnail)
-                    .resizable()
-                    .scaledToFit()
-                    .padding(8)
+            if canPreview {
+                InlineQuickLookPreview(url: url)
+                    .clipShape(.rect(cornerRadius: AppTheme.theme.cornerRadius))
             } else if didFail {
                 Image(systemName: fallbackIcon)
                     .font(.system(size: 48, weight: .light))
@@ -35,12 +40,18 @@ struct QuickLookPreview: View {
             }
         }
         .frame(height: 200)
-        .task(id: url) { await loadThumbnail() }
+        .task(id: url) { await validatePreview() }
     }
 
-    private func loadThumbnail() async {
-        thumbnail = nil
+    private func validatePreview() async {
+        canPreview = false
         didFail = false
+
+        let fileExtension = url.pathExtension.lowercased()
+        guard !Self.unsupportedPreviewExtensions.contains(fileExtension) else {
+            didFail = true
+            return
+        }
 
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
@@ -52,10 +63,63 @@ struct QuickLookPreview: View {
             representationTypes: .all
         )
         do {
-            let rep = try await QLThumbnailGenerator.shared.generateBestRepresentation(for: request)
-            thumbnail = rep.nsImage
+            _ = try await QLThumbnailGenerator.shared.generateBestRepresentation(for: request)
+            guard !Task.isCancelled else { return }
+            canPreview = true
         } catch {
+            guard !Task.isCancelled else { return }
             didFail = true
+        }
+    }
+}
+
+private struct InlineQuickLookPreview: NSViewRepresentable {
+    let url: URL
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    func makeNSView(context: Context) -> QLPreviewView {
+        let view = QLPreviewView(frame: .zero, style: .normal)
+        view?.autostarts = true
+        configure(view, context: context)
+        return view ?? QLPreviewView()
+    }
+
+    func updateNSView(_ nsView: QLPreviewView, context: Context) {
+        configure(nsView, context: context)
+    }
+
+    static func dismantleNSView(_ nsView: QLPreviewView, coordinator: Coordinator) {
+        coordinator.stopAccessing()
+        nsView.previewItem = nil
+    }
+
+    private func configure(_ previewView: QLPreviewView?, context: Context) {
+        guard let previewView else { return }
+        context.coordinator.updateAccess(for: url)
+        previewView.previewItem = url as NSURL
+        previewView.refreshPreviewItem()
+    }
+
+    final class Coordinator {
+        private var accessedURL: URL?
+        private var isAccessing = false
+
+        func updateAccess(for url: URL) {
+            guard accessedURL != url else { return }
+            stopAccessing()
+            accessedURL = url
+            isAccessing = url.startAccessingSecurityScopedResource()
+        }
+
+        func stopAccessing() {
+            if isAccessing {
+                accessedURL?.stopAccessingSecurityScopedResource()
+            }
+            accessedURL = nil
+            isAccessing = false
         }
     }
 }
