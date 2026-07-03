@@ -32,7 +32,7 @@ nonisolated struct FileEntry: Identifiable, Hashable, Codable, Sendable {
     ) {
         self.id = id
         self.name = name
-        self.path = path
+        self.path = Self.canonicalURL(for: path)
         self.size = size
         self.created = created
         self.modified = modified
@@ -59,7 +59,7 @@ nonisolated struct FileEntry: Identifiable, Hashable, Codable, Sendable {
     }
 
     nonisolated static func canonicalPathKey(for url: URL) -> String {
-        var path = url.standardizedFileURL.resolvingSymlinksInPath().path(percentEncoded: false)
+        var path = canonicalURL(for: url).path(percentEncoded: false)
         while path.count > 1 && path.hasSuffix("/") {
             path.removeLast()
         }
@@ -68,5 +68,9 @@ nonisolated struct FileEntry: Identifiable, Hashable, Codable, Sendable {
 
     nonisolated static func canonicalPathKey(forStoredPath path: String) -> String {
         canonicalPathKey(for: URL(fileURLWithPath: path))
+    }
+
+    nonisolated static func canonicalURL(for url: URL) -> URL {
+        URL(fileURLWithPath: url.standardizedFileURL.resolvingSymlinksInPath().path(percentEncoded: false))
     }
 }
