@@ -114,6 +114,7 @@ final class IndexViewModel {
     private static let rowDensityKey = "FileAtlas.rowDensity"
     private static let recentScanRootsKey = "FileAtlas.recentScanRoots"
     private static let fileTagsKey = "FileAtlas.fileTags"
+    private static let fileTagsCanonicalMigrationKey = "FileAtlas.didMigrateTagsToCanonicalKeysV2"
     private static let customTagsKey = "FileAtlas.customTags"
     private nonisolated static let searchDebounceDelay: Duration = .milliseconds(150)
     private nonisolated static let scanPublishInterval: Duration = .milliseconds(200)
@@ -643,13 +644,19 @@ final class IndexViewModel {
     }
 
     private func loadFileTags() {
-        guard let raw = UserDefaults.standard.dictionary(forKey: Self.fileTagsKey) as? [String: [String]] else { return }
-        var migratedFileTags: [String: Set<FileTag>] = [:]
-        for (path, storedTags) in raw {
-            let key = FileEntry.canonicalPathKey(forStoredPath: path)
-            migratedFileTags[key, default: []].formUnion(storedTags.map { FileTag(rawValue: $0) })
+        let defaults = UserDefaults.standard
+        guard let raw = defaults.dictionary(forKey: Self.fileTagsKey) as? [String: [String]] else { return }
+
+        if defaults.bool(forKey: Self.fileTagsCanonicalMigrationKey) {
+            fileTags = raw.mapValues { storedTags in
+                Set(storedTags.map { FileTag(rawValue: $0) })
+            }
+        } else {
+            fileTags = Self.migratedCanonicalFileTags(from: raw)
+            persistFileTags()
+            defaults.set(true, forKey: Self.fileTagsCanonicalMigrationKey)
         }
-        fileTags = migratedFileTags
+
         let tagsFromFiles = fileTags.values.flatMap { $0 }
         let migratedCustomTags = tagsFromFiles.filter { tag in
             !FileTag.predefined.contains { predefined in
@@ -658,14 +665,20 @@ final class IndexViewModel {
         }
         customTags = (customTags + migratedCustomTags).uniquedByTitle()
         persistCustomTags()
-        if Set(raw.keys) != Set(fileTags.keys) {
-            persistFileTags()
-        }
     }
 
     private func persistFileTags() {
         let raw = fileTags.mapValues { $0.map(\.rawValue) }
         UserDefaults.standard.set(raw, forKey: Self.fileTagsKey)
+    }
+
+    private nonisolated static func migratedCanonicalFileTags(from raw: [String: [String]]) -> [String: Set<FileTag>] {
+        var migratedFileTags: [String: Set<FileTag>] = [:]
+        for (path, storedTags) in raw {
+            let key = FileEntry.canonicalPathKey(forStoredPath: path)
+            migratedFileTags[key, default: []].formUnion(storedTags.map { FileTag(rawValue: $0) })
+        }
+        return migratedFileTags
     }
 
     // MARK: - Scannen
