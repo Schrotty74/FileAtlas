@@ -653,8 +653,10 @@ private struct TagPickerPopover: View {
             titles.append("Tabelle")
         case "pptx", "ppt", "key":
             titles.append("Präsentation")
-        case "zip", "dmg", "pkg", "rar", "7z":
+        case "zip", "dmg", "rar", "7z":
             titles.append("Archiv")
+        case "exe", "pkg", "msi":
+            titles.append("Installer")
         case "app":
             titles.append("App")
         case "swift", "py", "js", "ts", "html", "css", "json":
