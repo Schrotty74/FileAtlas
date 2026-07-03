@@ -52,4 +52,21 @@ nonisolated struct FileEntry: Identifiable, Hashable, Codable, Sendable {
 
     /// Gleichheit über den absoluten Pfad (für Snapshot-Diffs).
     var pathKey: String { path.path(percentEncoded: false) }
+
+    /// Kanonischer Pfad für dateigebundene App-Daten wie Tags.
+    var canonicalPathKey: String {
+        Self.canonicalPathKey(for: path)
+    }
+
+    nonisolated static func canonicalPathKey(for url: URL) -> String {
+        var path = url.standardizedFileURL.resolvingSymlinksInPath().path(percentEncoded: false)
+        while path.count > 1 && path.hasSuffix("/") {
+            path.removeLast()
+        }
+        return path
+    }
+
+    nonisolated static func canonicalPathKey(forStoredPath path: String) -> String {
+        canonicalPathKey(for: URL(fileURLWithPath: path))
+    }
 }
