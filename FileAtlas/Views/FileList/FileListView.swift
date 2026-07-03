@@ -655,7 +655,7 @@ private struct TagPickerPopover: View {
             titles.append("Präsentation")
         case "zip", "dmg", "rar", "7z":
             titles.append("Archiv")
-        case "exe", "pkg", "msi":
+        case "exe", "pkg", "msi", "apk":
             titles.append("Installer")
         case "app":
             titles.append("App")
