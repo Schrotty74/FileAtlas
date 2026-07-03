@@ -69,7 +69,7 @@ final class IndexViewModel {
     }
 
     private(set) var recentScanRoots: [URL] = []
-    private(set) var fileTags: [String: Set<FileTag>] = [:] {
+    private(set) var extensionTags: [String: Set<FileTag>] = [:] {
         didSet { recomputeDisplayedEntries() }
     }
     private(set) var customTags: [FileTag] = []
@@ -113,8 +113,9 @@ final class IndexViewModel {
     private static let skippedFoldersMigrationKey = "FileAtlas.skippedFoldersMigrationVersion"
     private static let rowDensityKey = "FileAtlas.rowDensity"
     private static let recentScanRootsKey = "FileAtlas.recentScanRoots"
-    private static let fileTagsKey = "FileAtlas.fileTags"
-    private static let fileTagsCanonicalMigrationKey = "FileAtlas.didMigrateTagsToCanonicalKeysV2"
+    private static let legacyFileTagsKey = "FileAtlas.fileTags"
+    private static let extensionTagsKey = "FileAtlas.extensionTags"
+    private static let extensionTagsMigrationKey = "FileAtlas.didMigrateFileTagsToExtensionTagsV1"
     private static let customTagsKey = "FileAtlas.customTags"
     private nonisolated static let searchDebounceDelay: Duration = .milliseconds(150)
     private nonisolated static let scanPublishInterval: Duration = .milliseconds(200)
@@ -208,7 +209,7 @@ final class IndexViewModel {
         restoreSavedLocations()
         loadRecentScanRoots()
         loadCustomTags()
-        loadFileTags()
+        loadExtensionTags()
     }
 
     /// Trimmt Einträge, verwirft Leere und entfernt case-insensitive Duplikate.
@@ -359,7 +360,8 @@ final class IndexViewModel {
     }
 
     func tags(for entry: FileEntry) -> Set<FileTag> {
-        fileTags[entry.canonicalPathKey] ?? []
+        guard let key = Self.extensionKey(for: entry) else { return [] }
+        return extensionTags[key] ?? []
     }
 
     func hasTag(_ tag: FileTag, for entry: FileEntry) -> Bool {
@@ -367,48 +369,19 @@ final class IndexViewModel {
     }
 
     func toggleTag(_ tag: FileTag, for entry: FileEntry) {
-        let key = entry.canonicalPathKey
-        var tags = fileTags[key] ?? []
+        guard let key = Self.extensionKey(for: entry) else { return }
+        var tags = extensionTags[key] ?? []
         if tags.contains(tag) {
             tags.remove(tag)
         } else {
             tags.insert(tag)
         }
         if tags.isEmpty {
-            fileTags.removeValue(forKey: key)
+            extensionTags.removeValue(forKey: key)
         } else {
-            fileTags[key] = tags
+            extensionTags[key] = tags
         }
-        persistFileTags()
-    }
-
-    func applyTagToDisplayedEntriesWithSameExtension(_ tag: FileTag, as entry: FileEntry) {
-        let targetExtension = FilterPreset.normalize(entry.fileExtension)
-        guard !targetExtension.isEmpty else { return }
-
-        addCustomTag(tag.title)
-        let displayedEntries = displayedEntries
-        let currentFileTags = fileTags
-
-        Task.detached(priority: .userInitiated) { [weak self] in
-            var updatedFileTags = currentFileTags
-            var didChange = false
-
-            for candidate in displayedEntries where FilterPreset.normalize(candidate.fileExtension) == targetExtension {
-                let key = candidate.canonicalPathKey
-                var tags = updatedFileTags[key] ?? []
-                if tags.insert(tag).inserted {
-                    updatedFileTags[key] = tags
-                    didChange = true
-                }
-            }
-
-            guard didChange else { return }
-            await MainActor.run { [weak self] in
-                self?.fileTags = updatedFileTags
-                self?.persistFileTags()
-            }
-        }
+        persistExtensionTags()
     }
 
     func addCustomTag(_ title: String) {
@@ -425,26 +398,26 @@ final class IndexViewModel {
         if selectedTagFilter == tag { selectedTagFilter = nil }
         persistCustomTags()
 
-        let currentFileTags = fileTags
+        let currentExtensionTags = extensionTags
         Task.detached(priority: .userInitiated) { [weak self] in
-            var updatedFileTags = currentFileTags
+            var updatedExtensionTags = currentExtensionTags
             var didChange = false
 
-            for key in currentFileTags.keys {
-                guard var tags = updatedFileTags[key],
+            for key in currentExtensionTags.keys {
+                guard var tags = updatedExtensionTags[key],
                       tags.remove(tag) != nil else { continue }
                 if tags.isEmpty {
-                    updatedFileTags.removeValue(forKey: key)
+                    updatedExtensionTags.removeValue(forKey: key)
                 } else {
-                    updatedFileTags[key] = tags
+                    updatedExtensionTags[key] = tags
                 }
                 didChange = true
             }
 
             guard didChange else { return }
             await MainActor.run { [weak self] in
-                self?.fileTags = updatedFileTags
-                self?.persistFileTags()
+                self?.extensionTags = updatedExtensionTags
+                self?.persistExtensionTags()
             }
         }
     }
@@ -643,21 +616,24 @@ final class IndexViewModel {
         UserDefaults.standard.set(customTags.map(\.title), forKey: Self.customTagsKey)
     }
 
-    private func loadFileTags() {
+    private func loadExtensionTags() {
         let defaults = UserDefaults.standard
-        guard let raw = defaults.dictionary(forKey: Self.fileTagsKey) as? [String: [String]] else { return }
+        let storedExtensionTags = defaults.dictionary(forKey: Self.extensionTagsKey) as? [String: [String]] ?? [:]
 
-        if defaults.bool(forKey: Self.fileTagsCanonicalMigrationKey) {
-            fileTags = raw.mapValues { storedTags in
-                Set(storedTags.map { FileTag(rawValue: $0) })
-            }
+        if defaults.bool(forKey: Self.extensionTagsMigrationKey) {
+            extensionTags = Self.loadedExtensionTags(from: storedExtensionTags)
         } else {
-            fileTags = Self.migratedCanonicalFileTags(from: raw)
-            persistFileTags()
-            defaults.set(true, forKey: Self.fileTagsCanonicalMigrationKey)
+            let legacyFileTags = defaults.dictionary(forKey: Self.legacyFileTagsKey) as? [String: [String]] ?? [:]
+            extensionTags = Self.migratedExtensionTags(
+                fromLegacyFileTags: legacyFileTags,
+                existingExtensionTags: storedExtensionTags
+            )
+            persistExtensionTags()
+            defaults.removeObject(forKey: Self.legacyFileTagsKey)
+            defaults.set(true, forKey: Self.extensionTagsMigrationKey)
         }
 
-        let tagsFromFiles = fileTags.values.flatMap { $0 }
+        let tagsFromFiles = extensionTags.values.flatMap { $0 }
         let migratedCustomTags = tagsFromFiles.filter { tag in
             !FileTag.predefined.contains { predefined in
                 predefined.title.caseInsensitiveCompare(tag.title) == .orderedSame
@@ -667,18 +643,37 @@ final class IndexViewModel {
         persistCustomTags()
     }
 
-    private func persistFileTags() {
-        let raw = fileTags.mapValues { $0.map(\.rawValue) }
-        UserDefaults.standard.set(raw, forKey: Self.fileTagsKey)
+    private func persistExtensionTags() {
+        let raw = extensionTags.mapValues { $0.map(\.rawValue) }
+        UserDefaults.standard.set(raw, forKey: Self.extensionTagsKey)
     }
 
-    private nonisolated static func migratedCanonicalFileTags(from raw: [String: [String]]) -> [String: Set<FileTag>] {
-        var migratedFileTags: [String: Set<FileTag>] = [:]
-        for (path, storedTags) in raw {
-            let key = FileEntry.canonicalPathKey(forStoredPath: path)
-            migratedFileTags[key, default: []].formUnion(storedTags.map { FileTag(rawValue: $0) })
+    private nonisolated static func loadedExtensionTags(from raw: [String: [String]]) -> [String: Set<FileTag>] {
+        var loadedTags: [String: Set<FileTag>] = [:]
+        for (rawExtension, storedTags) in raw {
+            let key = FilterPreset.normalize(rawExtension)
+            guard !key.isEmpty else { continue }
+            loadedTags[key, default: []].formUnion(storedTags.map { FileTag(rawValue: $0) })
         }
-        return migratedFileTags
+        return loadedTags
+    }
+
+    private nonisolated static func migratedExtensionTags(
+        fromLegacyFileTags legacyFileTags: [String: [String]],
+        existingExtensionTags: [String: [String]]
+    ) -> [String: Set<FileTag>] {
+        var migratedTags = loadedExtensionTags(from: existingExtensionTags)
+        for (path, storedTags) in legacyFileTags {
+            let key = FilterPreset.normalize(URL(fileURLWithPath: path).pathExtension)
+            guard !key.isEmpty else { continue }
+            migratedTags[key, default: []].formUnion(storedTags.map { FileTag(rawValue: $0) })
+        }
+        return migratedTags
+    }
+
+    private nonisolated static func extensionKey(for entry: FileEntry) -> String? {
+        let key = FilterPreset.normalize(entry.fileExtension)
+        return key.isEmpty ? nil : key
     }
 
     // MARK: - Scannen
