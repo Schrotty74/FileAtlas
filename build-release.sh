@@ -96,6 +96,7 @@ echo "[4/5] Erstelle DMG..."
 DMG_STAGING="$BUILD_DIR/dmg_src"
 mkdir -p "$DMG_STAGING"
 cp -r "$APP_PATH" "$DMG_STAGING/"
+ln -s /Applications "$DMG_STAGING/Applications"
 DMG_PATH="$BUILD_DIR/$APP_NAME.dmg"
 hdiutil create \
   -volname "$APP_NAME" \
