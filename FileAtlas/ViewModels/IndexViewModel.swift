@@ -325,7 +325,7 @@ final class IndexViewModel {
         panel.prompt = NSLocalizedString("Add", comment: "")
         guard panel.runModal() == .OK else { return }
 
-        for url in panel.urls where !scanRoots.contains(url) {
+        for url in panel.urls where !scanRoots.contains(where: { sameFilePath($0, url) }) {
             scanRoots.append(url)
             storeBookmark(for: url)
         }
@@ -358,7 +358,7 @@ final class IndexViewModel {
     }
 
     func tags(for entry: FileEntry) -> Set<FileTag> {
-        fileTags[Self.tagKey(for: entry)] ?? []
+        fileTags[entry.canonicalPathKey] ?? []
     }
 
     func hasTag(_ tag: FileTag, for entry: FileEntry) -> Bool {
@@ -366,7 +366,7 @@ final class IndexViewModel {
     }
 
     func toggleTag(_ tag: FileTag, for entry: FileEntry) {
-        let key = Self.tagKey(for: entry)
+        let key = entry.canonicalPathKey
         var tags = fileTags[key] ?? []
         if tags.contains(tag) {
             tags.remove(tag)
@@ -394,7 +394,7 @@ final class IndexViewModel {
             var didChange = false
 
             for candidate in displayedEntries where FilterPreset.normalize(candidate.fileExtension) == targetExtension {
-                let key = Self.tagKey(for: candidate)
+                let key = candidate.canonicalPathKey
                 var tags = updatedFileTags[key] ?? []
                 if tags.insert(tag).inserted {
                     updatedFileTags[key] = tags
@@ -556,14 +556,6 @@ final class IndexViewModel {
         return path
     }
 
-    private nonisolated static func normalizedPath(forStoredPath path: String) -> String {
-        normalizedPath(for: URL(fileURLWithPath: path))
-    }
-
-    private nonisolated static func tagKey(for entry: FileEntry) -> String {
-        normalizedPath(for: entry.path)
-    }
-
     private static func displayPath(for url: URL) -> String {
         var path = url.path(percentEncoded: false)
         while path.count > 1 && path.hasSuffix("/") {
@@ -654,7 +646,7 @@ final class IndexViewModel {
         guard let raw = UserDefaults.standard.dictionary(forKey: Self.fileTagsKey) as? [String: [String]] else { return }
         var migratedFileTags: [String: Set<FileTag>] = [:]
         for (path, storedTags) in raw {
-            let key = Self.normalizedPath(forStoredPath: path)
+            let key = FileEntry.canonicalPathKey(forStoredPath: path)
             migratedFileTags[key, default: []].formUnion(storedTags.map { FileTag(rawValue: $0) })
         }
         fileTags = migratedFileTags
@@ -1070,7 +1062,7 @@ final class IndexViewModel {
                 refreshed.append(data)
             }
 
-            if !scanRoots.contains(url) {
+            if !scanRoots.contains(where: { sameFilePath($0, url) }) {
                 scanRoots.append(url)
             }
         }
