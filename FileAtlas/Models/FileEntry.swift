@@ -32,7 +32,7 @@ nonisolated struct FileEntry: Identifiable, Hashable, Codable, Sendable {
     ) {
         self.id = id
         self.name = name
-        self.path = Self.canonicalURL(for: path)
+        self.path = path
         self.size = size
         self.created = created
         self.modified = modified
@@ -53,24 +53,4 @@ nonisolated struct FileEntry: Identifiable, Hashable, Codable, Sendable {
     /// Gleichheit über den absoluten Pfad (für Snapshot-Diffs).
     var pathKey: String { path.path(percentEncoded: false) }
 
-    /// Kanonischer Pfad für dateigebundene App-Daten wie Tags.
-    var canonicalPathKey: String {
-        Self.canonicalPathKey(for: path)
-    }
-
-    nonisolated static func canonicalPathKey(for url: URL) -> String {
-        var path = canonicalURL(for: url).path(percentEncoded: false)
-        while path.count > 1 && path.hasSuffix("/") {
-            path.removeLast()
-        }
-        return path
-    }
-
-    nonisolated static func canonicalPathKey(forStoredPath path: String) -> String {
-        canonicalPathKey(for: URL(fileURLWithPath: path))
-    }
-
-    nonisolated static func canonicalURL(for url: URL) -> URL {
-        URL(fileURLWithPath: url.standardizedFileURL.resolvingSymlinksInPath().path(percentEncoded: false))
-    }
 }

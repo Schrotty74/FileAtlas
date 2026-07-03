@@ -529,7 +529,6 @@ private struct TagPickerPopover: View {
     @Environment(IndexViewModel.self) private var vm
     let entry: FileEntry
     @Binding var newTagName: String
-    @State private var pendingBulkTag: FileTag?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -584,40 +583,6 @@ private struct TagPickerPopover: View {
                 }
             }
 
-            if let pendingBulkTag, let extensionLabel {
-                Divider()
-
-                HStack(spacing: 8) {
-                    Text(
-                        String(
-                            format: NSLocalizedString("Apply to all [%@] files?", comment: "Prompt to apply a tag to all visible files with the same extension."),
-                            extensionLabel
-                        )
-                    )
-                    .font(.caption)
-                    .foregroundStyle(AppTheme.theme.textSecondary)
-                    .lineLimit(2)
-
-                    Spacer(minLength: 0)
-
-                    Button("Apply") {
-                        vm.applyTagToDisplayedEntriesWithSameExtension(pendingBulkTag, as: entry)
-                        self.pendingBulkTag = nil
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(AppTheme.theme.accentColor)
-
-                    Button {
-                        self.pendingBulkTag = nil
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(AppTheme.theme.textSecondary)
-                    }
-                    .buttonStyle(.plain)
-                    .help("Dismiss")
-                }
-            }
-
             Divider()
 
             HStack {
@@ -629,12 +594,6 @@ private struct TagPickerPopover: View {
         }
         .padding(14)
         .frame(width: 260)
-    }
-
-    private var extensionLabel: String? {
-        let fileExtension = FilterPreset.normalize(entry.fileExtension)
-        guard !fileExtension.isEmpty else { return nil }
-        return ".\(fileExtension)"
     }
 
     private var suggestedTags: [FileTag] {
@@ -706,12 +665,10 @@ private struct TagPickerPopover: View {
 
     private func applyTag(_ tag: FileTag, addToCustomTags: Bool) {
         guard !tag.title.isEmpty else {
-            pendingBulkTag = nil
             return
         }
 
         let isNewlyApplied = !vm.hasTag(tag, for: entry)
-        pendingBulkTag = isNewlyApplied && extensionLabel != nil ? tag : nil
 
         if addToCustomTags {
             vm.addCustomTag(tag.title)
