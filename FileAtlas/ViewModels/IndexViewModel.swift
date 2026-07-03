@@ -28,6 +28,7 @@ final class IndexViewModel {
     private(set) var selectedScanRoot: URL? = nil {
         didSet {
             guard !isUpdatingSelectionEntries else { return }
+            activateScopedPresetForSelectedRootIfNeeded()
             recomputeDisplayedEntries()
         }
     }
@@ -465,6 +466,7 @@ final class IndexViewModel {
         isUpdatingSelectionEntries = false
         selection = []
         currentDiff = nil
+        activateScopedPresetForSelectedRootIfNeeded()
         recomputeDisplayedEntries()
     }
 
@@ -594,7 +596,29 @@ final class IndexViewModel {
     private func activePresetAppliesToCurrentFolder(_ preset: FilterPreset) -> Bool {
         guard !preset.appliesToAllFolders else { return true }
         guard let selectedScanRoot else { return false }
-        return preset.scopedFolderPaths.contains(Self.normalizedPath(for: selectedScanRoot))
+        return scopedPreset(preset, appliesTo: selectedScanRoot)
+    }
+
+    private func activateScopedPresetForSelectedRootIfNeeded() {
+        guard let selectedScanRoot else { return }
+
+        if let activePreset {
+            if activePreset.appliesToAllFolders || scopedPreset(activePreset, appliesTo: selectedScanRoot) {
+                return
+            }
+        }
+
+        if let scopedPreset = presets.first(where: {
+            !$0.appliesToAllFolders && scopedPreset($0, appliesTo: selectedScanRoot)
+        }) {
+            activePresetID = scopedPreset.id
+        } else if activePreset?.appliesToAllFolders == false {
+            activePresetID = nil
+        }
+    }
+
+    private func scopedPreset(_ preset: FilterPreset, appliesTo root: URL) -> Bool {
+        preset.scopedFolderPaths.contains(Self.normalizedPath(for: root))
     }
 
     private func loadRecentScanRoots() {
