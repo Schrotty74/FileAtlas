@@ -358,7 +358,7 @@ final class IndexViewModel {
     }
 
     func tags(for entry: FileEntry) -> Set<FileTag> {
-        fileTags[entry.pathKey] ?? []
+        fileTags[Self.tagKey(for: entry)] ?? []
     }
 
     func hasTag(_ tag: FileTag, for entry: FileEntry) -> Bool {
@@ -366,16 +366,17 @@ final class IndexViewModel {
     }
 
     func toggleTag(_ tag: FileTag, for entry: FileEntry) {
-        var tags = fileTags[entry.pathKey] ?? []
+        let key = Self.tagKey(for: entry)
+        var tags = fileTags[key] ?? []
         if tags.contains(tag) {
             tags.remove(tag)
         } else {
             tags.insert(tag)
         }
         if tags.isEmpty {
-            fileTags.removeValue(forKey: entry.pathKey)
+            fileTags.removeValue(forKey: key)
         } else {
-            fileTags[entry.pathKey] = tags
+            fileTags[key] = tags
         }
         persistFileTags()
     }
@@ -393,9 +394,10 @@ final class IndexViewModel {
             var didChange = false
 
             for candidate in displayedEntries where FilterPreset.normalize(candidate.fileExtension) == targetExtension {
-                var tags = updatedFileTags[candidate.pathKey] ?? []
+                let key = Self.tagKey(for: candidate)
+                var tags = updatedFileTags[key] ?? []
                 if tags.insert(tag).inserted {
-                    updatedFileTags[candidate.pathKey] = tags
+                    updatedFileTags[key] = tags
                     didChange = true
                 }
             }
@@ -546,12 +548,20 @@ final class IndexViewModel {
         Self.normalizedPath(for: lhs) == Self.normalizedPath(for: rhs)
     }
 
-    private static func normalizedPath(for url: URL) -> String {
+    private nonisolated static func normalizedPath(for url: URL) -> String {
         var path = url.standardizedFileURL.resolvingSymlinksInPath().path(percentEncoded: false)
         while path.count > 1 && path.hasSuffix("/") {
             path.removeLast()
         }
         return path
+    }
+
+    private nonisolated static func normalizedPath(forStoredPath path: String) -> String {
+        normalizedPath(for: URL(fileURLWithPath: path))
+    }
+
+    private nonisolated static func tagKey(for entry: FileEntry) -> String {
+        normalizedPath(for: entry.path)
     }
 
     private static func displayPath(for url: URL) -> String {
@@ -642,9 +652,12 @@ final class IndexViewModel {
 
     private func loadFileTags() {
         guard let raw = UserDefaults.standard.dictionary(forKey: Self.fileTagsKey) as? [String: [String]] else { return }
-        fileTags = raw.mapValues { storedTags in
-            Set(storedTags.map { FileTag(rawValue: $0) })
+        var migratedFileTags: [String: Set<FileTag>] = [:]
+        for (path, storedTags) in raw {
+            let key = Self.normalizedPath(forStoredPath: path)
+            migratedFileTags[key, default: []].formUnion(storedTags.map { FileTag(rawValue: $0) })
         }
+        fileTags = migratedFileTags
         let tagsFromFiles = fileTags.values.flatMap { $0 }
         let migratedCustomTags = tagsFromFiles.filter { tag in
             !FileTag.predefined.contains { predefined in
@@ -653,6 +666,9 @@ final class IndexViewModel {
         }
         customTags = (customTags + migratedCustomTags).uniquedByTitle()
         persistCustomTags()
+        if Set(raw.keys) != Set(fileTags.keys) {
+            persistFileTags()
+        }
     }
 
     private func persistFileTags() {
