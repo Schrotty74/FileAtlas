@@ -43,6 +43,10 @@ FileAtlas is a native macOS file indexing and comparison app built with pure App
 - Settings panel with sidebar navigation (macOS System Settings style)
 - Info & Contact section in Settings
 - Clear cache option in Settings
+- Real system icons for files, apps and folders, with a toggle for fast generic icons in Settings
+- App bundle metadata (name, version, developer, bundle ID) shown in detail panel
+- Auto-scan on launch option in Settings
+- Update check notification via GitHub Releases
 - No external dependencies - pure Apple frameworks only
 
 ## Requirements
