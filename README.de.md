@@ -43,6 +43,10 @@ FileAtlas ist eine native macOS-App zum Indizieren und Vergleichen von Dateien, 
 - Einstellungsfenster mit Seitenleistennavigation (im Stil der macOS-Systemeinstellungen)
 - Info & Kontakt-Bereich in den Einstellungen
 - Cache leeren in den Einstellungen
+- Echte Systemsymbole fuer Dateien, Apps und Ordner, mit Umschalter fuer schnelle generische Icons in den Einstellungen
+- App-Bundle-Metadaten (Name, Version, Entwickler, Bundle-ID) im Detailbereich
+- Option fuer Auto-Scan beim Start in den Einstellungen
+- Update-Check-Benachrichtigung ueber GitHub Releases
 - Keine externen Abhaengigkeiten - nur reine Apple-Frameworks
 
 ## Voraussetzungen
