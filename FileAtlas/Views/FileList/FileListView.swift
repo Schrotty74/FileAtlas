@@ -70,14 +70,24 @@ struct FileListView: View {
                     Image(systemName: FileRowView.icon(for: entry))
                         .font(.system(size: 12))
                         .foregroundStyle(AppTheme.theme.accentColor)
-                    Text(entry.name)
-                        .font(.callout)
-                        .tracking(-0.2)
-                        .foregroundStyle(AppTheme.theme.textPrimary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(entry.name)
+                            .font(.callout)
+                            .tracking(-0.2)
+                            .foregroundStyle(AppTheme.theme.textPrimary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+
+                        if let location = vm.searchLocationDescription(for: entry) {
+                            Text(location)
+                                .font(.caption2)
+                                .foregroundStyle(AppTheme.theme.textSecondary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                    }
                 }
-                .frame(height: vm.rowDensity.rowHeight)
+                .frame(minHeight: vm.rowDensity.rowHeight)
                 .contextMenu { rowContextMenu(for: entry) }
             }
             .width(min: 180, ideal: 280, max: .infinity)
@@ -169,12 +179,23 @@ struct FileListView: View {
                 .foregroundStyle(AppTheme.theme.accentColor)
                 .frame(width: 16)
 
-            Text(entry.name)
-                .font(.callout)
-                .tracking(-0.2)
-                .foregroundStyle(AppTheme.theme.textPrimary)
-                .lineLimit(1)
-                .truncationMode(.middle)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(entry.name)
+                    .font(.callout)
+                    .tracking(-0.2)
+                    .foregroundStyle(AppTheme.theme.textPrimary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+
+                if let location = vm.searchLocationDescription(for: entry) {
+                    Text(location)
+                        .font(.caption2)
+                        .foregroundStyle(AppTheme.theme.textSecondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             tagMenu(for: entry)
                 .frame(minWidth: 72, idealWidth: 120, maxWidth: 160, alignment: .leading)
@@ -187,7 +208,7 @@ struct FileListView: View {
                 .foregroundStyle(AppTheme.theme.textSecondary)
                 .lineLimit(1)
         }
-        .frame(height: vm.rowDensity.rowHeight)
+        .frame(minHeight: vm.rowDensity.rowHeight)
         .contentShape(Rectangle())
     }
 

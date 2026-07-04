@@ -56,7 +56,7 @@ struct ContentView: View {
                 .frame(minWidth: 280, idealWidth: 320, maxWidth: 440)
         }
         .toolbar {
-            MainToolbar(vm: vm, ui: ui, searchText: $vm.searchText)
+            MainToolbar(vm: vm, ui: ui, searchText: $vm.searchText, searchAllFolders: $vm.searchAllFolders)
         }
         .sheet(isPresented: $ui.showFilterPanel) {
             FilterPanel()

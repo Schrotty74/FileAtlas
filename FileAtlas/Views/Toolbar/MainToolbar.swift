@@ -11,13 +11,14 @@ struct MainToolbar: ToolbarContent {
     let vm: IndexViewModel
     let ui: UIState
     @Binding var searchText: String
+    @Binding var searchAllFolders: Bool
 
     var body: some ToolbarContent {
         @Bindable var ui = ui
 
         ToolbarItem(placement: .principal) {
-            SearchField(text: $searchText)
-                .frame(maxWidth: 340)
+            SearchField(text: $searchText, searchAllFolders: $searchAllFolders)
+                .frame(maxWidth: 520)
         }
 
         ToolbarItemGroup(placement: .primaryAction) {
