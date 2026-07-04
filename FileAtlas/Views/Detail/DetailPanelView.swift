@@ -7,9 +7,22 @@
 
 import SwiftUI
 import AppKit
+import Security
+
+private struct AppBundleMetadata: Sendable, Equatable {
+    let appName: String?
+    let version: String?
+    let developer: String?
+    let bundleIdentifier: String?
+
+    nonisolated var hasVisibleValues: Bool {
+        appName != nil || version != nil || developer != nil || bundleIdentifier != nil
+    }
+}
 
 struct DetailPanelView: View {
     @Environment(IndexViewModel.self) private var vm
+    @State private var appBundleMetadata: AppBundleMetadata?
 
     var body: some View {
         Group {
@@ -52,6 +65,10 @@ struct DetailPanelView: View {
 
                 metadata(entry)
 
+                if let appBundleMetadata {
+                    appMetadata(appBundleMetadata)
+                }
+
                 if entry.isDuplicate {
                     duplicatesGroup(entry)
                 }
@@ -62,6 +79,9 @@ struct DetailPanelView: View {
             }
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .task(id: entry.id) {
+            await loadAppBundleMetadata(for: entry)
         }
     }
 
@@ -80,6 +100,30 @@ struct DetailPanelView: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 160)
+        .background(AppTheme.surfaceRaised, in: .rect(cornerRadius: AppTheme.theme.cornerRadius))
+    }
+
+    @ViewBuilder
+    private func appMetadata(_ metadata: AppBundleMetadata) -> some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Text("App Metadata")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(AppTheme.theme.textSecondary)
+
+            if let appName = metadata.appName {
+                metaRow("App Name", appName)
+            }
+            if let version = metadata.version {
+                metaRow("Version", version)
+            }
+            if let developer = metadata.developer {
+                metaRow("Developer", developer)
+            }
+            if let bundleIdentifier = metadata.bundleIdentifier {
+                metaRow("Bundle ID", bundleIdentifier)
+            }
+        }
+        .padding(14)
         .background(AppTheme.surfaceRaised, in: .rect(cornerRadius: AppTheme.theme.cornerRadius))
     }
 
@@ -175,5 +219,82 @@ struct DetailPanelView: View {
         df.dateStyle = .medium
         df.timeStyle = .short
         return df.string(from: date)
+    }
+
+    private func loadAppBundleMetadata(for entry: FileEntry) async {
+        guard Self.isAppBundle(entry) else {
+            appBundleMetadata = nil
+            return
+        }
+
+        appBundleMetadata = nil
+        let url = entry.path
+        let metadata = await Task.detached(priority: .utility) {
+            Self.readAppBundleMetadata(from: url)
+        }.value
+
+        guard vm.selectedEntry?.id == entry.id else { return }
+        appBundleMetadata = metadata
+    }
+
+    private nonisolated static func isAppBundle(_ entry: FileEntry) -> Bool {
+        guard entry.isDirectory,
+              entry.path.pathExtension.caseInsensitiveCompare("app") == .orderedSame
+        else { return false }
+
+        var isDirectory: ObjCBool = false
+        let exists = FileManager.default.fileExists(
+            atPath: entry.path.path(percentEncoded: false),
+            isDirectory: &isDirectory
+        )
+        return exists && isDirectory.boolValue
+    }
+
+    private nonisolated static func readAppBundleMetadata(from url: URL) -> AppBundleMetadata? {
+        guard let bundle = Bundle(url: url),
+              let info = bundle.infoDictionary
+        else { return nil }
+
+        let bundleIdentifier = trimmed(info["CFBundleIdentifier"] as? String)
+        let displayName = trimmed(info["CFBundleDisplayName"] as? String)
+        let bundleName = trimmed(info["CFBundleName"] as? String)
+        let version = trimmed(info["CFBundleShortVersionString"] as? String)
+        let developer = signingDeveloper(for: url) ?? developerFallback(from: bundleIdentifier)
+
+        let metadata = AppBundleMetadata(
+            appName: displayName ?? bundleName,
+            version: version,
+            developer: developer,
+            bundleIdentifier: bundleIdentifier
+        )
+        return metadata.hasVisibleValues ? metadata : nil
+    }
+
+    private nonisolated static func signingDeveloper(for url: URL) -> String? {
+        var staticCode: SecStaticCode?
+        guard SecStaticCodeCreateWithPath(url as CFURL, SecCSFlags(), &staticCode) == errSecSuccess,
+              let staticCode
+        else { return nil }
+
+        var signingInfo: CFDictionary?
+        let flags = SecCSFlags(rawValue: kSecCSSigningInformation)
+        guard SecCodeCopySigningInformation(staticCode, flags, &signingInfo) == errSecSuccess,
+              let info = signingInfo as? [String: Any]
+        else { return nil }
+
+        return trimmed(info[kSecCodeInfoTeamIdentifier as String] as? String)
+    }
+
+    private nonisolated static func developerFallback(from bundleIdentifier: String?) -> String? {
+        guard let bundleIdentifier else { return nil }
+        let parts = bundleIdentifier.split(separator: ".")
+        guard parts.count >= 2 else { return nil }
+        return parts.prefix(2).joined(separator: ".")
+    }
+
+    private nonisolated static func trimmed(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedValue.isEmpty ? nil : trimmedValue
     }
 }
