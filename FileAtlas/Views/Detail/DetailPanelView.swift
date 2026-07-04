@@ -222,28 +222,32 @@ struct DetailPanelView: View {
     }
 
     private func loadAppBundleMetadata(for entry: FileEntry) async {
-        guard Self.isAppBundle(entry) else {
-            appBundleMetadata = nil
-            return
-        }
-
         appBundleMetadata = nil
         let url = entry.path
-        let metadata = await Task.detached(priority: .utility) {
-            Self.readAppBundleMetadata(from: url)
+        let accessURL = vm.securityScopedAccessRoot(for: url)
+        let metadata = await Task.detached(priority: .utility) { () -> AppBundleMetadata? in
+            let isAccessing = accessURL.startAccessingSecurityScopedResource()
+            defer {
+                if isAccessing {
+                    accessURL.stopAccessingSecurityScopedResource()
+                }
+            }
+
+            guard Self.isAppBundleURL(url) else { return nil }
+            return Self.readAppBundleMetadata(from: url)
         }.value
 
         guard vm.selectedEntry?.id == entry.id else { return }
         appBundleMetadata = metadata
     }
 
-    private nonisolated static func isAppBundle(_ entry: FileEntry) -> Bool {
-        guard entry.path.pathExtension.caseInsensitiveCompare("app") == .orderedSame
+    private nonisolated static func isAppBundleURL(_ url: URL) -> Bool {
+        guard url.pathExtension.caseInsensitiveCompare("app") == .orderedSame
         else { return false }
 
         var isDirectory: ObjCBool = false
         let exists = FileManager.default.fileExists(
-            atPath: entry.path.path(percentEncoded: false),
+            atPath: url.path(percentEncoded: false),
             isDirectory: &isDirectory
         )
         return exists && isDirectory.boolValue
