@@ -581,8 +581,7 @@ final class IndexViewModel {
     }
 
     func tags(for entry: FileEntry) -> Set<FileTag> {
-        guard let key = Self.extensionKey(for: entry) else { return [] }
-        return extensionTags[key] ?? []
+        extensionTags[Self.extensionKey(for: entry)] ?? []
     }
 
     func hasTag(_ tag: FileTag, for entry: FileEntry) -> Bool {
@@ -590,7 +589,7 @@ final class IndexViewModel {
     }
 
     func toggleTag(_ tag: FileTag, for entry: FileEntry) {
-        guard let key = Self.extensionKey(for: entry) else { return }
+        let key = Self.extensionKey(for: entry)
         var tags = extensionTags[key] ?? []
         if tags.contains(tag) {
             tags.remove(tag)
@@ -619,28 +618,23 @@ final class IndexViewModel {
         if selectedTagFilter == tag { selectedTagFilter = nil }
         persistCustomTags()
 
-        let currentExtensionTags = extensionTags
-        Task.detached(priority: .userInitiated) { [weak self] in
-            var updatedExtensionTags = currentExtensionTags
-            var didChange = false
+        var updatedExtensionTags = extensionTags
+        var didChange = false
 
-            for key in currentExtensionTags.keys {
-                guard var tags = updatedExtensionTags[key],
-                      tags.remove(tag) != nil else { continue }
-                if tags.isEmpty {
-                    updatedExtensionTags.removeValue(forKey: key)
-                } else {
-                    updatedExtensionTags[key] = tags
-                }
-                didChange = true
+        for key in extensionTags.keys {
+            guard var tags = updatedExtensionTags[key],
+                  tags.remove(tag) != nil else { continue }
+            if tags.isEmpty {
+                updatedExtensionTags.removeValue(forKey: key)
+            } else {
+                updatedExtensionTags[key] = tags
             }
-
-            guard didChange else { return }
-            await MainActor.run { [weak self] in
-                self?.extensionTags = updatedExtensionTags
-                self?.persistExtensionTags()
-            }
+            didChange = true
         }
+
+        guard didChange else { return }
+        extensionTags = updatedExtensionTags
+        persistExtensionTags()
     }
 
     func openSelectedEntry() {
@@ -893,11 +887,14 @@ final class IndexViewModel {
         UserDefaults.standard.set(raw, forKey: Self.extensionTagsKey)
     }
 
+    /// Sammel-Key für Dateien ohne Endung (z. B. `Makefile`, `Dockerfile`), damit deren Tags
+    /// beim Laden/Migrieren nicht verworfen werden.
+    private static let noExtensionTagKey = "__no_extension__"
+
     private nonisolated static func loadedExtensionTags(from raw: [String: [String]]) -> [String: Set<FileTag>] {
         var loadedTags: [String: Set<FileTag>] = [:]
         for (rawExtension, storedTags) in raw {
-            let key = FilterPreset.normalize(rawExtension)
-            guard !key.isEmpty else { continue }
+            let key = normalizedExtensionKey(rawExtension)
             loadedTags[key, default: []].formUnion(storedTags.map { FileTag(rawValue: $0) })
         }
         return loadedTags
@@ -909,16 +906,19 @@ final class IndexViewModel {
     ) -> [String: Set<FileTag>] {
         var migratedTags = loadedExtensionTags(from: existingExtensionTags)
         for (path, storedTags) in legacyFileTags {
-            let key = FilterPreset.normalize(URL(fileURLWithPath: path).pathExtension)
-            guard !key.isEmpty else { continue }
+            let key = normalizedExtensionKey(URL(fileURLWithPath: path).pathExtension)
             migratedTags[key, default: []].formUnion(storedTags.map { FileTag(rawValue: $0) })
         }
         return migratedTags
     }
 
-    private nonisolated static func extensionKey(for entry: FileEntry) -> String? {
-        let key = FilterPreset.normalize(entry.fileExtension)
-        return key.isEmpty ? nil : key
+    private nonisolated static func extensionKey(for entry: FileEntry) -> String {
+        normalizedExtensionKey(entry.fileExtension)
+    }
+
+    private nonisolated static func normalizedExtensionKey(_ rawExtension: String) -> String {
+        let key = FilterPreset.normalize(rawExtension)
+        return key.isEmpty ? noExtensionTagKey : key
     }
 
     // MARK: - Scannen
