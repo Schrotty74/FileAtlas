@@ -413,6 +413,7 @@
     },
     "Clear" : {
       "comment" : "Tooltip for a button that clears a search field.",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1357,6 +1358,7 @@
     },
     "Search folders" : {
       "comment" : "Placeholder for the sidebar folder search field.",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

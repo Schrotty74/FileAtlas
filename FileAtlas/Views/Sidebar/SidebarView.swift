@@ -31,17 +31,15 @@ struct SidebarView: View {
 
 private struct SidebarContent: View {
     @Environment(IndexViewModel.self) private var vm
-    @State private var sidebarSearchText = ""
 
     var body: some View {
         @Bindable var vm = vm
 
         List {
             header
-            SidebarSearchField(text: $sidebarSearchText)
 
-            RecentLocationsSection(searchText: sidebarSearchText)
-            SavedLocationsSection(searchText: sidebarSearchText)
+            RecentLocationsSection()
+            SavedLocationsSection()
             PresetsSection()
 
             if vm.duplicateCount > 0 {
@@ -75,38 +73,6 @@ private struct SidebarContent: View {
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .listRowInsets(EdgeInsets(top: 6, leading: 4, bottom: 10, trailing: 4))
-        .listRowSeparator(.hidden)
-        .listRowBackground(EmptyView())
-    }
-}
-
-private struct SidebarSearchField: View {
-    @Binding var text: String
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(AppTheme.theme.textSecondary)
-            TextField("Search folders", text: $text)
-                .textFieldStyle(.plain)
-            if !text.isEmpty {
-                Button {
-                    text = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(AppTheme.theme.textSecondary)
-                }
-                .buttonStyle(.plain)
-                .help("Clear")
-            }
-        }
-        .font(.caption)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(.quaternary, in: .rect(cornerRadius: 7))
-        .padding(.horizontal, 8)
-        .padding(.bottom, 6)
-        .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 4, trailing: 4))
         .listRowSeparator(.hidden)
         .listRowBackground(EmptyView())
     }
