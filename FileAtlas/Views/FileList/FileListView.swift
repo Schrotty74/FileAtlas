@@ -353,9 +353,15 @@ struct FileListView: View {
     private var scanStatusBar: some View {
         HStack(spacing: 10) {
             ProgressView().controlSize(.small)
-            Text("Scanning…")
-                .font(.callout.weight(.medium))
-                .foregroundStyle(AppTheme.theme.textPrimary)
+            Group {
+                if let autoScanLaunchMessage = vm.autoScanLaunchMessage {
+                    Text(autoScanLaunchMessage)
+                } else {
+                    Text("Scanning…")
+                }
+            }
+            .font(.callout.weight(.medium))
+            .foregroundStyle(AppTheme.theme.textPrimary)
             Text("\(vm.scanProgressCount) files")
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(AppTheme.theme.accentColor)

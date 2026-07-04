@@ -62,6 +62,15 @@ nonisolated enum FileListViewMode: String, CaseIterable, Codable, Sendable, Iden
     }
 }
 
+/// Verhalten für automatische Scans beim App-Start.
+nonisolated enum AutoScanOnLaunchMode: String, CaseIterable, Codable, Sendable, Identifiable {
+    case off
+    case allSavedAndRecent
+    case restoreCached
+
+    var id: String { rawValue }
+}
+
 /// Änderungsstatus im Snapshot-Vergleich.
 nonisolated enum ChangeStatus: String, Codable, Sendable {
     case added       // 🟢 Neu

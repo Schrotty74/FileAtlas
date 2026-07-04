@@ -25,8 +25,12 @@ struct FileAtlasApp: App {
                 .frame(minWidth: 980, minHeight: 620)
                 .environment(\.locale, language.locale)
                 .task {
+                    vm.startAutoScanOnLaunchIfNeeded()
                     // Fällige geplante Backups beim Start (nur während die App läuft).
                     await backup.runScheduledIfDue(locations: vm.scanRoots)
+                }
+                .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+                    vm.persistCachedRootPathsForAutoScan()
                 }
         }
         .commands {

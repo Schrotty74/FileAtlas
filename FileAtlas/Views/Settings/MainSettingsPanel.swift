@@ -139,8 +139,17 @@ struct MainSettingsPanel: View {
     }
 
     private var scanSection: some View {
-        Form {
+        @Bindable var vm = vm
+
+        return Form {
             Section("Scan Settings") {
+                Picker("Auto-scan on launch", selection: $vm.autoScanOnLaunchMode) {
+                    ForEach(AutoScanOnLaunchMode.allCases) { mode in
+                        Text(autoScanOnLaunchTitle(for: mode)).tag(mode)
+                    }
+                }
+                .pickerStyle(.radioGroup)
+
                 Button("Rescan now") { vm.startScan() }
                     .disabled(vm.scanRoots.isEmpty || vm.isScanning)
                 Button("Clear Cache", role: .destructive) {
@@ -167,6 +176,14 @@ struct MainSettingsPanel: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    private func autoScanOnLaunchTitle(for mode: AutoScanOnLaunchMode) -> LocalizedStringKey {
+        switch mode {
+        case .off: return "Off"
+        case .allSavedAndRecent: return "Scan all Orte and Schnellzugriff folders"
+        case .restoreCached: return "Restore last cached folders"
+        }
     }
 
     private var ignoredFoldersSection: some View {

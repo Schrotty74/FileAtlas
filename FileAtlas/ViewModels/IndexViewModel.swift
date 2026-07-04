@@ -71,6 +71,9 @@ final class IndexViewModel {
     var rowDensity: FileRowDensity {
         didSet { UserDefaults.standard.set(rowDensity.rawValue, forKey: Self.rowDensityKey) }
     }
+    var autoScanOnLaunchMode: AutoScanOnLaunchMode {
+        didSet { UserDefaults.standard.set(autoScanOnLaunchMode.rawValue, forKey: Self.autoScanOnLaunchModeKey) }
+    }
 
     private(set) var recentScanRoots: [URL] = []
     private(set) var extensionTags: [String: Set<FileTag>] = [:] {
@@ -78,6 +81,7 @@ final class IndexViewModel {
     }
     private(set) var customTags: [FileTag] = []
     private(set) var lastAutoRescanMessage: String? = nil
+    private(set) var autoScanLaunchMessage: String? = nil
 
     var availableTags: [FileTag] {
         (FileTag.predefined + customTags).uniquedByTitle()
@@ -116,6 +120,8 @@ final class IndexViewModel {
     private static let skippedFoldersKey = "FileAtlas.skippedFolders"
     private static let skippedFoldersMigrationKey = "FileAtlas.skippedFoldersMigrationVersion"
     private static let rowDensityKey = "FileAtlas.rowDensity"
+    private static let autoScanOnLaunchModeKey = "FileAtlas.autoScanOnLaunchMode"
+    private static let cachedRootPathsOnQuitKey = "FileAtlas.cachedRootPathsOnQuit"
     private static let recentScanRootsKey = "FileAtlas.recentScanRoots"
     private static let legacyFileTagsKey = "FileAtlas.fileTags"
     private static let extensionTagsKey = "FileAtlas.extensionTags"
@@ -177,6 +183,8 @@ final class IndexViewModel {
     private let snapshotStore = SnapshotStore()
     private var searchDebounceTask: Task<Void, Never>? = nil
     private var scanTask: Task<Void, Never>? = nil
+    private var autoScanLaunchTask: Task<Void, Never>? = nil
+    private var didStartAutoScanOnLaunch = false
     private var folderMonitor: FolderChangeMonitor? = nil
     private var pendingAutoRescanTask: Task<Void, Never>? = nil
     private var suppressAutoRescanUntil: Date? = nil
@@ -186,6 +194,8 @@ final class IndexViewModel {
     init() {
         let defaults = UserDefaults.standard
         self.rowDensity = defaults.string(forKey: Self.rowDensityKey).flatMap(FileRowDensity.init(rawValue:)) ?? .normal
+        self.autoScanOnLaunchMode = defaults.string(forKey: Self.autoScanOnLaunchModeKey)
+            .flatMap(AutoScanOnLaunchMode.init(rawValue:)) ?? .off
 
         if let stored = defaults.stringArray(forKey: Self.skippedFoldersKey) {
             // Einmalige Migration: fehlende Default-Einträge ergänzen.
@@ -398,6 +408,7 @@ final class IndexViewModel {
             selectedScanRoot = nil
         }
         indexedEntriesByRootPath.removeValue(forKey: Self.normalizedPath(for: url))
+        persistCachedRootPathsForAutoScan()
         removeRecentScanRoot(url)
         removeBookmark(for: url)
     }
@@ -565,6 +576,7 @@ final class IndexViewModel {
         isUpdatingSelectionEntries = false
         selection = []
         currentDiff = nil
+        persistCachedRootPathsForAutoScan()
     }
 
     private func rememberRecentScanRoots(_ roots: [URL]) {
@@ -760,6 +772,72 @@ final class IndexViewModel {
 
     // MARK: - Scannen
 
+    func startAutoScanOnLaunchIfNeeded() {
+        guard !didStartAutoScanOnLaunch else { return }
+        didStartAutoScanOnLaunch = true
+
+        let roots = autoScanLaunchRoots()
+        guard autoScanOnLaunchMode != .off, !roots.isEmpty else { return }
+
+        autoScanLaunchTask?.cancel()
+        autoScanLaunchTask = Task { [weak self] in
+            guard let self else { return }
+            let total = roots.count
+
+            for (index, root) in roots.enumerated() {
+                guard !Task.isCancelled else { break }
+
+                while self.isScanning && !Task.isCancelled {
+                    try? await Task.sleep(for: .milliseconds(200))
+                }
+                guard !Task.isCancelled else { break }
+
+                self.autoScanLaunchMessage = String(
+                    format: NSLocalizedString("Scanning folder %lld of %lld…", comment: "Progress message while automatically scanning folders on launch."),
+                    index + 1,
+                    total
+                )
+                self.startScan(roots: [root])
+
+                while self.isScanning && !Task.isCancelled {
+                    try? await Task.sleep(for: .milliseconds(200))
+                }
+            }
+
+            guard !Task.isCancelled else { return }
+            self.autoScanLaunchMessage = nil
+            self.autoScanLaunchTask = nil
+        }
+    }
+
+    func persistCachedRootPathsForAutoScan() {
+        let paths = Array(indexedEntriesByRootPath.keys).sorted()
+        UserDefaults.standard.set(paths, forKey: Self.cachedRootPathsOnQuitKey)
+    }
+
+    private func autoScanLaunchRoots() -> [URL] {
+        switch autoScanOnLaunchMode {
+        case .off:
+            return []
+        case .allSavedAndRecent:
+            return deduplicatedRoots(scanRoots + recentScanRoots)
+        case .restoreCached:
+            let storedPaths = UserDefaults.standard.stringArray(forKey: Self.cachedRootPathsOnQuitKey) ?? []
+            return deduplicatedRoots(storedPaths.map { urlForStoredRootPath($0) })
+        }
+    }
+
+    private func urlForStoredRootPath(_ path: String) -> URL {
+        let storedURL = URL(fileURLWithPath: path)
+        let knownRoots = scanRoots + recentScanRoots
+        return knownRoots.first { sameFilePath($0, storedURL) } ?? storedURL
+    }
+
+    private func deduplicatedRoots(_ roots: [URL]) -> [URL] {
+        var seen = Set<String>()
+        return roots.filter { seen.insert(Self.normalizedPath(for: $0)).inserted }
+    }
+
     /// Scannt entweder die übergebenen Orte oder – falls `nil` – alle gespeicherten Orte.
     func startScan(roots: [URL]? = nil, rememberInQuickAccess: Bool = false) {
         let roots = roots ?? scanRoots
@@ -913,6 +991,7 @@ final class IndexViewModel {
                 indexedEntriesByRootPath[Self.normalizedPath(for: root)] = rootEntries
             }
         }
+        persistCachedRootPathsForAutoScan()
     }
 
     // MARK: - Presets
