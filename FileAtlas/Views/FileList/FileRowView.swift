@@ -21,9 +21,7 @@ struct FileRowView: View {
     var body: some View {
         HStack(spacing: 0) {
             HStack(spacing: 8) {
-                Image(systemName: Self.icon(for: entry))
-                    .font(.system(size: 12))
-                    .foregroundStyle(AppTheme.theme.accentColor)
+                SystemFileIconView(entry: entry, size: 16)
                 Text(entry.name)
                     .font(.callout)
                     .tracking(-0.2)
