@@ -9,16 +9,15 @@ import SwiftUI
 import AppKit
 
 struct SystemFileIconView: View {
-    @Environment(IndexViewModel.self) private var vm
-
     let entry: FileEntry
     var size: CGFloat = 16
+    var iconDisplayMode: IconDisplayMode = .real
 
     @State private var icon: NSImage?
 
     var body: some View {
         Group {
-            if vm.iconDisplayMode == .real,
+            if iconDisplayMode == .real,
                !SystemFileIconCache.usesFallbackIcon(for: entry),
                let icon {
                 Image(nsImage: icon)
@@ -30,7 +29,7 @@ struct SystemFileIconView: View {
         }
         .frame(width: size, height: size)
         .task(id: taskKey) {
-            guard vm.iconDisplayMode == .real,
+            guard iconDisplayMode == .real,
                   !SystemFileIconCache.usesFallbackIcon(for: entry) else {
                 icon = nil
                 return
@@ -46,7 +45,7 @@ struct SystemFileIconView: View {
     }
 
     private var taskKey: String {
-        vm.iconDisplayMode.rawValue + ":" + cacheKey
+        iconDisplayMode.rawValue + ":" + cacheKey
     }
 
     private var cacheKey: String {
@@ -54,14 +53,14 @@ struct SystemFileIconView: View {
     }
 
     private var fallbackIconName: String {
-        if vm.iconDisplayMode == .real, SystemFileIconCache.usesFallbackIcon(for: entry) {
+        if iconDisplayMode == .real, SystemFileIconCache.usesFallbackIcon(for: entry) {
             return "film"
         }
         return FileRowView.icon(for: entry)
     }
 
     private var fallbackIconColor: Color {
-        if vm.iconDisplayMode == .real, SystemFileIconCache.usesFallbackIcon(for: entry) {
+        if iconDisplayMode == .real, SystemFileIconCache.usesFallbackIcon(for: entry) {
             return AppTheme.gold
         }
         return AppTheme.theme.accentColor

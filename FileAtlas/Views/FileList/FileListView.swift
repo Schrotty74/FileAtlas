@@ -67,7 +67,7 @@ struct FileListView: View {
                      columnCustomization: $columnCustomization) {
             TableColumn("Name") { entry in
                 HStack(spacing: 8) {
-                    SystemFileIconView(entry: entry, size: 16)
+                    SystemFileIconView(entry: entry, size: 16, iconDisplayMode: vm.iconDisplayMode)
                     VStack(alignment: .leading, spacing: 1) {
                         Text(entry.name)
                             .font(.callout)
@@ -172,7 +172,7 @@ struct FileListView: View {
 
     private func compactRow(for entry: FileEntry) -> some View {
         HStack(spacing: 8) {
-            SystemFileIconView(entry: entry, size: 16)
+            SystemFileIconView(entry: entry, size: 16, iconDisplayMode: vm.iconDisplayMode)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.name)
