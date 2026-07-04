@@ -46,6 +46,9 @@ final class IndexViewModel {
     var searchText = "" {
         didSet { scheduleSearchRecompute() }
     }
+    var searchAllFolders = false {
+        didSet { recomputeDisplayedEntries() }
+    }
     var sortField: SortField = .name {
         didSet { recomputeDisplayedEntries() }
     }
@@ -160,6 +163,10 @@ final class IndexViewModel {
             ?? displayedEntries.first { $0.id == selection.first }
     }
 
+    var isSearchAllFoldersActive: Bool {
+        searchAllFolders && !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     // MARK: - Snapshots / Vergleich
 
     var currentDiff: SnapshotDiff? = nil
@@ -240,9 +247,11 @@ final class IndexViewModel {
     }
 
     private func recomputeDisplayedEntries() {
-        var list = entries
+        let trimmed = searchText.trimmingCharacters(in: .whitespaces)
+        let shouldSearchAllFolders = searchAllFolders && !trimmed.isEmpty
+        var list = shouldSearchAllFolders ? entriesAcrossIndexedRoots() : entries
 
-        if let selectedScanRoot {
+        if let selectedScanRoot, !shouldSearchAllFolders {
             list = list.filter { Self.isPath($0.path, inside: selectedScanRoot) }
         }
 
@@ -256,7 +265,6 @@ final class IndexViewModel {
             list = list.filter { tags(for: $0).contains(selectedTagFilter) }
         }
 
-        let trimmed = searchText.trimmingCharacters(in: .whitespaces)
         if !trimmed.isEmpty {
             if let q = SizeQuery.parse(trimmed) {
                 list = list.filter { q.matches($0.size) }
@@ -278,6 +286,56 @@ final class IndexViewModel {
         }
 
         displayedEntries = list.sorted(by: comparator)
+    }
+
+    private func entriesAcrossIndexedRoots() -> [FileEntry] {
+        var seen = Set<String>()
+        var result: [FileEntry] = []
+
+        for cachedEntries in indexedEntriesByRootPath.values {
+            for entry in cachedEntries where seen.insert(Self.normalizedPath(for: entry.path)).inserted {
+                result.append(entry)
+            }
+        }
+
+        for entry in entries where seen.insert(Self.normalizedPath(for: entry.path)).inserted {
+            result.append(entry)
+        }
+
+        return result
+    }
+
+    func searchLocationDescription(for entry: FileEntry) -> String? {
+        guard isSearchAllFoldersActive else { return nil }
+
+        let entryPath = Self.normalizedPath(for: entry.path)
+        guard let rootPath = indexedSearchRootPaths()
+            .sorted(by: { $0.count > $1.count })
+            .first(where: { Self.normalizedPath(entryPath, isInsideNormalizedPath: $0) })
+        else { return nil }
+
+        let rootName = URL(fileURLWithPath: rootPath).lastPathComponent
+        let relativePath = entryPath == rootPath
+            ? ""
+            : String(entryPath.dropFirst(rootPath.count + 1))
+        let folderPath = (relativePath as NSString).deletingLastPathComponent
+
+        if folderPath.isEmpty || folderPath == "." {
+            return rootName
+        }
+        return "\(rootName)/\(folderPath)"
+    }
+
+    private func indexedSearchRootPaths() -> [String] {
+        var paths = Array(indexedEntriesByRootPath.keys)
+        paths.append(contentsOf: scanRoots.map { Self.normalizedPath(for: $0) })
+        paths.append(contentsOf: recentScanRoots.map { Self.normalizedPath(for: $0) })
+        if let selectedScanRoot {
+            paths.append(Self.normalizedPath(for: selectedScanRoot))
+        }
+
+        var seen = Set<String>()
+        return paths.filter { seen.insert($0).inserted }
     }
 
     private var comparator: (FileEntry, FileEntry) -> Bool {
