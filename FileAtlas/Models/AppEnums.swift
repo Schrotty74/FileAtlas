@@ -71,6 +71,14 @@ nonisolated enum AutoScanOnLaunchMode: String, CaseIterable, Codable, Sendable, 
     var id: String { rawValue }
 }
 
+/// Icon-Darstellung in der Dateiliste.
+nonisolated enum IconDisplayMode: String, CaseIterable, Codable, Sendable, Identifiable {
+    case real
+    case generic
+
+    var id: String { rawValue }
+}
+
 /// Änderungsstatus im Snapshot-Vergleich.
 nonisolated enum ChangeStatus: String, Codable, Sendable {
     case added       // 🟢 Neu

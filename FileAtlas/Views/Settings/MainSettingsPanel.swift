@@ -118,6 +118,12 @@ struct MainSettingsPanel: View {
                     }
                 }
                 .pickerStyle(.segmented)
+
+                Picker("Icon display", selection: $vm.iconDisplayMode) {
+                    Text("Real icons").tag(IconDisplayMode.real)
+                    Text("Fast generic icons").tag(IconDisplayMode.generic)
+                }
+                .pickerStyle(.segmented)
             }
         }
         .formStyle(.grouped)

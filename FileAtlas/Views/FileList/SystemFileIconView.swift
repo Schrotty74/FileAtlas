@@ -9,6 +9,8 @@ import SwiftUI
 import AppKit
 
 struct SystemFileIconView: View {
+    @Environment(IndexViewModel.self) private var vm
+
     let entry: FileEntry
     var size: CGFloat = 16
 
@@ -16,20 +18,32 @@ struct SystemFileIconView: View {
 
     var body: some View {
         Group {
-            if let icon {
+            if vm.iconDisplayMode == .real, let icon {
                 Image(nsImage: icon)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
             } else {
-                Image(systemName: FileRowView.icon(for: entry))
-                    .font(.system(size: max(12, size - 2)))
-                    .foregroundStyle(AppTheme.theme.accentColor)
+                genericIcon
             }
         }
         .frame(width: size, height: size)
-        .task(id: cacheKey) {
+        .task(id: taskKey) {
+            guard vm.iconDisplayMode == .real else {
+                icon = nil
+                return
+            }
             icon = await SystemFileIconCache.shared.icon(for: entry)
         }
+    }
+
+    private var genericIcon: some View {
+        Image(systemName: FileRowView.icon(for: entry))
+            .font(.system(size: max(12, size - 2)))
+            .foregroundStyle(AppTheme.theme.accentColor)
+    }
+
+    private var taskKey: String {
+        vm.iconDisplayMode.rawValue + ":" + cacheKey
     }
 
     private var cacheKey: String {
