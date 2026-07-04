@@ -13,11 +13,13 @@ struct QuickLookPreview: View {
     let url: URL
     let accessURL: URL?
     let fallbackIcon: String
+    let onPreviewAccess: () -> Void
 
-    init(url: URL, accessURL: URL? = nil, fallbackIcon: String) {
+    init(url: URL, accessURL: URL? = nil, fallbackIcon: String, onPreviewAccess: @escaping () -> Void = {}) {
         self.url = url
         self.accessURL = accessURL
         self.fallbackIcon = fallbackIcon
+        self.onPreviewAccess = onPreviewAccess
     }
 
     private static let unsupportedPreviewExtensions: Set<String> = [
@@ -36,7 +38,7 @@ struct QuickLookPreview: View {
                 .fill(AppTheme.surfaceRaised)
 
             if canPreview {
-                InlineQuickLookPreview(url: url, accessURL: accessURL ?? url)
+                InlineQuickLookPreview(url: url, accessURL: accessURL ?? url, onPreviewAccess: onPreviewAccess)
                     .clipShape(.rect(cornerRadius: AppTheme.theme.cornerRadius))
             } else if didFail {
                 Image(systemName: fallbackIcon)
@@ -60,6 +62,7 @@ struct QuickLookPreview: View {
             return
         }
 
+        onPreviewAccess()
         let accessURL = accessURL ?? url
         let scoped = accessURL.startAccessingSecurityScopedResource()
         defer { if scoped { accessURL.stopAccessingSecurityScopedResource() } }
@@ -84,6 +87,7 @@ struct QuickLookPreview: View {
 private struct InlineQuickLookPreview: NSViewRepresentable {
     let url: URL
     let accessURL: URL
+    let onPreviewAccess: () -> Void
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -108,6 +112,7 @@ private struct InlineQuickLookPreview: NSViewRepresentable {
     private func configure(_ previewView: QLPreviewView?, context: Context) {
         guard let previewView else { return }
         context.coordinator.updateAccess(for: accessURL)
+        onPreviewAccess()
         previewView.previewItem = url as NSURL
         previewView.refreshPreviewItem()
     }
