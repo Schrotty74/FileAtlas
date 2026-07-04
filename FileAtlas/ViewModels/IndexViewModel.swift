@@ -71,6 +71,9 @@ final class IndexViewModel {
     var rowDensity: FileRowDensity {
         didSet { UserDefaults.standard.set(rowDensity.rawValue, forKey: Self.rowDensityKey) }
     }
+    var iconDisplayMode: IconDisplayMode {
+        didSet { UserDefaults.standard.set(iconDisplayMode.rawValue, forKey: Self.iconDisplayModeKey) }
+    }
     var autoScanOnLaunchMode: AutoScanOnLaunchMode {
         didSet { UserDefaults.standard.set(autoScanOnLaunchMode.rawValue, forKey: Self.autoScanOnLaunchModeKey) }
     }
@@ -120,6 +123,7 @@ final class IndexViewModel {
     private static let skippedFoldersKey = "FileAtlas.skippedFolders"
     private static let skippedFoldersMigrationKey = "FileAtlas.skippedFoldersMigrationVersion"
     private static let rowDensityKey = "FileAtlas.rowDensity"
+    private static let iconDisplayModeKey = "FileAtlas.iconDisplayMode"
     private static let autoScanOnLaunchModeKey = "FileAtlas.autoScanOnLaunchMode"
     private static let cachedRootPathsOnQuitKey = "FileAtlas.cachedRootPathsOnQuit"
     private static let recentScanRootsKey = "FileAtlas.recentScanRoots"
@@ -194,6 +198,8 @@ final class IndexViewModel {
     init() {
         let defaults = UserDefaults.standard
         self.rowDensity = defaults.string(forKey: Self.rowDensityKey).flatMap(FileRowDensity.init(rawValue:)) ?? .normal
+        self.iconDisplayMode = defaults.string(forKey: Self.iconDisplayModeKey)
+            .flatMap(IconDisplayMode.init(rawValue:)) ?? .real
         self.autoScanOnLaunchMode = defaults.string(forKey: Self.autoScanOnLaunchModeKey)
             .flatMap(AutoScanOnLaunchMode.init(rawValue:)) ?? .off
 
