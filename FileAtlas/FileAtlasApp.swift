@@ -26,6 +26,7 @@ struct FileAtlasApp: App {
                 .environment(\.locale, language.locale)
                 .task {
                     vm.startAutoScanOnLaunchIfNeeded()
+                    vm.scheduleUpdateCheckOnLaunch()
                     // Fällige geplante Backups beim Start (nur während die App läuft).
                     await backup.runScheduledIfDue(locations: vm.scanRoots)
                 }
