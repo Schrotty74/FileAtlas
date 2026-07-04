@@ -67,9 +67,7 @@ struct FileListView: View {
                      columnCustomization: $columnCustomization) {
             TableColumn("Name") { entry in
                 HStack(spacing: 8) {
-                    Image(systemName: FileRowView.icon(for: entry))
-                        .font(.system(size: 12))
-                        .foregroundStyle(AppTheme.theme.accentColor)
+                    SystemFileIconView(entry: entry, size: 16)
                     VStack(alignment: .leading, spacing: 1) {
                         Text(entry.name)
                             .font(.callout)
@@ -174,10 +172,7 @@ struct FileListView: View {
 
     private func compactRow(for entry: FileEntry) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: FileRowView.icon(for: entry))
-                .font(.system(size: 12))
-                .foregroundStyle(AppTheme.theme.accentColor)
-                .frame(width: 16)
+            SystemFileIconView(entry: entry, size: 16)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.name)
