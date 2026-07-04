@@ -285,7 +285,52 @@ struct DetailPanelView: View {
               let info = signingInfo as? [String: Any]
         else { return nil }
 
-        return trimmed(info[kSecCodeInfoTeamIdentifier as String] as? String)
+        let teamID = trimmed(info[kSecCodeInfoTeamIdentifier as String] as? String)
+        if let certificates = info[kSecCodeInfoCertificates as String] as? [SecCertificate],
+           let leafCertificate = certificates.first,
+           let readableName = readableDeveloperName(from: leafCertificate, teamID: teamID) {
+            return readableName
+        }
+
+        return teamID
+    }
+
+    private nonisolated static func readableDeveloperName(from certificate: SecCertificate, teamID: String?) -> String? {
+        var commonName: CFString?
+        guard SecCertificateCopyCommonName(certificate, &commonName) == errSecSuccess,
+              let commonName = trimmed(commonName as String?)
+        else { return nil }
+
+        return developerName(fromCertificateCommonName: commonName, teamID: teamID)
+    }
+
+    private nonisolated static func developerName(fromCertificateCommonName commonName: String, teamID: String?) -> String? {
+        let prefixes = [
+            "Developer ID Application:",
+            "Developer ID Installer:",
+            "Apple Development:",
+            "Apple Distribution:",
+            "Mac Developer:",
+            "3rd Party Mac Developer Application:"
+        ]
+
+        var developerName = commonName
+        if let prefix = prefixes.first(where: { developerName.hasPrefix($0) }) {
+            developerName.removeFirst(prefix.count)
+        }
+
+        if let teamID, developerName.hasSuffix("(\(teamID))") {
+            developerName.removeLast(teamID.count + 2)
+        } else if developerName.hasSuffix(")"),
+                  let openingParenthesis = developerName.lastIndex(of: "(") {
+            developerName = String(developerName[..<openingParenthesis])
+        }
+
+        guard let parsedName = trimmed(developerName),
+              parsedName != teamID
+        else { return nil }
+
+        return parsedName
     }
 
     private nonisolated static func developerFallback(from bundleIdentifier: String?) -> String? {
