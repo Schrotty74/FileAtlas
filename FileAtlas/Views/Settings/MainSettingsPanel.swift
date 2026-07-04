@@ -377,6 +377,35 @@ struct MainSettingsPanel: View {
                 Text(appVersionText)
                     .foregroundStyle(AppTheme.theme.textPrimary)
 
+                if let availableUpdate = vm.availableUpdate {
+                    Button {
+                        vm.openAvailableUpdate()
+                    } label: {
+                        Label(
+                            String(
+                                format: NSLocalizedString("New version available: %@", comment: "Update notification with the latest version tag."),
+                                availableUpdate.versionTag
+                            ),
+                            systemImage: "arrow.down.circle.fill"
+                        )
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(AppTheme.theme.accentColor)
+                }
+
+                Button {
+                    Task { await vm.checkForUpdates(force: true) }
+                } label: {
+                    HStack {
+                        if vm.isCheckingForUpdates {
+                            ProgressView()
+                                .controlSize(.small)
+                        }
+                        Text("Check for updates")
+                    }
+                }
+                .disabled(vm.isCheckingForUpdates)
+
                 if let issuesURL = URL(string: "https://github.com/Schrotty74/FileAtlas/issues") {
                     Link("Report a bug on GitHub", destination: issuesURL)
                 }

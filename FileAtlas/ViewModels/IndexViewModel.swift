@@ -11,6 +11,22 @@ import AppKit
 import CoreServices
 import UniformTypeIdentifiers
 
+struct AvailableUpdate: Identifiable, Equatable {
+    var id: String { versionTag }
+    let versionTag: String
+    let releaseURL: URL
+}
+
+private struct GitHubReleaseResponse: Decodable {
+    let tagName: String
+    let htmlURL: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case tagName = "tag_name"
+        case htmlURL = "html_url"
+    }
+}
+
 @Observable
 @MainActor
 final class IndexViewModel {
@@ -85,6 +101,8 @@ final class IndexViewModel {
     private(set) var customTags: [FileTag] = []
     private(set) var lastAutoRescanMessage: String? = nil
     private(set) var autoScanLaunchMessage: String? = nil
+    private(set) var availableUpdate: AvailableUpdate? = nil
+    private(set) var isCheckingForUpdates = false
 
     var availableTags: [FileTag] {
         (FileTag.predefined + customTags).uniquedByTitle()
@@ -131,6 +149,12 @@ final class IndexViewModel {
     private static let extensionTagsKey = "FileAtlas.extensionTags"
     private static let extensionTagsMigrationKey = "FileAtlas.didMigrateFileTagsToExtensionTagsV1"
     private static let customTagsKey = "FileAtlas.customTags"
+    private static let updateLastCheckKey = "FileAtlas.updateLastCheck"
+    private static let updateLatestTagKey = "FileAtlas.updateLatestTag"
+    private static let updateLatestURLKey = "FileAtlas.updateLatestURL"
+    private static let updateCheckInterval: TimeInterval = 24 * 60 * 60
+    private static let latestReleaseAPIURL = URL(string: "https://api.github.com/repos/Schrotty74/FileAtlas/releases/latest")!
+    private static let latestReleaseWebURL = URL(string: "https://github.com/Schrotty74/FileAtlas/releases/latest")!
     private nonisolated static let searchDebounceDelay: Duration = .milliseconds(150)
     private nonisolated static let scanPublishInterval: Duration = .milliseconds(200)
     private nonisolated static let scanPublishBatchSize = 200
@@ -189,6 +213,7 @@ final class IndexViewModel {
     private var scanTask: Task<Void, Never>? = nil
     private var autoScanLaunchTask: Task<Void, Never>? = nil
     private var didStartAutoScanOnLaunch = false
+    private var didScheduleUpdateCheckOnLaunch = false
     private var folderMonitor: FolderChangeMonitor? = nil
     private var pendingAutoRescanTask: Task<Void, Never>? = nil
     private var suppressAutoRescanUntil: Date? = nil
@@ -234,6 +259,7 @@ final class IndexViewModel {
         loadRecentScanRoots()
         loadCustomTags()
         loadExtensionTags()
+        loadCachedUpdateResult()
     }
 
     /// Trimmt Einträge, verwirft Leere und entfernt case-insensitive Duplikate.
@@ -249,6 +275,106 @@ final class IndexViewModel {
             }
         }
         return result
+    }
+
+    // MARK: - Update-Prüfung
+
+    func scheduleUpdateCheckOnLaunch() {
+        guard !didScheduleUpdateCheckOnLaunch else { return }
+        didScheduleUpdateCheckOnLaunch = true
+
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
+            await self?.checkForUpdates(force: false)
+        }
+    }
+
+    func checkForUpdates(force: Bool) async {
+        if !force, !shouldRunAutomaticUpdateCheck() {
+            return
+        }
+
+        isCheckingForUpdates = true
+        defer { isCheckingForUpdates = false }
+
+        do {
+            var request = URLRequest(url: Self.latestReleaseAPIURL)
+            request.setValue("FileAtlas", forHTTPHeaderField: "User-Agent")
+            request.timeoutInterval = 10
+
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200..<300).contains(httpResponse.statusCode)
+            else { return }
+
+            let release = try JSONDecoder().decode(GitHubReleaseResponse.self, from: data)
+            let releaseURL = release.htmlURL.flatMap(URL.init(string:)) ?? Self.latestReleaseWebURL
+            updateCachedRelease(tag: release.tagName, releaseURL: releaseURL)
+        } catch {
+            // Netzwerkfehler und Rate Limits bewusst still ignorieren.
+            return
+        }
+    }
+
+    func openAvailableUpdate() {
+        NSWorkspace.shared.open(availableUpdate?.releaseURL ?? Self.latestReleaseWebURL)
+    }
+
+    private func shouldRunAutomaticUpdateCheck() -> Bool {
+        let lastCheck = UserDefaults.standard.object(forKey: Self.updateLastCheckKey) as? Date
+        guard let lastCheck else { return true }
+        return Date().timeIntervalSince(lastCheck) >= Self.updateCheckInterval
+    }
+
+    private func loadCachedUpdateResult() {
+        let defaults = UserDefaults.standard
+        guard let tag = defaults.string(forKey: Self.updateLatestTagKey) else { return }
+        let releaseURL = defaults.string(forKey: Self.updateLatestURLKey).flatMap(URL.init(string:)) ?? Self.latestReleaseWebURL
+        if Self.isVersion(tag, newerThan: Self.currentAppVersion()) {
+            availableUpdate = AvailableUpdate(versionTag: tag, releaseURL: releaseURL)
+        }
+    }
+
+    private func updateCachedRelease(tag: String, releaseURL: URL) {
+        let defaults = UserDefaults.standard
+        defaults.set(Date(), forKey: Self.updateLastCheckKey)
+        defaults.set(tag, forKey: Self.updateLatestTagKey)
+        defaults.set(releaseURL.absoluteString, forKey: Self.updateLatestURLKey)
+
+        if Self.isVersion(tag, newerThan: Self.currentAppVersion()) {
+            availableUpdate = AvailableUpdate(versionTag: tag, releaseURL: releaseURL)
+        } else {
+            availableUpdate = nil
+        }
+    }
+
+    private nonisolated static func currentAppVersion() -> String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+        return version ?? build ?? "0"
+    }
+
+    private nonisolated static func isVersion(_ candidate: String, newerThan current: String) -> Bool {
+        let lhs = versionComponents(candidate)
+        let rhs = versionComponents(current)
+        let count = max(lhs.count, rhs.count)
+
+        for index in 0..<count {
+            let left = index < lhs.count ? lhs[index] : 0
+            let right = index < rhs.count ? rhs[index] : 0
+            if left != right {
+                return left > right
+            }
+        }
+        return false
+    }
+
+    private nonisolated static func versionComponents(_ version: String) -> [Int] {
+        version
+            .trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+            .split { !$0.isNumber }
+            .compactMap { Int($0) }
     }
 
     // MARK: - Abgeleitete Liste (gefiltert + sortiert)
