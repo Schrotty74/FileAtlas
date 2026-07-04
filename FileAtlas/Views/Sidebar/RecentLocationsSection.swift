@@ -7,7 +7,6 @@ import SwiftUI
 
 struct RecentLocationsSection: View {
     @Environment(IndexViewModel.self) private var vm
-    let searchText: String
     @State private var expandedPaths: Set<String> = []
     @State private var childrenByPath: [String: [URL]] = [:]
     @State private var loadingPaths: Set<String> = []
@@ -16,7 +15,7 @@ struct RecentLocationsSection: View {
     var body: some View {
         if !vm.recentScanRoots.isEmpty {
             Section {
-                ForEach(visibleNodes) { node in
+                ForEach(nodes) { node in
                     LocationTreeRow(
                         url: node.url,
                         level: node.level,
@@ -35,14 +34,7 @@ struct RecentLocationsSection: View {
         }
     }
 
-    private var visibleNodes: [LocationTreeNode] {
-        let nodes = unfilteredNodes
-        let query = normalized(searchText.trimmingCharacters(in: .whitespacesAndNewlines))
-        guard !query.isEmpty else { return nodes }
-        return nodes.filter { normalized($0.url.lastPathComponent).contains(query) }
-    }
-
-    private var unfilteredNodes: [LocationTreeNode] {
+    private var nodes: [LocationTreeNode] {
         vm.recentScanRoots.flatMap { url in
             nodes(for: url, level: 0, isSavedRoot: true, accessRoot: vm.securityScopedAccessRoot(for: url))
         }
@@ -72,9 +64,5 @@ struct RecentLocationsSection: View {
 
     private func pathKey(for url: URL) -> String {
         url.path(percentEncoded: false)
-    }
-
-    private func normalized(_ value: String) -> String {
-        value.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
     }
 }
