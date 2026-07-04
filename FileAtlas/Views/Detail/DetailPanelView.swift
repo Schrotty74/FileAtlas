@@ -238,8 +238,7 @@ struct DetailPanelView: View {
     }
 
     private nonisolated static func isAppBundle(_ entry: FileEntry) -> Bool {
-        guard entry.isDirectory,
-              entry.path.pathExtension.caseInsensitiveCompare("app") == .orderedSame
+        guard entry.path.pathExtension.caseInsensitiveCompare("app") == .orderedSame
         else { return false }
 
         var isDirectory: ObjCBool = false
