@@ -46,7 +46,10 @@ struct DetailPanelView: View {
                     QuickLookPreview(
                         url: entry.path,
                         accessURL: vm.securityScopedAccessRoot(for: entry.path),
-                        fallbackIcon: FileRowView.icon(for: entry)
+                        fallbackIcon: FileRowView.icon(for: entry),
+                        onPreviewAccess: {
+                            vm.suppressAutoRescanForPreviewActivity()
+                        }
                     )
                 }
 

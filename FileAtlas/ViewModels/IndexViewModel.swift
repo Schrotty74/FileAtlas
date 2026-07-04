@@ -649,8 +649,12 @@ final class IndexViewModel {
 
     func quickLookSelectedEntry() {
         guard let selectedEntry else { return }
-        suppressAutoRescanForPreview()
+        suppressAutoRescanForPreviewActivity()
         QuickLookPresenter.shared.present(selectedEntry.path, accessURL: securityScopedAccessRoot(for: selectedEntry.path))
+    }
+
+    func suppressAutoRescanForPreviewActivity() {
+        suppressAutoRescanForPreview()
     }
 
     func startRecentScan(root: URL) {
@@ -889,7 +893,7 @@ final class IndexViewModel {
 
     /// Sammel-Key für Dateien ohne Endung (z. B. `Makefile`, `Dockerfile`), damit deren Tags
     /// beim Laden/Migrieren nicht verworfen werden.
-    private static let noExtensionTagKey = "__no_extension__"
+    private nonisolated static let noExtensionTagKey = "__no_extension__"
 
     private nonisolated static func loadedExtensionTags(from raw: [String: [String]]) -> [String: Set<FileTag>] {
         var loadedTags: [String: Set<FileTag>] = [:]
@@ -1130,7 +1134,7 @@ final class IndexViewModel {
     }
 
     private func suppressAutoRescanForPreview() {
-        suppressAutoRescanUntil = Date().addingTimeInterval(5)
+        suppressAutoRescanUntil = Date().addingTimeInterval(10)
         pendingAutoRescanTask?.cancel()
         pendingAutoRescanTask = nil
     }
