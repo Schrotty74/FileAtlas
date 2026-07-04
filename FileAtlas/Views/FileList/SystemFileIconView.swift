@@ -18,7 +18,9 @@ struct SystemFileIconView: View {
 
     var body: some View {
         Group {
-            if vm.iconDisplayMode == .real, let icon {
+            if vm.iconDisplayMode == .real,
+               !SystemFileIconCache.usesFallbackIcon(for: entry),
+               let icon {
                 Image(nsImage: icon)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -28,7 +30,8 @@ struct SystemFileIconView: View {
         }
         .frame(width: size, height: size)
         .task(id: taskKey) {
-            guard vm.iconDisplayMode == .real else {
+            guard vm.iconDisplayMode == .real,
+                  !SystemFileIconCache.usesFallbackIcon(for: entry) else {
                 icon = nil
                 return
             }
@@ -37,9 +40,9 @@ struct SystemFileIconView: View {
     }
 
     private var genericIcon: some View {
-        Image(systemName: FileRowView.icon(for: entry))
+        Image(systemName: fallbackIconName)
             .font(.system(size: max(12, size - 2)))
-            .foregroundStyle(AppTheme.theme.accentColor)
+            .foregroundStyle(fallbackIconColor)
     }
 
     private var taskKey: String {
@@ -49,10 +52,25 @@ struct SystemFileIconView: View {
     private var cacheKey: String {
         SystemFileIconCache.cacheKey(for: entry)
     }
+
+    private var fallbackIconName: String {
+        if vm.iconDisplayMode == .real, SystemFileIconCache.usesFallbackIcon(for: entry) {
+            return "film"
+        }
+        return FileRowView.icon(for: entry)
+    }
+
+    private var fallbackIconColor: Color {
+        if vm.iconDisplayMode == .real, SystemFileIconCache.usesFallbackIcon(for: entry) {
+            return AppTheme.gold
+        }
+        return AppTheme.theme.accentColor
+    }
 }
 
 private actor SystemFileIconCache {
     static let shared = SystemFileIconCache()
+    private nonisolated static let fallbackIconExtensions: Set<String> = ["mkv"]
 
     private var icons: [String: NSImage] = [:]
 
@@ -68,11 +86,19 @@ private actor SystemFileIconCache {
     }
 
     nonisolated static func cacheKey(for entry: FileEntry) -> String {
+        if usesFallbackIcon(for: entry) {
+            return "fallback-ext:" + FilterPreset.normalize(entry.fileExtension)
+        }
+
         if entry.isDirectory || FilterPreset.normalize(entry.fileExtension) == "app" {
             return "path:" + entry.path.path(percentEncoded: false)
         }
 
         let ext = FilterPreset.normalize(entry.fileExtension)
         return ext.isEmpty ? "path:" + entry.path.path(percentEncoded: false) : "ext:" + ext
+    }
+
+    nonisolated static func usesFallbackIcon(for entry: FileEntry) -> Bool {
+        fallbackIconExtensions.contains(FilterPreset.normalize(entry.fileExtension))
     }
 }
