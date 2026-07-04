@@ -103,6 +103,7 @@ final class IndexViewModel {
     private(set) var autoScanLaunchMessage: String? = nil
     private(set) var availableUpdate: AvailableUpdate? = nil
     private(set) var isCheckingForUpdates = false
+    private(set) var updateCheckStatusMessage: String? = nil
 
     var availableTags: [FileTag] {
         (FileTag.predefined + customTags).uniquedByTitle()
@@ -295,24 +296,38 @@ final class IndexViewModel {
             return
         }
 
+        if force {
+            updateCheckStatusMessage = nil
+        }
         isCheckingForUpdates = true
         defer { isCheckingForUpdates = false }
 
         do {
             var request = URLRequest(url: Self.latestReleaseAPIURL)
-            request.setValue("FileAtlas", forHTTPHeaderField: "User-Agent")
+            request.setValue("FileAtlas/\(Self.currentAppVersion())", forHTTPHeaderField: "User-Agent")
             request.timeoutInterval = 10
 
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse,
                   (200..<300).contains(httpResponse.statusCode)
-            else { return }
+            else {
+                if force {
+                    updateCheckStatusMessage = NSLocalizedString("Update check failed.", comment: "Manual update check failed status message.")
+                }
+                return
+            }
 
             let release = try JSONDecoder().decode(GitHubReleaseResponse.self, from: data)
             let releaseURL = release.htmlURL.flatMap(URL.init(string:)) ?? Self.latestReleaseWebURL
-            updateCachedRelease(tag: release.tagName, releaseURL: releaseURL)
+            let updateAvailable = updateCachedRelease(tag: release.tagName, releaseURL: releaseURL)
+            if force, !updateAvailable {
+                updateCheckStatusMessage = NSLocalizedString("FileAtlas is up to date.", comment: "Manual update check success status message when no update is available.")
+            }
         } catch {
             // Netzwerkfehler und Rate Limits bewusst still ignorieren.
+            if force {
+                updateCheckStatusMessage = NSLocalizedString("Update check failed.", comment: "Manual update check failed status message.")
+            }
             return
         }
     }
@@ -336,7 +351,8 @@ final class IndexViewModel {
         }
     }
 
-    private func updateCachedRelease(tag: String, releaseURL: URL) {
+    @discardableResult
+    private func updateCachedRelease(tag: String, releaseURL: URL) -> Bool {
         let defaults = UserDefaults.standard
         defaults.set(Date(), forKey: Self.updateLastCheckKey)
         defaults.set(tag, forKey: Self.updateLatestTagKey)
@@ -344,8 +360,11 @@ final class IndexViewModel {
 
         if Self.isVersion(tag, newerThan: Self.currentAppVersion()) {
             availableUpdate = AvailableUpdate(versionTag: tag, releaseURL: releaseURL)
+            updateCheckStatusMessage = nil
+            return true
         } else {
             availableUpdate = nil
+            return false
         }
     }
 

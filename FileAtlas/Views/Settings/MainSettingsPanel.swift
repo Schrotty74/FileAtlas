@@ -406,6 +406,12 @@ struct MainSettingsPanel: View {
                 }
                 .disabled(vm.isCheckingForUpdates)
 
+                if let updateCheckStatusMessage = vm.updateCheckStatusMessage {
+                    Text(updateCheckStatusMessage)
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.theme.textSecondary)
+                }
+
                 if let issuesURL = URL(string: "https://github.com/Schrotty74/FileAtlas/issues") {
                     Link("Report a bug on GitHub", destination: issuesURL)
                 }
