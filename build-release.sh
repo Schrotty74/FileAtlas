@@ -15,6 +15,11 @@ if [ -z "$VERSION" ]; then
   echo "Verwendung: ./build-release.sh v1.0.0"
   exit 1
 fi
+if ! [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "FEHLER: Ungueltiges Versionsformat: '$VERSION'"
+  echo "Erwartet: vX.Y.Z (z. B. v1.8.1)"
+  exit 1
+fi
 APP_VERSION="${VERSION#v}"
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
