@@ -1,9 +1,14 @@
 name: Release
 
+# Manuell statt automatisch bei Tag-Push: build-release.sh ist der alleinige
+# Release-Weg (siehe CLAUDE.md). Läuft dieser Workflow gleichzeitig bei einem
+# Tag-Push, erzeugt/aktualisiert er dasselbe GitHub Release erneut mit
+# generate_release_notes. Existiert bereits ein body (aus build-release.sh),
+# hängt die GitHub-API die neu generierten Notes an den bestehenden Text an,
+# statt ihn zu ersetzen — das verdoppelt den "Full Changelog"-Link (siehe
+# Release v1.7.0). workflow_dispatch verhindert diese Race Condition.
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
