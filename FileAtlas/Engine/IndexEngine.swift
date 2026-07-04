@@ -157,12 +157,13 @@ actor IndexEngine {
         return true
     }
 
-    /// Ein Paket/Archiv als einzelne „Datei", ohne dessen Inhalt während des Scans zu lesen.
+    /// Ein Paket/Archiv als einzelne „Datei", ohne dessen Inhalt als eigene Einträge zu lesen.
     private static func packageEntry(for url: URL, values: URLResourceValues) -> FileEntry {
-        FileEntry(
+        let isDirectory = values.isDirectory ?? false
+        return FileEntry(
             name: values.name ?? url.lastPathComponent,
             path: url,
-            size: Int64(values.fileSize ?? 0),
+            size: isDirectory ? directorySize(of: url) : Int64(values.fileSize ?? 0),
             created: values.creationDate ?? .distantPast,
             modified: values.contentModificationDate ?? .distantPast,
             fileExtension: url.pathExtension,
