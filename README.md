@@ -1,6 +1,6 @@
 # FileAtlas
 
-![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue) ![Swift 6](https://img.shields.io/badge/Swift-6-orange) ![License: GPLv3](https://img.shields.io/badge/License-GPLv3-green) ![Security: Clean](https://img.shields.io/badge/Security-Clean-brightgreen)
+![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue) ![Swift 6](https://img.shields.io/badge/Swift-6-orange) ![License: GPLv3](https://img.shields.io/badge/License-GPLv3-green) ![Security: Clean](https://img.shields.io/badge/Security-Clean-brightgreen) [![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/RbsvqRCPQ)
 
 <p align="center">
   <img src="FileAtlas/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" width="150" alt="FileAtlas App Icon">
@@ -82,6 +82,10 @@ macOS remembers your choice — this step is only required once.
 > xattr -cr FileAtlas.app
 > ```
 > Then try opening the app again.
+
+## Community
+
+Questions, feedback and discussions are welcome on [Discord](https://discord.gg/RbsvqRCPQ).
 
 ## License
 
