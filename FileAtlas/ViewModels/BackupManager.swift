@@ -15,6 +15,7 @@ final class BackupManager {
 
     private var configs: [String: BackupConfig]
     private let store = BackupConfigStore()
+    private var backupTask: Task<Void, Error>? = nil
 
     // Laufzustand (für UI)
     private(set) var activeBackupLocation: String? = nil
@@ -108,14 +109,19 @@ final class BackupManager {
         let locScoped = location.startAccessingSecurityScopedResource()
 
         let task = Task.detached(priority: .utility) { [weak self] () throws -> Void in
+            try Task.checkCancellation()
+
             if kind == .indexOnly || kind == .both {
                 _ = try BackupEngine.writeIndex(location: location, destinationDir: destDir, timestamp: timestamp)
             }
+
+            try Task.checkCancellation()
+
             if kind == .fullOnly || kind == .both {
                 var lastPct = -1.0
                 _ = try BackupEngine.writeFullZip(
                     location: location, destinationDir: destDir, timestamp: timestamp,
-                    password: password, shouldCancel: { false },
+                    password: password, shouldCancel: { Task.isCancelled },
                     progress: { fraction, files in
                         let pct = (fraction * 100).rounded()
                         guard pct != lastPct else { return }
@@ -128,6 +134,7 @@ final class BackupManager {
                     })
             }
         }
+        backupTask = task
 
         let result = await task.result
         if destScoped { destDir.stopAccessingSecurityScopedResource() }
@@ -141,9 +148,14 @@ final class BackupManager {
         case .failure(let error):
             statusMessage = Self.message(for: error)
         }
+        backupTask = nil
         activeBackupLocation = nil
         progressFraction = 0
         progressLabel = ""
+    }
+
+    func cancelBackup() {
+        backupTask?.cancel()
     }
 
     /// Beim App-Start: für alle Orte fällige geplante Backups nacheinander ausführen.
@@ -173,6 +185,9 @@ final class BackupManager {
     }
 
     private static func message(for error: Error) -> String {
+        if error is CancellationError {
+            return NSLocalizedString("Backup cancelled.", comment: "")
+        }
         if case BackupEngine.BackupError.insufficientSpace(let needed, let free) = error {
             let n = ByteCountFormatter.string(fromByteCount: needed, countStyle: .file)
             let f = ByteCountFormatter.string(fromByteCount: free, countStyle: .file)
