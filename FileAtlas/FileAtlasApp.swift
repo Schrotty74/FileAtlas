@@ -127,33 +127,3 @@ struct FileAtlasCommands: Commands {
         }
     }
 }
-
-// MARK: - Einstellungen (⌘,)
-
-struct SettingsView: View {
-    @Environment(AppearanceManager.self) private var appearance
-    @Environment(LanguageManager.self) private var language
-
-    var body: some View {
-        @Bindable var appearance = appearance
-        @Bindable var language = language
-        Form {
-            Section("Appearance") {
-                Picker("Appearance", selection: $appearance.mode) {
-                    Text("Light").tag(AppearanceMode.light)
-                    Text("Dark").tag(AppearanceMode.dark)
-                    Text("System").tag(AppearanceMode.system)
-                }
-            }
-            Section("Language") {
-                Picker("Language", selection: $language.language) {
-                    Text("Deutsch").tag(AppLanguage.de)
-                    Text("English").tag(AppLanguage.en)
-                    Text("System").tag(AppLanguage.auto)
-                }
-            }
-        }
-        .formStyle(.grouped)
-        .frame(width: 380, height: 220)
-    }
-}
