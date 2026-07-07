@@ -18,7 +18,9 @@ FileAtlas has been audited for exposed private data. The audit covers all commit
 
 ## App Safety
 
-FileAtlas is built exclusively with Apple frameworks and requires no external dependencies. It does not make any network requests. All data (snapshots, backups, filter presets) is stored locally on your Mac.
+FileAtlas is built exclusively with Apple frameworks and requires no external dependencies. User data stays local on your Mac: snapshots, backups, filter presets, scan results, bookmarks and tags are stored locally.
+
+The only intended network access is the optional GitHub Releases update check, which contacts GitHub to determine whether a newer FileAtlas release is available. FileAtlas does not upload scanned file metadata or private user data.
 
 Passwords for encrypted backups are stored in the macOS Keychain — never in plain text.
 
