@@ -126,6 +126,11 @@ private struct BackupProgressBanner: View {
                 Text(backup.progressLabel)
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(AppTheme.theme.textSecondary)
+                Button("Cancel") {
+                    backup.cancelBackup()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
             }
             .padding(.horizontal, 14).padding(.vertical, 8)
             .background(.regularMaterial, in: Capsule())
