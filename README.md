@@ -8,7 +8,7 @@
 
 FileAtlas is a native macOS file indexing and comparison app built with pure Apple frameworks. It helps scan folders, inspect metadata, detect duplicates, compare snapshots, export reports, and manage backups without external dependencies.
 
-> **Security:** No private data, API keys, or certificates have been published in this repository. The app stores user data locally and only uses network access for the optional GitHub Releases update check. See [SECURITY.md](SECURITY.md) for the full audit.
+> **Security:** No private data, API keys, or certificates have been published in this repository. FileAtlas stores scan data locally. If update checks are enabled, the app only contacts GitHub Releases to look for a newer version. See [SECURITY.md](SECURITY.md) for the full audit.
 
 
 [🇩🇪 Deutsche Beschreibung](README.de.md)
@@ -46,7 +46,7 @@ FileAtlas is a native macOS file indexing and comparison app built with pure App
 - Real system icons for files, apps and folders, with a toggle for fast generic icons in Settings
 - App bundle metadata (name, version, developer, bundle ID) shown in detail panel
 - Auto-scan on launch option in Settings
-- Optional update check notification via GitHub Releases
+- Update check notification via GitHub Releases
 - No external dependencies - pure Apple frameworks only
 
 ## Requirements
