@@ -126,6 +126,7 @@ if ! command -v gh &> /dev/null; then
 fi
 
 NOTES_PATH="$BUILD_DIR/release-notes.md"
+CLEAN_NOTES_PATH="$BUILD_DIR/release-notes-clean.md"
 DEDUPED_NOTES_PATH="$BUILD_DIR/release-notes-deduped.md"
 
 echo "Generiere Release Notes..."
@@ -137,13 +138,24 @@ gh api \
   --jq .body > "$NOTES_PATH"
 
 awk '
+  NR == 1 && /^#*[[:space:]]*FileAtlas[[:space:]]+/ {
+    skippedTitle = 1
+    next
+  }
+  NR == 2 && skippedTitle && /^$/ {
+    next
+  }
+  { print }
+' "$NOTES_PATH" > "$CLEAN_NOTES_PATH"
+
+awk '
   /^\*\*Full Changelog\*\*:/ {
     if (seenFullChangelog++) {
       next
     }
   }
   { print }
-' "$NOTES_PATH" > "$DEDUPED_NOTES_PATH"
+' "$CLEAN_NOTES_PATH" > "$DEDUPED_NOTES_PATH"
 
 gh release create "$VERSION" \
   "$DMG_PATH#FileAtlas.dmg" \
