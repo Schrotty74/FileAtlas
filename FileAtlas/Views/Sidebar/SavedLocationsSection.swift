@@ -242,13 +242,13 @@ struct LocationTreeRow: View {
                     Label("Add to Quick Access", systemImage: "bookmark")
                 }
             }
-            Button {
-                ui.backupLocation = url
-                ui.showBackupSettings = true
-            } label: {
-                Label("Backup Settings…", systemImage: "arrow.down.doc")
-            }
             if isSavedRoot {
+                Button {
+                    ui.backupLocation = url
+                    ui.showBackupSettings = true
+                } label: {
+                    Label("Backup Settings…", systemImage: "arrow.down.doc")
+                }
                 Divider()
                 Button(role: .destructive) {
                     vm.removeRoot(url)

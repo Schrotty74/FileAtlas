@@ -16,9 +16,12 @@ struct BackupSettingsView: View {
     @State private var kind: BackupKind = .indexOnly
     @State private var schedule: BackupSchedule = .off
     @State private var passwordEnabled = false
+    @State private var compressionEnabled = true
+    @State private var hashManifestEnabled = false
     @State private var password = ""
     @State private var hasDestination = false
     @State private var destinationName: String?
+    @State private var sourceName = ""
     @State private var estimatedSize: Int64?
 
     private var includesFull: Bool { kind != .indexOnly }
@@ -50,7 +53,36 @@ struct BackupSettingsView: View {
                     .pickerStyle(.radioGroup)
                 }
 
+                Section("Source") {
+                    HStack {
+                        Image(systemName: "folder.fill")
+                            .foregroundStyle(AppTheme.theme.accentColor)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(sourceName)
+                            Text("Full backup backs up the selected folder recursively. You can choose a single file instead.")
+                                .font(.caption)
+                                .foregroundStyle(AppTheme.theme.textSecondary)
+                        }
+                        Spacer()
+                        Button("Choose…") {
+                            backup.chooseSource(for: location)
+                            refreshSource()
+                            refreshEstimate()
+                        }
+                    }
+                }
+
                 if includesFull {
+                    Section("Archive options") {
+                        Toggle("Compress files", isOn: $compressionEnabled)
+                            .tint(AppTheme.theme.accentColor)
+                        Toggle("Create SHA-256 hash manifest", isOn: $hashManifestEnabled)
+                            .tint(AppTheme.theme.accentColor)
+                        Text("Large already-compressed files are streamed for speed and cancellation responsiveness.")
+                            .font(.caption)
+                            .foregroundStyle(AppTheme.theme.textSecondary)
+                    }
+
                     Section("Password protection (AES-256)") {
                         Toggle("Encrypt backup with password", isOn: $passwordEnabled)
                             .tint(AppTheme.theme.accentColor)
@@ -130,8 +162,7 @@ struct BackupSettingsView: View {
         .frame(width: 460, height: 600)
         .onAppear(perform: load)
         .task {
-            let loc = location
-            estimatedSize = await Task.detached { BackupEngine.estimatedSize(of: loc) }.value
+            refreshEstimate()
         }
     }
 
@@ -142,7 +173,14 @@ struct BackupSettingsView: View {
         kind = config.kind
         schedule = config.schedule
         passwordEnabled = config.passwordEnabled
+        compressionEnabled = config.compressionEnabled
+        hashManifestEnabled = config.hashManifestEnabled
+        refreshSource()
         refreshDestination()
+    }
+
+    private func refreshSource() {
+        sourceName = backup.sourceDisplayName(for: location)
     }
 
     private func refreshDestination() {
@@ -150,11 +188,21 @@ struct BackupSettingsView: View {
         hasDestination = destinationName != nil
     }
 
+    private func refreshEstimate() {
+        estimatedSize = nil
+        let loc = location
+        Task {
+            estimatedSize = await Task.detached { BackupEngine.estimatedSize(of: loc) }.value
+        }
+    }
+
     private func save() {
         var config = backup.config(for: location)
         config.kind = kind
         config.schedule = schedule
         config.passwordEnabled = passwordEnabled
+        config.compressionEnabled = compressionEnabled
+        config.hashManifestEnabled = hashManifestEnabled
         backup.saveConfig(config)
 
         if includesFull && passwordEnabled {

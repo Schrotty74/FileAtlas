@@ -140,7 +140,7 @@ private struct InlineQuickLookPreview: NSViewRepresentable {
 
 /// Präsentiert die native Vollbild-Vorschau (Quick Look).
 @MainActor
-final class QuickLookPresenter: NSObject, QLPreviewPanelDataSource, QLPreviewPanelDelegate {
+final class QuickLookPresenter: NSObject, @preconcurrency QLPreviewPanelDataSource, QLPreviewPanelDelegate {
     static let shared = QuickLookPresenter()
     private var url: URL?
     private var accessedURL: URL?

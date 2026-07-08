@@ -22,23 +22,31 @@ nonisolated struct ZipArchiver {
     enum ZipError: Error { case cannotCreateFile, cancelled }
 
     private static let zip64Threshold: UInt64 = 0xFFFF_FFFF
+    private static let maxInMemoryCompressionSize = 64 * 1024 * 1024
 
-    /// Erstellt ein ZIP aus `sourceFolder` unter `destination`.
+    /// Erstellt ein ZIP aus einer Datei oder einem Ordner unter `destination`.
     /// - Parameter password: nil = unverschlüsselt, sonst AES-256 (WinZip AE-2).
     static func create(
-        sourceFolder: URL,
+        source: URL,
         destination: URL,
         password: String?,
+        options: BackupArchiveOptions = BackupArchiveOptions(),
         shouldCancel: () -> Bool = { false },
-        progress: (_ bytesProcessed: Int64, _ filesProcessed: Int) -> Void = { _, _ in }
+        progress: (_ bytesProcessed: Int64, _ filesProcessed: Int, _ currentPath: URL) -> Void = { _, _, _ in }
     ) throws {
-        let files = regularFiles(in: sourceFolder)
+        let files = regularFiles(in: source)
 
         FileManager.default.createFile(atPath: destination.path, contents: nil)
         guard let handle = try? FileHandle(forWritingTo: destination) else {
             throw ZipError.cannotCreateFile
         }
-        defer { try? handle.close() }
+        var didFinish = false
+        defer {
+            try? handle.close()
+            if !didFinish {
+                try? FileManager.default.removeItem(at: destination)
+            }
+        }
 
         var central = Data()
         var offset: UInt64 = 0
@@ -48,28 +56,58 @@ nonisolated struct ZipArchiver {
         for (index, file) in files.enumerated() {
             if shouldCancel() { throw ZipError.cancelled }
 
-            let name = relativePath(of: file, base: sourceFolder)
-            let raw = (try? Data(contentsOf: file)) ?? Data()
-            let crc = crc32(raw)
-            let (payload, method) = compress(raw)
+            let name = relativePath(of: file, base: source)
+            let canStreamStored = password?.isEmpty ?? true
+            let fileSize = Int64((try? file.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0)
+            let shouldStreamStored = canStreamStored && fileSize > maxInMemoryCompressionSize
 
-            // Optional verschlüsseln (WinZip AE-2).
-            let fileData: Data
+            let uncompSize: UInt64
+            let compSize: UInt64
+            let headerCRC: UInt32
             let storedMethod: UInt16
             let aesExtra: Data?
-            if let password, !password.isEmpty {
-                fileData = encryptAES(payload, password: password)
-                storedMethod = 99                                   // AES
-                aesExtra = aesExtraField(actualMethod: method)
-            } else {
-                fileData = payload
-                storedMethod = method
+            let fileData: Data?
+            let usesDataDescriptor: Bool
+            var streamedCRC: UInt32?
+
+            if shouldStreamStored {
+                uncompSize = UInt64(max(0, fileSize))
+                compSize = UInt64(max(0, fileSize))
+                headerCRC = 0
+                storedMethod = 0
                 aesExtra = nil
+                fileData = nil
+                usesDataDescriptor = true
+            } else {
+                if shouldCancel() { throw ZipError.cancelled }
+                let raw = (try? Data(contentsOf: file)) ?? Data()
+                if shouldCancel() { throw ZipError.cancelled }
+                let crc = crc32(raw)
+                let (payload, method) = try compress(raw, compressionEnabled: options.compressionEnabled, shouldCancel: shouldCancel)
+                if shouldCancel() { throw ZipError.cancelled }
+
+                // Optional verschlüsseln (WinZip AE-2).
+                if let password, !password.isEmpty {
+                    if shouldCancel() { throw ZipError.cancelled }
+                    let encrypted = encryptAES(payload, password: password)
+                    uncompSize = UInt64(raw.count)
+                    compSize = UInt64(encrypted.count)
+                    headerCRC = 0                                  // AE-2: CRC = 0
+                    storedMethod = 99                              // AES
+                    aesExtra = aesExtraField(actualMethod: method)
+                    fileData = encrypted
+                    usesDataDescriptor = false
+                } else {
+                    uncompSize = UInt64(raw.count)
+                    compSize = UInt64(payload.count)
+                    headerCRC = crc
+                    storedMethod = method
+                    aesExtra = nil
+                    fileData = payload
+                    usesDataDescriptor = false
+                }
             }
 
-            let uncompSize = UInt64(raw.count)
-            let compSize = UInt64(fileData.count)
-            let headerCRC: UInt32 = (aesExtra != nil) ? 0 : crc      // AE-2: CRC = 0
             let (dosTime, dosDate) = dosDateTime(for: file)
             let localOffset = offset
 
@@ -82,13 +120,13 @@ nonisolated struct ZipArchiver {
             var local = Data()
             local.le(UInt32(0x04034b50))
             local.le(UInt16(needsZip64 ? 45 : (storedMethod == 99 ? 51 : 20)))   // version needed
-            local.le(UInt16(0x0800))                                              // flags: UTF-8 names
+            local.le(UInt16(usesDataDescriptor ? 0x0808 : 0x0800))                // flags: UTF-8 + optional data descriptor
             local.le(storedMethod)
             local.le(dosTime)
             local.le(dosDate)
-            local.le(headerCRC)
-            local.le(UInt32(needsZip64 ? 0xFFFFFFFF : UInt32(compSize)))
-            local.le(UInt32(needsZip64 ? 0xFFFFFFFF : UInt32(uncompSize)))
+            local.le(usesDataDescriptor ? UInt32(0) : headerCRC)
+            local.le(usesDataDescriptor ? UInt32(0) : UInt32(needsZip64 ? 0xFFFFFFFF : UInt32(compSize)))
+            local.le(usesDataDescriptor ? UInt32(0) : UInt32(needsZip64 ? 0xFFFFFFFF : UInt32(uncompSize)))
             local.le(UInt16(nameBytes.count))
 
             var localExtra = Data()
@@ -98,20 +136,31 @@ nonisolated struct ZipArchiver {
             local.append(nameBytes)
             local.append(localExtra)
 
+            if shouldCancel() { throw ZipError.cancelled }
             handle.write(local)
-            handle.write(fileData)
-            offset += UInt64(local.count) + compSize
+            if let fileData {
+                handle.write(fileData)
+            } else {
+                let streamed = try writeStoredFile(file, to: handle, shouldCancel: shouldCancel)
+                streamedCRC = streamed.crc
+                let descriptor = dataDescriptor(crc: streamed.crc, comp: UInt64(streamed.size), uncomp: UInt64(streamed.size), zip64: needsZip64)
+                handle.write(descriptor)
+            }
+            if shouldCancel() { throw ZipError.cancelled }
+            let descriptorSize = usesDataDescriptor ? UInt64(dataDescriptorSize(zip64: needsZip64)) : 0
+            offset += UInt64(local.count) + compSize + descriptorSize
 
             // ----- Central Directory Record -----
+            let centralCRC = streamedCRC ?? headerCRC
             var cd = Data()
             cd.le(UInt32(0x02014b50))
             cd.le(UInt16(needsZip64 ? 45 : 51))                                   // version made by
             cd.le(UInt16(needsZip64 ? 45 : (storedMethod == 99 ? 51 : 20)))       // version needed
-            cd.le(UInt16(0x0800))
+            cd.le(UInt16(usesDataDescriptor ? 0x0808 : 0x0800))
             cd.le(storedMethod)
             cd.le(dosTime)
             cd.le(dosDate)
-            cd.le(headerCRC)
+            cd.le(centralCRC)
             cd.le(UInt32(compSize >= zip64Threshold ? 0xFFFFFFFF : UInt32(compSize)))
             cd.le(UInt32(uncompSize >= zip64Threshold ? 0xFFFFFFFF : UInt32(uncompSize)))
             cd.le(UInt16(nameBytes.count))
@@ -132,11 +181,12 @@ nonisolated struct ZipArchiver {
             central.append(cd)
 
             entryCount += 1
-            bytesProcessed += Int64(raw.count)
-            progress(bytesProcessed, index + 1)
+            bytesProcessed += Int64(uncompSize)
+            progress(bytesProcessed, index + 1, file)
         }
 
         // ----- Central Directory + (Zip64) EOCD -----
+        if shouldCancel() { throw ZipError.cancelled }
         let centralOffset = offset
         let centralSize = UInt64(central.count)
         handle.write(central)
@@ -161,6 +211,7 @@ nonisolated struct ZipArchiver {
         eocd.le(UInt32(centralOffset >= zip64Threshold ? 0xFFFFFFFF : UInt32(centralOffset)))
         eocd.le(UInt16(0))                                                        // comment length
         handle.write(eocd)
+        didFinish = true
     }
 
     // MARK: - Dateiliste
@@ -169,6 +220,10 @@ nonisolated struct ZipArchiver {
     static func regularFiles(in folder: URL) -> [URL] {
         let scoped = folder.startAccessingSecurityScopedResource()
         defer { if scoped { folder.stopAccessingSecurityScopedResource() } }
+
+        if ((try? folder.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile == true) {
+            return [folder]
+        }
 
         guard let en = FileManager.default.enumerator(
             at: folder,
@@ -191,7 +246,10 @@ nonisolated struct ZipArchiver {
         }
     }
 
-    private static func relativePath(of url: URL, base: URL) -> String {
+    static func relativePath(of url: URL, base: URL) -> String {
+        if ((try? base.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile == true) {
+            return base.lastPathComponent
+        }
         let basePath = base.path(percentEncoded: false)
         let full = url.path(percentEncoded: false)
         var rel = full.hasPrefix(basePath) ? String(full.dropFirst(basePath.count)) : full
@@ -201,8 +259,11 @@ nonisolated struct ZipArchiver {
 
     // MARK: - Kompression
 
-    private static func compress(_ data: Data) -> (payload: Data, method: UInt16) {
+    private static func compress(_ data: Data, compressionEnabled: Bool, shouldCancel: () -> Bool) throws -> (payload: Data, method: UInt16) {
         guard !data.isEmpty else { return (Data(), 0) }
+        guard compressionEnabled else { return (data, 0) }
+        guard data.count <= maxInMemoryCompressionSize else { return (data, 0) }
+        if shouldCancel() { throw ZipError.cancelled }
         let cap = data.count
         var dst = Data(count: cap)
         let n = dst.withUnsafeMutableBytes { d -> Int in
@@ -213,9 +274,45 @@ nonisolated struct ZipArchiver {
                     nil, COMPRESSION_ZLIB)
             }
         }
+        if shouldCancel() { throw ZipError.cancelled }
         if n == 0 || n >= data.count { return (data, 0) }   // nicht komprimierbar → speichern
         dst.removeSubrange(n..<dst.count)
         return (dst, 8)
+    }
+
+    private static func writeStoredFile(_ file: URL, to handle: FileHandle, shouldCancel: () -> Bool) throws -> (size: Int64, crc: UInt32) {
+        let input = try FileHandle(forReadingFrom: file)
+        defer { try? input.close() }
+
+        var size: Int64 = 0
+        var crc: UInt32 = 0xFFFFFFFF
+        while true {
+            if shouldCancel() { throw ZipError.cancelled }
+            let data = try input.read(upToCount: 8 * 1024 * 1024) ?? Data()
+            if data.isEmpty { break }
+            size += Int64(data.count)
+            crc = updateCRC(crc, with: data)
+            handle.write(data)
+        }
+        return (size, crc ^ 0xFFFFFFFF)
+    }
+
+    private static func dataDescriptor(crc: UInt32, comp: UInt64, uncomp: UInt64, zip64: Bool) -> Data {
+        var d = Data()
+        d.le(UInt32(0x08074b50))
+        d.le(crc)
+        if zip64 {
+            d.le(comp)
+            d.le(uncomp)
+        } else {
+            d.le(UInt32(comp))
+            d.le(UInt32(uncomp))
+        }
+        return d
+    }
+
+    private static func dataDescriptorSize(zip64: Bool) -> Int {
+        zip64 ? 24 : 16
     }
 
     // MARK: - WinZip AES-256 (AE-2)
@@ -389,13 +486,17 @@ nonisolated struct ZipArchiver {
     }
 
     private static func crc32(_ data: Data) -> UInt32 {
-        var crc: UInt32 = 0xFFFFFFFF
+        updateCRC(0xFFFFFFFF, with: data) ^ 0xFFFFFFFF
+    }
+
+    private static func updateCRC(_ current: UInt32, with data: Data) -> UInt32 {
+        var crc = current
         data.withUnsafeBytes { buf in
             for byte in buf.bindMemory(to: UInt8.self) {
                 crc = crcTable[Int((crc ^ UInt32(byte)) & 0xFF)] ^ (crc >> 8)
             }
         }
-        return crc ^ 0xFFFFFFFF
+        return crc
     }
 
     private static func dosDateTime(for url: URL) -> (time: UInt16, date: UInt16) {

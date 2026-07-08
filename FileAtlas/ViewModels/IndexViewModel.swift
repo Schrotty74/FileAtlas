@@ -1489,7 +1489,8 @@ private final class FolderChangeMonitor {
         let callback: FSEventStreamCallback = { _, info, _, _, _, _ in
             guard let info else { return }
             let monitor = Unmanaged<FolderChangeMonitor>.fromOpaque(info).takeUnretainedValue()
-            Task { @MainActor in monitor.onChange() }
+            let onChange = monitor.onChange
+            Task { @MainActor in onChange() }
         }
         stream = FSEventStreamCreate(
             kCFAllocatorDefault,

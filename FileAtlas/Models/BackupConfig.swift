@@ -38,6 +38,10 @@ nonisolated struct BackupConfig: Codable, Identifiable, Sendable, Hashable {
     var kind: BackupKind = .indexOnly
     var schedule: BackupSchedule = .off
     var passwordEnabled: Bool = false
+    var compressionEnabled: Bool = true
+    var hashManifestEnabled: Bool = false
+    /// Optional abweichende Backup-Quelle (Datei oder Ordner).
+    var sourceBookmark: Data? = nil
     /// Security-Scoped-Bookmark des Zielordners.
     var destinationBookmark: Data? = nil
     var lastBackupDate: Date? = nil

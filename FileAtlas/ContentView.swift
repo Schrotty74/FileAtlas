@@ -122,7 +122,19 @@ private struct BackupProgressBanner: View {
             HStack(spacing: 10) {
                 ProgressView(value: backup.progressFraction)
                     .frame(width: 140)
-                Text("Backing up…").font(.callout.weight(.medium))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Backing up \(backup.activeSourceName)…")
+                        .font(.callout.weight(.medium))
+                    if !backup.currentItemName.isEmpty {
+                        Text(backup.currentItemName)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    } else {
+                        Text(backup.progressLabel)
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(AppTheme.theme.textSecondary)
                 Text(backup.progressLabel)
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(AppTheme.theme.textSecondary)

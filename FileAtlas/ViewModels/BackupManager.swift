@@ -15,13 +15,15 @@ final class BackupManager {
 
     private var configs: [String: BackupConfig]
     private let store = BackupConfigStore()
-    private var backupTask: Task<Void, Error>? = nil
 
     // Laufzustand (für UI)
     private(set) var activeBackupLocation: String? = nil
     private(set) var progressFraction: Double = 0
     private(set) var progressLabel: String = ""
+    private(set) var activeSourceName: String = ""
+    private(set) var currentItemName: String = ""
     var statusMessage: String? = nil
+    private var backupTask: Task<Void, Error>? = nil
 
     var isBackingUp: Bool { activeBackupLocation != nil }
 
@@ -46,6 +48,10 @@ final class BackupManager {
 
     func destinationDisplayName(for location: URL) -> String? {
         resolveDestination(config(for: location))?.lastPathComponent
+    }
+
+    func sourceDisplayName(for location: URL) -> String {
+        resolveSource(config(for: location), fallback: location).lastPathComponent
     }
 
     // MARK: - Passwort (Keychain)
@@ -78,10 +84,24 @@ final class BackupManager {
         saveConfig(config)
     }
 
+    func chooseSource(for location: URL) {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = NSLocalizedString("Choose", comment: "")
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        var config = config(for: location)
+        config.sourceBookmark = try? url.bookmarkData(
+            options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+        saveConfig(config)
+    }
+
     // MARK: - Größe / Vorbedingungen
 
     func estimatedSize(of location: URL) -> Int64 {
-        BackupEngine.estimatedSize(of: location)
+        BackupEngine.estimatedSize(of: resolveSource(config(for: location), fallback: location))
     }
 
     // MARK: - Backup ausführen
@@ -96,49 +116,62 @@ final class BackupManager {
         }
 
         let locationPath = config.locationPath
+        let source = resolveSource(config, fallback: location)
         activeBackupLocation = locationPath
+        activeSourceName = source.lastPathComponent
+        currentItemName = ""
         progressFraction = 0
         progressLabel = NSLocalizedString("Preparing…", comment: "")
         statusMessage = nil
 
         let password = config.passwordEnabled ? KeychainStore.password(for: locationPath) : nil
         let kind = config.kind
+        let compressionEnabled = config.compressionEnabled
+        let hashManifestEnabled = config.hashManifestEnabled
         let timestamp = Self.timestamp()
 
         let destScoped = destDir.startAccessingSecurityScopedResource()
-        let locScoped = location.startAccessingSecurityScopedResource()
+        let sourceScoped = source.startAccessingSecurityScopedResource()
 
         let task = Task.detached(priority: .utility) { [weak self] () throws -> Void in
             try Task.checkCancellation()
 
             if kind == .indexOnly || kind == .both {
-                _ = try BackupEngine.writeIndex(location: location, destinationDir: destDir, timestamp: timestamp)
+                try Task.checkCancellation()
+                _ = try BackupEngine.writeIndex(location: source, destinationDir: destDir, timestamp: timestamp)
             }
 
             try Task.checkCancellation()
 
             if kind == .fullOnly || kind == .both {
+                try Task.checkCancellation()
                 var lastPct = -1.0
                 _ = try BackupEngine.writeFullZip(
-                    location: location, destinationDir: destDir, timestamp: timestamp,
+                    location: source, destinationDir: destDir, timestamp: timestamp,
                     password: password, shouldCancel: { Task.isCancelled },
-                    progress: { fraction, files in
+                    options: BackupArchiveOptions(
+                        compressionEnabled: compressionEnabled,
+                        hashManifestEnabled: hashManifestEnabled
+                    ),
+                    progress: { fraction, files, currentPath in
                         let pct = (fraction * 100).rounded()
-                        guard pct != lastPct else { return }
+                        let itemName = currentPath.lastPathComponent
+                        guard pct != lastPct || !itemName.isEmpty else { return }
                         lastPct = pct
                         let label = String(format: NSLocalizedString("%lld files", comment: ""), files)
                         Task { @MainActor [weak self] in
                             self?.progressFraction = fraction
                             self?.progressLabel = label
+                            self?.currentItemName = itemName
                         }
                     })
             }
         }
         backupTask = task
-
         let result = await task.result
+        backupTask = nil
         if destScoped { destDir.stopAccessingSecurityScopedResource() }
-        if locScoped { location.stopAccessingSecurityScopedResource() }
+        if sourceScoped { source.stopAccessingSecurityScopedResource() }
 
         switch result {
         case .success:
@@ -150,12 +183,16 @@ final class BackupManager {
         }
         backupTask = nil
         activeBackupLocation = nil
+        activeSourceName = ""
+        currentItemName = ""
         progressFraction = 0
         progressLabel = ""
     }
 
     func cancelBackup() {
+        guard isBackingUp else { return }
         backupTask?.cancel()
+        progressLabel = NSLocalizedString("Cancelling…", comment: "")
     }
 
     /// Beim App-Start: für alle Orte fällige geplante Backups nacheinander ausführen.
@@ -178,6 +215,13 @@ final class BackupManager {
                         relativeTo: nil, bookmarkDataIsStale: &stale)
     }
 
+    private func resolveSource(_ config: BackupConfig, fallback: URL) -> URL {
+        guard let data = config.sourceBookmark else { return fallback }
+        var stale = false
+        return (try? URL(resolvingBookmarkData: data, options: .withSecurityScope,
+                         relativeTo: nil, bookmarkDataIsStale: &stale)) ?? fallback
+    }
+
     private static func timestamp() -> String {
         let df = DateFormatter()
         df.dateFormat = "yyyy-MM-dd_HH-mm"
@@ -186,6 +230,9 @@ final class BackupManager {
 
     private static func message(for error: Error) -> String {
         if error is CancellationError {
+            return NSLocalizedString("Backup cancelled.", comment: "")
+        }
+        if case ZipArchiver.ZipError.cancelled = error {
             return NSLocalizedString("Backup cancelled.", comment: "")
         }
         if case BackupEngine.BackupError.insufficientSpace(let needed, let free) = error {
