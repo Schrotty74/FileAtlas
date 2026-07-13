@@ -34,6 +34,7 @@ struct FileAtlasApp: App {
                     vm.persistCachedRootPathsForAutoScan()
                 }
         }
+        .windowToolbarStyle(.unified(showsTitle: false))
         .commands {
             FileAtlasCommands(vm: vm, ui: ui, appearance: appearance, language: language)
         }

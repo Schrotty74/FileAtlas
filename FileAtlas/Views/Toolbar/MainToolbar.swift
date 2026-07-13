@@ -16,6 +16,16 @@ struct MainToolbar: ToolbarContent {
     var body: some ToolbarContent {
         @Bindable var ui = ui
 
+        ToolbarItem(placement: .navigation) {
+            HStack(spacing: 8) {
+                Text("FileAtlas")
+                    .font(.title3.weight(.semibold))
+                    .fixedSize()
+                DiscordMark(size: 30)
+                GitHubMark(size: 30)
+            }
+        }
+
         ToolbarItem(placement: .principal) {
             SearchField(text: $searchText, searchAllFolders: $searchAllFolders)
                 .frame(maxWidth: 520)
