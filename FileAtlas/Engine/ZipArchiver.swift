@@ -34,7 +34,24 @@ nonisolated struct ZipArchiver {
         shouldCancel: () -> Bool = { false },
         progress: (_ bytesProcessed: Int64, _ filesProcessed: Int, _ currentPath: URL) -> Void = { _, _, _ in }
     ) throws {
-        let files = regularFiles(in: source)
+        try create(
+            sources: [source], destination: destination, password: password,
+            options: options, includeSourceDirectory: false,
+            shouldCancel: shouldCancel, progress: progress
+        )
+    }
+
+    /// Erstellt ein einzelnes ZIP aus mehreren Dateien und/oder Ordnern.
+    static func create(
+        sources: [URL],
+        destination: URL,
+        password: String?,
+        options: BackupArchiveOptions = BackupArchiveOptions(),
+        includeSourceDirectory: Bool = true,
+        shouldCancel: () -> Bool = { false },
+        progress: (_ bytesProcessed: Int64, _ filesProcessed: Int, _ currentPath: URL) -> Void = { _, _, _ in }
+    ) throws {
+        let files = archiveFiles(in: sources, includeSourceDirectory: includeSourceDirectory)
 
         FileManager.default.createFile(atPath: destination.path, contents: nil)
         guard let handle = try? FileHandle(forWritingTo: destination) else {
@@ -53,10 +70,11 @@ nonisolated struct ZipArchiver {
         var entryCount: UInt64 = 0
         var bytesProcessed: Int64 = 0
 
-        for (index, file) in files.enumerated() {
+        for (index, archiveFile) in files.enumerated() {
             if shouldCancel() { throw ZipError.cancelled }
 
-            let name = relativePath(of: file, base: source)
+            let file = archiveFile.url
+            let name = archiveFile.name
             let canStreamStored = password?.isEmpty ?? true
             let fileSize = Int64((try? file.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0)
             let shouldStreamStored = canStreamStored && fileSize > maxInMemoryCompressionSize
@@ -246,6 +264,10 @@ nonisolated struct ZipArchiver {
         }
     }
 
+    static func totalSize(of sources: [URL]) -> Int64 {
+        sources.reduce(Int64(0)) { $0 + totalSize(of: $1) }
+    }
+
     static func relativePath(of url: URL, base: URL) -> String {
         if ((try? base.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile == true) {
             return base.lastPathComponent
@@ -255,6 +277,41 @@ nonisolated struct ZipArchiver {
         var rel = full.hasPrefix(basePath) ? String(full.dropFirst(basePath.count)) : full
         while rel.hasPrefix("/") { rel.removeFirst() }
         return rel
+    }
+
+    private struct ArchiveFile {
+        let url: URL
+        let name: String
+    }
+
+    private static func archiveFiles(in sources: [URL], includeSourceDirectory: Bool) -> [ArchiveFile] {
+        guard includeSourceDirectory || sources.count != 1 else {
+            let source = sources[0]
+            return regularFiles(in: source).map {
+                ArchiveFile(url: $0, name: relativePath(of: $0, base: source))
+            }
+        }
+
+        var usedTopLevelNames = Set<String>()
+        var result: [ArchiveFile] = []
+
+        for source in sources {
+            var topLevelName = source.lastPathComponent
+            var suffix = 2
+            while !usedTopLevelNames.insert(topLevelName).inserted {
+                topLevelName = "\(source.lastPathComponent) \(suffix)"
+                suffix += 1
+            }
+
+            let sourceIsFile = (try? source.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile == true
+            for file in regularFiles(in: source) {
+                let name = sourceIsFile
+                    ? topLevelName
+                    : "\(topLevelName)/\(relativePath(of: file, base: source))"
+                result.append(ArchiveFile(url: file, name: name))
+            }
+        }
+        return result
     }
 
     // MARK: - Kompression

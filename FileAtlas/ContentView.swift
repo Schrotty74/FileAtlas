@@ -33,6 +33,8 @@ final class UIState {
     // Backup
     var backupLocation: URL? = nil
     var showBackupSettings = false
+    var selectionBackupEntries: [FileEntry] = []
+    var showSelectionBackup = false
 
     init() {
         let rawMode = UserDefaults.standard.string(forKey: Self.fileListViewModeKey)
@@ -97,6 +99,9 @@ struct ContentView: View {
             if let location = ui.backupLocation {
                 BackupSettingsView(location: location)
             }
+        }
+        .sheet(isPresented: $ui.showSelectionBackup) {
+            SelectionBackupView(entries: ui.selectionBackupEntries)
         }
         .overlay(alignment: .bottom) {
             VStack(spacing: 8) {

@@ -242,7 +242,16 @@ struct LocationTreeRow: View {
                     Label("Add to Quick Access", systemImage: "bookmark")
                 }
             }
+            Divider()
+            Button {
+                ui.selectionBackupEntries = [backupEntry]
+                ui.showSelectionBackup = true
+            } label: {
+                Label("Back Up This Folder…", systemImage: "arrow.down.doc")
+            }
+            .disabled(backup.isBackingUp)
             if isSavedRoot {
+                Divider()
                 Button {
                     ui.backupLocation = url
                     ui.showBackupSettings = true
@@ -277,6 +286,25 @@ struct LocationTreeRow: View {
                 }
             }
         }
+    }
+
+    private var backupEntry: FileEntry {
+        let values = try? url.resourceValues(forKeys: [
+            .fileSizeKey,
+            .creationDateKey,
+            .contentModificationDateKey,
+            .isDirectoryKey,
+            .nameKey,
+        ])
+        return FileEntry(
+            name: values?.name ?? url.lastPathComponent,
+            path: url,
+            size: Int64(values?.fileSize ?? 0),
+            created: values?.creationDate ?? .distantPast,
+            modified: values?.contentModificationDate ?? .distantPast,
+            fileExtension: url.pathExtension,
+            isDirectory: values?.isDirectory ?? true
+        )
     }
 
     private func toggleExpanded() {

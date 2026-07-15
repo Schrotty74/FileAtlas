@@ -92,28 +92,54 @@ nonisolated struct BackupEngine {
         options: BackupArchiveOptions = BackupArchiveOptions(),
         progress: @escaping (_ fraction: Double, _ currentFiles: Int, _ currentPath: URL) -> Void
     ) throws -> URL {
-        let total = max(1, ZipArchiver.totalSize(of: location))
+        try writeFullZip(
+            sources: [location], destinationDir: destinationDir, timestamp: timestamp,
+            password: password, includeSourceDirectory: false,
+            shouldCancel: shouldCancel, options: options, progress: progress
+        )
+    }
+
+    /// Erstellt ein ZIP aus mehreren explizit ausgewählten Dateien und/oder Ordnern.
+    static func writeFullZip(
+        sources: [URL],
+        destinationDir: URL,
+        timestamp: String,
+        password: String?,
+        includeSourceDirectory: Bool = true,
+        shouldCancel: @escaping () -> Bool,
+        options: BackupArchiveOptions = BackupArchiveOptions(),
+        progress: @escaping (_ fraction: Double, _ currentFiles: Int, _ currentPath: URL) -> Void
+    ) throws -> URL {
+        let total = max(1, ZipArchiver.totalSize(of: sources))
 
         // Freien Speicherplatz prüfen (grob: unkomprimierte Gesamtgröße als Worst Case).
         if let free = freeSpace(at: destinationDir), free < total {
             throw BackupError.insufficientSpace(needed: total, free: free)
         }
 
-        let name = "FileAtlas_Backup_\(location.lastPathComponent)_\(timestamp).zip"
+        let sourceName = sources.count == 1 ? sources[0].lastPathComponent : "Selection"
+        let name = "FileAtlas_Backup_\(sourceName)_\(timestamp).zip"
         let url = destinationDir.appendingPathComponent(name)
 
         try ZipArchiver.create(
-            source: location,
+            sources: sources,
             destination: url,
             password: password,
             options: options,
+            includeSourceDirectory: includeSourceDirectory,
             shouldCancel: shouldCancel,
             progress: { bytes, files, currentPath in
                 progress(Double(bytes) / Double(total), files, currentPath)
             }
         )
         if options.hashManifestEnabled {
-            try writeHashManifest(for: location, zipURL: url, timestamp: timestamp, shouldCancel: shouldCancel)
+            try writeHashManifest(
+                for: sources,
+                zipURL: url,
+                timestamp: timestamp,
+                includeSourceDirectory: includeSourceDirectory,
+                shouldCancel: shouldCancel
+            )
         }
         return url
     }
@@ -131,24 +157,27 @@ nonisolated struct BackupEngine {
     }
 
     private static func writeHashManifest(
-        for location: URL,
+        for locations: [URL],
         zipURL: URL,
         timestamp: String,
+        includeSourceDirectory: Bool,
         shouldCancel: () -> Bool
     ) throws {
-        let files = ZipArchiver.regularFiles(in: location)
         var lines = [
             "# FileAtlas SHA-256 manifest",
-            "# Source: \(location.path(percentEncoded: false))",
+            "# Sources: \(locations.map { $0.path(percentEncoded: false) }.joined(separator: ", "))",
             "# Created: \(timestamp)",
             "",
         ]
 
-        for file in files {
-            if shouldCancel() { throw ZipArchiver.ZipError.cancelled }
-            guard let hash = sha256(of: file, shouldCancel: shouldCancel) else { continue }
-            let relative = ZipArchiver.relativePath(of: file, base: location)
-            lines.append("\(hash)  \(relative)")
+        for location in locations {
+            for file in ZipArchiver.regularFiles(in: location) {
+                if shouldCancel() { throw ZipArchiver.ZipError.cancelled }
+                guard let hash = sha256(of: file, shouldCancel: shouldCancel) else { continue }
+                let relative = ZipArchiver.relativePath(of: file, base: location)
+                let archivePath = includeSourceDirectory ? "\(location.lastPathComponent)/\(relative)" : relative
+                lines.append("\(hash)  \(archivePath)")
+            }
         }
 
         let manifestURL = zipURL.deletingPathExtension().appendingPathExtension("sha256")

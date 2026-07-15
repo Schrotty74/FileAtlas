@@ -212,6 +212,21 @@ final class IndexViewModel {
             ?? displayedEntries.first { $0.id == selection.first }
     }
 
+    func backupEntries(fallback: FileEntry) -> [FileEntry] {
+        let selected = displayedEntries.filter { selection.contains($0.id) }
+        let candidates = selected.contains(where: { $0.id == fallback.id }) ? selected : [fallback]
+        return removingNestedBackupEntries(from: candidates)
+    }
+
+    private func removingNestedBackupEntries(from entries: [FileEntry]) -> [FileEntry] {
+        let selectedFolders = entries.filter(\.isDirectory).map(\.pathKey)
+        return entries.filter { entry in
+            !selectedFolders.contains { folderPath in
+                folderPath != entry.pathKey && entry.pathKey.hasPrefix(folderPath + "/")
+            }
+        }
+    }
+
     var isSearchAllFoldersActive: Bool {
         searchAllFolders && !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }

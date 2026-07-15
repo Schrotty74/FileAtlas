@@ -11,6 +11,7 @@ import AppKit
 struct FileListView: View {
     @Environment(IndexViewModel.self) private var vm
     @Environment(UIState.self) private var ui
+    @Environment(BackupManager.self) private var backup
     @AppStorage("FileListColumnCustomization") private var columnCustomizationData = Data()
     @State private var columnCustomization = TableColumnCustomization<FileEntry>()
     @State private var tagPickerEntry: FileEntry?
@@ -233,6 +234,16 @@ struct FileListView: View {
         } label: {
             Label("Copy", systemImage: "doc.on.doc")
         }
+
+        Divider()
+
+        Button {
+            ui.selectionBackupEntries = vm.backupEntries(fallback: entry)
+            ui.showSelectionBackup = true
+        } label: {
+            Label("Back Up Selected Items…", systemImage: "arrow.down.doc")
+        }
+        .disabled(backup.isBackingUp)
 
         Divider()
 

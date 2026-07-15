@@ -189,6 +189,76 @@ final class BackupManager {
         progressLabel = ""
     }
 
+    /// Sichert eine explizite Auswahl. Dieser manuelle Weg hat keinen Einfluss
+    /// auf Zeitplan oder Quellen-Konfiguration eines gespeicherten Ortes.
+    func runSelectionBackup(
+        sources: [URL],
+        accessRoots: [URL],
+        destination: URL,
+        compressionEnabled: Bool,
+        hashManifestEnabled: Bool
+    ) async {
+        guard activeBackupLocation == nil, !sources.isEmpty else { return }
+
+        activeBackupLocation = "selection"
+        activeSourceName = sources.count == 1 ? sources[0].lastPathComponent : "\(sources.count) selected items"
+        currentItemName = ""
+        progressFraction = 0
+        progressLabel = NSLocalizedString("Preparing…", comment: "")
+        statusMessage = nil
+
+        let destinationScoped = destination.startAccessingSecurityScopedResource()
+        let uniqueAccessRoots = Dictionary(accessRoots.map { ($0.path(percentEncoded: false), $0) }) { first, _ in first }.values
+        let scopedSources = uniqueAccessRoots.map { ($0, $0.startAccessingSecurityScopedResource()) }
+        let timestamp = Self.timestamp()
+
+        let task = Task.detached(priority: .utility) { [weak self] () throws -> Void in
+            try Task.checkCancellation()
+            var lastPct = -1.0
+            _ = try BackupEngine.writeFullZip(
+                sources: sources,
+                destinationDir: destination,
+                timestamp: timestamp,
+                password: nil,
+                shouldCancel: { Task.isCancelled },
+                options: BackupArchiveOptions(
+                    compressionEnabled: compressionEnabled,
+                    hashManifestEnabled: hashManifestEnabled
+                ),
+                progress: { fraction, files, currentPath in
+                    let pct = (fraction * 100).rounded()
+                    let itemName = currentPath.lastPathComponent
+                    guard pct != lastPct || !itemName.isEmpty else { return }
+                    lastPct = pct
+                    let label = String(format: NSLocalizedString("%lld files", comment: ""), files)
+                    Task { @MainActor [weak self] in
+                        self?.progressFraction = fraction
+                        self?.progressLabel = label
+                        self?.currentItemName = itemName
+                    }
+                }
+            )
+        }
+        backupTask = task
+        let result = await task.result
+        backupTask = nil
+
+        if destinationScoped { destination.stopAccessingSecurityScopedResource() }
+        for (root, scoped) in scopedSources where scoped { root.stopAccessingSecurityScopedResource() }
+
+        switch result {
+        case .success:
+            statusMessage = NSLocalizedString("Backup completed.", comment: "")
+        case .failure(let error):
+            statusMessage = Self.message(for: error)
+        }
+        activeBackupLocation = nil
+        activeSourceName = ""
+        currentItemName = ""
+        progressFraction = 0
+        progressLabel = ""
+    }
+
     func cancelBackup() {
         guard isBackingUp else { return }
         backupTask?.cancel()
