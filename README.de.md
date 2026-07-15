@@ -13,6 +13,11 @@ FileAtlas ist eine native macOS-App zum Indizieren und Vergleichen von Dateien, 
 
 [🇬🇧 English Description](README.md)
 
+## Handbuch
+
+Das vollstaendige deutsche Handbuch: [FileAtlas Handbuch (PDF)](output/pdf/FileAtlas-Handbuch.pdf).
+The English edition is available here: [FileAtlas Manual (PDF)](output/pdf/FileAtlas-Manual-EN.pdf).
+
 ## Funktionen
 
 - Lokale Dateiindizierung mit rekursivem Ordnerscan und Live-Fortschritt (AsyncStream)
