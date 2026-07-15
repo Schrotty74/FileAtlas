@@ -8,9 +8,11 @@ set -e
 #
 # Voraussetzung: gh CLI installiert (https://cli.github.com)
 # Aufruf: ./build-release.sh v1.0.1
+# Beta:   ./build-release.sh v1.0.1-beta.1 release-notes.md
 # ---------------------------------------------------------------------------
 
 VERSION=${1:-}
+CUSTOM_NOTES_PATH=${2:-}
 if [ -z "$VERSION" ]; then
   echo "Verwendung: ./build-release.sh v1.0.0"
   exit 1
@@ -30,6 +32,16 @@ if [[ "$VERSION" =~ -beta\.([0-9]+)$ ]]; then
   BETA_NUMBER="${BASH_REMATCH[1]}"
   RELEASE_TITLE="FileAtlas $APP_VERSION Beta $BETA_NUMBER"
   RELEASE_CREATE_ARGS+=(--prerelease)
+fi
+
+if [ "$IS_PRERELEASE" = true ] && [ -z "$CUSTOM_NOTES_PATH" ]; then
+  echo "FEHLER: Beta-Releases brauchen eine eigene Notes-Datei."
+  echo "Aufruf: ./build-release.sh $VERSION release-notes.md"
+  exit 1
+fi
+if [ -n "$CUSTOM_NOTES_PATH" ] && [ ! -f "$CUSTOM_NOTES_PATH" ]; then
+  echo "FEHLER: Notes-Datei nicht gefunden: $CUSTOM_NOTES_PATH"
+  exit 1
 fi
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -140,38 +152,43 @@ CLEAN_NOTES_PATH="$BUILD_DIR/release-notes-clean.md"
 DEDUPED_NOTES_PATH="$BUILD_DIR/release-notes-deduped.md"
 
 echo "Generiere Release Notes..."
-gh api \
-  -X POST \
-  "repos/Schrotty74/FileAtlas/releases/generate-notes" \
-  -f tag_name="$VERSION" \
-  -f target_commitish=main \
-  --jq .body > "$NOTES_PATH"
+if [ -n "$CUSTOM_NOTES_PATH" ]; then
+  NOTES_PATH="$CUSTOM_NOTES_PATH"
+else
+  gh api \
+    -X POST \
+    "repos/Schrotty74/FileAtlas/releases/generate-notes" \
+    -f tag_name="$VERSION" \
+    -f target_commitish=main \
+    --jq .body > "$NOTES_PATH"
 
-awk '
-  NR == 1 && /^#*[[:space:]]*FileAtlas[[:space:]]+/ {
-    skippedTitle = 1
-    next
-  }
-  NR == 2 && skippedTitle && /^$/ {
-    next
-  }
-  { print }
-' "$NOTES_PATH" > "$CLEAN_NOTES_PATH"
-
-awk '
-  /^\*\*Full Changelog\*\*:/ {
-    if (seenFullChangelog++) {
+  awk '
+    NR == 1 && /^#*[[:space:]]*FileAtlas[[:space:]]+/ {
+      skippedTitle = 1
       next
     }
-  }
-  { print }
-' "$CLEAN_NOTES_PATH" > "$DEDUPED_NOTES_PATH"
+    NR == 2 && skippedTitle && /^$/ {
+      next
+    }
+    { print }
+  ' "$NOTES_PATH" > "$CLEAN_NOTES_PATH"
+
+  awk '
+    /^\*\*Full Changelog\*\*:/ {
+      if (seenFullChangelog++) {
+        next
+      }
+    }
+    { print }
+  ' "$CLEAN_NOTES_PATH" > "$DEDUPED_NOTES_PATH"
+  NOTES_PATH="$DEDUPED_NOTES_PATH"
+fi
 
 gh release create "$VERSION" \
   "$DMG_PATH#FileAtlas.dmg" \
   "$ZIP_PATH#FileAtlas.zip" \
   --title "$RELEASE_TITLE" \
-  --notes-file "$DEDUPED_NOTES_PATH" \
+  --notes-file "$NOTES_PATH" \
   --repo Schrotty74/FileAtlas \
   "${RELEASE_CREATE_ARGS[@]}"
 
