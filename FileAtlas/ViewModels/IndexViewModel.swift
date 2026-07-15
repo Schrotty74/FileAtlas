@@ -132,6 +132,18 @@ final class IndexViewModel {
         return presets.first { $0.id == id }
     }
 
+    // MARK: - Intelligente Sammlungen
+
+    private(set) var smartCollections: [SmartCollection] = []
+    var activeSmartCollectionID: SmartCollection.ID? = nil {
+        didSet { recomputeDisplayedEntries() }
+    }
+
+    var activeSmartCollection: SmartCollection? {
+        guard let activeSmartCollectionID else { return nil }
+        return smartCollections.first { $0.id == activeSmartCollectionID }
+    }
+
     // MARK: - Übersprungene Ordnernamen
 
     /// Ordnernamen, die der Scanner als einzelnen Eintrag behandelt (nicht rekursiv).
@@ -150,6 +162,8 @@ final class IndexViewModel {
     private static let extensionTagsKey = "FileAtlas.extensionTags"
     private static let extensionTagsMigrationKey = "FileAtlas.didMigrateFileTagsToExtensionTagsV1"
     private static let customTagsKey = "FileAtlas.customTags"
+    private static let alertRulesFilename = "alert-rules.json"
+    private static let smartCollectionsFilename = "smart-collections.json"
     private static let updateLastCheckKey = "FileAtlas.updateLastCheck"
     private static let updateLatestTagKey = "FileAtlas.updateLatestTag"
     private static let updateLatestURLKey = "FileAtlas.updateLatestURL"
@@ -205,6 +219,17 @@ final class IndexViewModel {
     // MARK: - Snapshots / Vergleich
 
     var currentDiff: SnapshotDiff? = nil
+    private(set) var latestScanSummary: ScanChangeSummary? = nil
+
+    // MARK: - Regeln
+
+    private(set) var alertRules: [AlertRule] = []
+    private(set) var latestAlertRuleMatches: [AlertRuleMatch] = []
+
+    // MARK: - Aufräumwarteschlange
+
+    private(set) var cleanupQueue: [FileEntry] = []
+    var cleanupResultMessage: String? = nil
 
     // MARK: - Abhängigkeiten
 
@@ -260,6 +285,8 @@ final class IndexViewModel {
         loadRecentScanRoots()
         loadCustomTags()
         loadExtensionTags()
+        loadAlertRules()
+        loadSmartCollections()
         loadCachedUpdateResult()
     }
 
@@ -410,14 +437,20 @@ final class IndexViewModel {
     private func recomputeDisplayedEntries() {
         let trimmed = searchText.trimmingCharacters(in: .whitespaces)
         let shouldSearchAllFolders = searchAllFolders && !trimmed.isEmpty
-        var list = shouldSearchAllFolders ? entriesAcrossIndexedRoots() : entries
+        let isShowingSmartCollection = activeSmartCollection != nil
+        let usesAllIndexedRoots = shouldSearchAllFolders || isShowingSmartCollection
+        var list = usesAllIndexedRoots ? entriesAcrossIndexedRoots() : entries
 
-        if let selectedScanRoot, !shouldSearchAllFolders {
+        if let selectedScanRoot, !usesAllIndexedRoots {
             list = list.filter { Self.isPath($0.path, inside: selectedScanRoot) }
         }
 
         if let preset = activePreset, activePresetAppliesToCurrentFolder(preset) {
             list = list.filter { preset.allows($0) }
+        }
+        if let collection = activeSmartCollection {
+            let now = Date()
+            list = list.filter { collection.contains($0, now: now) }
         }
         if showOnlyDuplicates {
             list = list.filter { $0.isDuplicate }
@@ -523,14 +556,39 @@ final class IndexViewModel {
     // MARK: - Statistik
 
     var totalSize: Int64 { displayedEntries.reduce(0) { $0 + $1.size } }
+    var indexedSize: Int64 { entries.reduce(0) { $0 + $1.size } }
     var duplicateCount: Int { entries.filter { $0.isDuplicate }.count }
+    var duplicateEntries: [FileEntry] { entries.filter { $0.isDuplicate } }
     var displayedDuplicateCount: Int { displayedEntries.filter { $0.isDuplicate }.count }
+    var largestIndexedEntries: [FileEntry] {
+        Array(entries.sorted { $0.size > $1.size }.prefix(20))
+    }
+    var storageTypeSummaries: [StorageTypeSummary] {
+        let files = entries.filter { !$0.isDirectory }
+        let grouped = Dictionary(grouping: files, by: { $0.fileExtension.lowercased() })
+        return grouped.map { ext, entries in
+            StorageTypeSummary(
+                fileExtension: ext,
+                fileCount: entries.count,
+                totalSize: entries.reduce(0) { $0 + $1.size }
+            )
+        }
+        .sorted { $0.totalSize > $1.totalSize }
+        .prefix(12)
+        .map { $0 }
+    }
+    var cleanupQueueSize: Int64 { cleanupQueue.reduce(0) { $0 + $1.size } }
+    func smartCollectionMatchCount(for collection: SmartCollection) -> Int {
+        let now = Date()
+        return entriesAcrossIndexedRoots().filter { collection.contains($0, now: now) }.count
+    }
     var hasExportableContent: Bool { currentDiff != nil || !entries.isEmpty }
     var hasActiveDisplayFilter: Bool {
         if let preset = activePreset, activePresetAppliesToCurrentFolder(preset) {
             return true
         }
         return showOnlyDuplicates
+            || activeSmartCollection != nil
             || selectedTagFilter != nil
             || !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             || dateFrom != nil
@@ -998,6 +1056,7 @@ final class IndexViewModel {
         let roots = roots ?? scanRoots
         guard !roots.isEmpty, !isScanning else { return }
         cancelScan()
+        let baselineSnapshot = latestSnapshot(matching: roots)
         selectedScanRoot = roots.count == 1 ? roots[0] : nil
 
         if rememberInQuickAccess {
@@ -1009,6 +1068,7 @@ final class IndexViewModel {
         currentScanPath = ""
         scanErrors = []
         currentDiff = nil
+        latestScanSummary = nil
         entries = []
         selection = []
         // Robust gegen Leerzeichen/Leereinträge: trimmen, leere verwerfen.
@@ -1088,6 +1148,8 @@ final class IndexViewModel {
                     self.scanErrors.append(contentsOf: pendingFailures)
                 }
                 self.storeIndexedEntries(for: roots, entries: marked)
+                self.saveAutomaticSnapshot(entries: marked, roots: roots, baseline: baselineSnapshot)
+                self.evaluateAlertRules(in: marked)
                 self.isScanning = false
                 self.scanTask = nil
             }
@@ -1142,9 +1204,7 @@ final class IndexViewModel {
     private func storeIndexedEntries(for roots: [URL], entries: [FileEntry]) {
         for root in roots {
             let rootEntries = entries.filter { Self.isPath($0.path, inside: root) }
-            if !rootEntries.isEmpty {
-                indexedEntriesByRootPath[Self.normalizedPath(for: root)] = rootEntries
-            }
+            indexedEntriesByRootPath[Self.normalizedPath(for: root)] = rootEntries
         }
         persistCachedRootPathsForAutoScan()
     }
@@ -1194,12 +1254,105 @@ final class IndexViewModel {
         try? data.write(to: presetsURL, options: .atomic)
     }
 
+    // MARK: - Regeln
+
+    private var alertRulesURL: URL {
+        SnapshotStore.appSupportDirectory.appendingPathComponent(Self.alertRulesFilename)
+    }
+
+    func saveAlertRule(_ rule: AlertRule) {
+        if let index = alertRules.firstIndex(where: { $0.id == rule.id }) {
+            alertRules[index] = rule
+        } else {
+            alertRules.append(rule)
+        }
+        persistAlertRules()
+        evaluateAlertRules(in: entries)
+    }
+
+    func deleteAlertRule(_ rule: AlertRule) {
+        alertRules.removeAll { $0.id == rule.id }
+        persistAlertRules()
+        evaluateAlertRules(in: entries)
+    }
+
+    func evaluateAlertRulesNow() {
+        evaluateAlertRules(in: entries)
+    }
+
+    var alertRuleMatchCount: Int {
+        latestAlertRuleMatches.reduce(0) { $0 + $1.entries.count }
+    }
+
+    private func loadAlertRules() {
+        guard let data = try? Data(contentsOf: alertRulesURL),
+              let loaded = try? JSONDecoder().decode([AlertRule].self, from: data)
+        else { return }
+        alertRules = loaded
+    }
+
+    private func persistAlertRules() {
+        guard let data = try? JSONEncoder().encode(alertRules) else { return }
+        try? data.write(to: alertRulesURL, options: .atomic)
+    }
+
+    // MARK: - Intelligente Sammlungen
+
+    private var smartCollectionsURL: URL {
+        SnapshotStore.appSupportDirectory.appendingPathComponent(Self.smartCollectionsFilename)
+    }
+
+    func saveSmartCollection(_ collection: SmartCollection) {
+        if let index = smartCollections.firstIndex(where: { $0.id == collection.id }) {
+            smartCollections[index] = collection
+        } else {
+            smartCollections.append(collection)
+        }
+        persistSmartCollections()
+        recomputeDisplayedEntries()
+    }
+
+    func deleteSmartCollection(_ collection: SmartCollection) {
+        smartCollections.removeAll { $0.id == collection.id }
+        if activeSmartCollectionID == collection.id {
+            activeSmartCollectionID = nil
+        }
+        persistSmartCollections()
+        recomputeDisplayedEntries()
+    }
+
+    func toggleSmartCollection(_ collection: SmartCollection) {
+        activeSmartCollectionID = activeSmartCollectionID == collection.id ? nil : collection.id
+    }
+
+    private func loadSmartCollections() {
+        guard let data = try? Data(contentsOf: smartCollectionsURL),
+              let loaded = try? JSONDecoder().decode([SmartCollection].self, from: data)
+        else { return }
+        smartCollections = loaded
+    }
+
+    private func persistSmartCollections() {
+        guard let data = try? JSONEncoder().encode(smartCollections) else { return }
+        try? data.write(to: smartCollectionsURL, options: .atomic)
+    }
+
+    private func evaluateAlertRules(in entries: [FileEntry]) {
+        let now = Date()
+        latestAlertRuleMatches = alertRules
+            .filter(\.isEnabled)
+            .map { rule in
+                AlertRuleMatch(rule: rule, entries: entries.filter { rule.matches($0, now: now) })
+            }
+            .filter { !$0.entries.isEmpty }
+    }
+
     // MARK: - Snapshots
 
     func saveSnapshot() {
         let snapshot = Snapshot(
             date: Date(),
-            rootPaths: scanRoots.map { $0.path(percentEncoded: false) },
+            rootPaths: snapshotRootsForCurrentEntries().map { $0.path(percentEncoded: false) },
             entries: entries
         )
         _ = try? snapshotStore.save(snapshot)
@@ -1222,6 +1375,96 @@ final class IndexViewModel {
 
     func clearDiff() {
         currentDiff = nil
+    }
+
+    func showLatestScanChanges() {
+        guard let latestScanSummary else { return }
+        currentDiff = latestScanSummary.diff
+    }
+
+    func dismissLatestScanSummary() {
+        latestScanSummary = nil
+    }
+
+    private func latestSnapshot(matching roots: [URL]) -> Snapshot? {
+        let rootPaths = Set(roots.map { Self.normalizedPath(for: $0) })
+        return snapshotStore.loadAll().first { snapshot in
+            Set(snapshot.rootPaths.map { Self.normalizedPath(for: URL(fileURLWithPath: $0)) }) == rootPaths
+        }
+    }
+
+    private func snapshotRootsForCurrentEntries() -> [URL] {
+        selectedScanRoot.map { [$0] } ?? scanRoots
+    }
+
+    private func saveAutomaticSnapshot(entries: [FileEntry], roots: [URL], baseline: Snapshot?) {
+        let snapshot = Snapshot(
+            date: Date(),
+            rootPaths: roots.map { $0.path(percentEncoded: false) },
+            entries: entries
+        )
+        _ = try? snapshotStore.save(snapshot)
+        if let baseline {
+            let diff = snapshotStore.diff(current: entries, baseline: baseline)
+            latestScanSummary = ScanChangeSummary(diff: diff)
+        }
+    }
+
+    // MARK: - Aufräumwarteschlange
+
+    func addToCleanupQueue(_ entry: FileEntry) {
+        guard !cleanupQueue.contains(where: { $0.pathKey == entry.pathKey }) else { return }
+        cleanupQueue.append(entry)
+    }
+
+    func removeFromCleanupQueue(_ entry: FileEntry) {
+        cleanupQueue.removeAll { $0.pathKey == entry.pathKey }
+    }
+
+    func clearCleanupQueue() {
+        cleanupQueue.removeAll()
+    }
+
+    func isInCleanupQueue(_ entry: FileEntry) -> Bool {
+        cleanupQueue.contains { $0.pathKey == entry.pathKey }
+    }
+
+    func moveCleanupQueueToTrash() {
+        let queuedEntries = cleanupQueue
+        var movedPaths = Set<String>()
+        var failures = 0
+
+        for entry in queuedEntries {
+            let accessRoot = securityScopedAccessRoot(for: entry.path)
+            let didStartAccess = accessRoot.startAccessingSecurityScopedResource()
+
+            do {
+                try FileManager.default.trashItem(at: entry.path, resultingItemURL: nil)
+                movedPaths.insert(entry.pathKey)
+            } catch {
+                failures += 1
+            }
+
+            if didStartAccess {
+                accessRoot.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        cleanupQueue.removeAll { movedPaths.contains($0.pathKey) }
+        removeIndexedEntries(at: movedPaths)
+        let moved = movedPaths.count
+        cleanupResultMessage = failures == 0
+            ? "Moved \(moved) item(s) to Trash."
+            : "Moved \(moved) item(s) to Trash. \(failures) item(s) could not be moved."
+    }
+
+    private func removeIndexedEntries(at paths: Set<String>) {
+        guard !paths.isEmpty else { return }
+        entries.removeAll { paths.contains($0.pathKey) }
+        for key in indexedEntriesByRootPath.keys {
+            indexedEntriesByRootPath[key]?.removeAll { paths.contains($0.pathKey) }
+        }
+        selection.removeAll()
     }
 
     // MARK: - Export

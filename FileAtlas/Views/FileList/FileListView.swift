@@ -236,6 +236,22 @@ struct FileListView: View {
 
         Divider()
 
+        if vm.isInCleanupQueue(entry) {
+            Button {
+                vm.removeFromCleanupQueue(entry)
+            } label: {
+                Label("Remove from Cleanup Queue", systemImage: "trash.slash")
+            }
+        } else {
+            Button {
+                vm.addToCleanupQueue(entry)
+            } label: {
+                Label("Add to Cleanup Queue", systemImage: "trash")
+            }
+        }
+
+        Divider()
+
         Button {
             tagPickerEntry = entry
         } label: {

@@ -58,6 +58,21 @@ struct MainToolbar: ToolbarContent {
             }
 
             Button {
+                ui.showStorageAnalysis = true
+            } label: {
+                Label("Storage Analysis", systemImage: "chart.bar.xaxis")
+            }
+            .disabled(vm.entries.isEmpty)
+            .help("Storage Analysis")
+
+            Button {
+                ui.showCleanupQueue = true
+            } label: {
+                Label("Cleanup Queue", systemImage: "trash")
+            }
+            .help("Cleanup Queue")
+
+            Button {
                 ui.showSettingsPanel = true
             } label: {
                 Label("Settings", systemImage: "gearshape")

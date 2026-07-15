@@ -33,6 +33,11 @@ FileAtlas ist eine native macOS-App zum Indizieren und Vergleichen von Dateien, 
 - Kein Auto-Rescan wenn Ordner bereits indexiert ist
 - Duplikaterkennung (Groessengruppierung -> SHA-256-Hash, goldenes Abzeichen)
 - Snapshots nach jedem Scan (max. 10, JSON) mit Diff-Vergleich und Loeschen
+- Automatische „Was hat sich geaendert?“-Zusammenfassung nach jedem weiteren Scan
+- Speicheranalyse fuer die groessten indexierten Eintraege, Dateitypen und Duplikate
+- Sichere Aufraeumwarteschlange: Elemente zuerst pruefen und nach Bestaetigung in den macOS-Papierkorb verschieben
+- Regeln fuer Dateityp, Mindestgroesse und Dateialter mit Benachrichtigungen nach dem Scan
+- Intelligente Sammlungen: gespeicherte dynamische Ansichten nach Dateityp, Groesse, letzten Aenderungen und Duplikaten
 - Ordnervergleich (zwei Ordner direkt)
 - Tags (vordefiniert + benutzerdefiniert, farbcodierte Pills, endungsbasiert und global ueber alle Ordner)
 - Unterordner-Anzeige in der Seitenleiste (mehrstufig, ohne UI-Freeze)

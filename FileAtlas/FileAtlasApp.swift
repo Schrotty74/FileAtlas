@@ -95,6 +95,12 @@ struct FileAtlasCommands: Commands {
             Button("Compare with Snapshot…") { ui.showSnapshotPicker = true }
                 .disabled(vm.entries.isEmpty)
             Button("Compare Two Folders…") { ui.showFolderCompare = true }
+
+            Divider()
+
+            Button("Storage Analysis") { ui.showStorageAnalysis = true }
+                .disabled(vm.entries.isEmpty)
+            Button("Cleanup Queue") { ui.showCleanupQueue = true }
         }
 
         // „Darstellung"-Menü

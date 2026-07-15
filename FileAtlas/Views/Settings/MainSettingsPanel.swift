@@ -10,6 +10,7 @@ struct MainSettingsPanel: View {
     @Environment(AppearanceManager.self) private var appearance
     @Environment(LanguageManager.self) private var language
     @Environment(BackupManager.self) private var backup
+    @Environment(UIState.self) private var ui
     @Environment(\.dismiss) private var dismiss
 
     @State private var selectedSection: SettingsSection? = .appearance
@@ -21,6 +22,8 @@ struct MainSettingsPanel: View {
     @State private var showPresetEditor = false
     @State private var showClearCacheConfirmation = false
     @State private var cacheClearMessage: String?
+    @State private var editingAlertRule: AlertRule?
+    @State private var showAlertRuleEditor = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -72,6 +75,9 @@ struct MainSettingsPanel: View {
         .sheet(isPresented: $showPresetEditor) {
             PresetEditorView(original: editingPreset)
         }
+        .sheet(isPresented: $showAlertRuleEditor) {
+            AlertRuleEditorView(original: editingAlertRule)
+        }
         .onAppear { filterByDate = vm.dateFrom != nil || vm.dateTo != nil }
     }
 
@@ -90,6 +96,10 @@ struct MainSettingsPanel: View {
             filterSetsSection
         case .filter:
             filterSection
+        case .rules:
+            rulesSection
+        case .smartCollections:
+            smartCollectionsSection
         case .snapshots:
             snapshotsSection
         case .backup:
@@ -323,6 +333,143 @@ struct MainSettingsPanel: View {
         .formStyle(.grouped)
     }
 
+    private var rulesSection: some View {
+        Form {
+            Section("Rules") {
+                Text("Rules are checked after every completed scan and only report matches; they do not hide or delete files.")
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.theme.textSecondary)
+
+                if vm.alertRules.isEmpty {
+                    Text("No rules created")
+                        .foregroundStyle(AppTheme.theme.textSecondary)
+                } else {
+                    ForEach(vm.alertRules) { rule in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(rule.name)
+                                Text(ruleDescription(rule))
+                                    .font(.caption)
+                                    .foregroundStyle(AppTheme.theme.textSecondary)
+                            }
+                            Spacer()
+                            Toggle("", isOn: ruleEnabledBinding(for: rule))
+                                .labelsHidden()
+                            Button("Edit…") {
+                                editingAlertRule = rule
+                                showAlertRuleEditor = true
+                            }
+                            Button(role: .destructive) {
+                                vm.deleteAlertRule(rule)
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+
+                HStack {
+                    Button {
+                        editingAlertRule = nil
+                        showAlertRuleEditor = true
+                    } label: {
+                        Label("New Rule…", systemImage: "plus")
+                    }
+                    Button("Run Rules Now") { vm.evaluateAlertRulesNow() }
+                        .disabled(vm.entries.isEmpty || vm.alertRules.isEmpty)
+                }
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private var smartCollectionsSection: some View {
+        Form {
+            Section("Smart Collections") {
+                Text("Collections update from the current index and never move, hide, or delete files.")
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.theme.textSecondary)
+
+                if vm.smartCollections.isEmpty {
+                    Text("No smart collections created")
+                        .foregroundStyle(AppTheme.theme.textSecondary)
+                } else {
+                    ForEach(vm.smartCollections) { collection in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(collection.name)
+                                Text(smartCollectionDescription(collection))
+                                    .font(.caption)
+                                    .foregroundStyle(AppTheme.theme.textSecondary)
+                            }
+                            Spacer()
+                            Text(vm.smartCollectionMatchCount(for: collection).formatted())
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(AppTheme.theme.textSecondary)
+                            Button("Edit…") {
+                                ui.editingSmartCollection = collection
+                                ui.isPresentingSmartCollectionEditor = true
+                            }
+                            Button(role: .destructive) {
+                                vm.deleteSmartCollection(collection)
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+
+                Button {
+                    ui.editingSmartCollection = nil
+                    ui.isPresentingSmartCollectionEditor = true
+                } label: {
+                    Label("New Smart Collection…", systemImage: "plus")
+                }
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private func smartCollectionDescription(_ collection: SmartCollection) -> String {
+        var parts: [String] = []
+        if !collection.extensions.isEmpty {
+            parts.append(collection.extensions.map { $0.uppercased() }.joined(separator: ", "))
+        }
+        if let minimumSize = collection.minimumSize {
+            parts.append("from \(ByteCountFormatter.string(fromByteCount: minimumSize, countStyle: .file))")
+        }
+        if let modifiedWithinDays = collection.modifiedWithinDays {
+            parts.append("last \(modifiedWithinDays) days")
+        }
+        if collection.duplicatesOnly { parts.append("duplicates") }
+        return parts.joined(separator: " · ")
+    }
+
+    private func ruleDescription(_ rule: AlertRule) -> String {
+        var parts: [String] = []
+        if !rule.extensions.isEmpty { parts.append(rule.extensions.map { $0.uppercased() }.joined(separator: ", ")) }
+        if let minimumSize = rule.minimumSize {
+            parts.append("from \(ByteCountFormatter.string(fromByteCount: minimumSize, countStyle: .file))")
+        }
+        if let olderThanDays = rule.olderThanDays {
+            parts.append("older than \(olderThanDays) days")
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    private func ruleEnabledBinding(for rule: AlertRule) -> Binding<Bool> {
+        Binding(
+            get: { vm.alertRules.first(where: { $0.id == rule.id })?.isEnabled ?? false },
+            set: { isEnabled in
+                var updated = rule
+                updated.isEnabled = isEnabled
+                vm.saveAlertRule(updated)
+            }
+        )
+    }
+
     private var snapshotsSection: some View {
         SnapshotPickerView(showsChrome: false)
     }
@@ -450,6 +597,8 @@ private enum SettingsSection: String, CaseIterable, Identifiable, Hashable {
     case ignoredFolders
     case filterSets
     case filter
+    case rules
+    case smartCollections
     case snapshots
     case backup
     case export
@@ -465,6 +614,8 @@ private enum SettingsSection: String, CaseIterable, Identifiable, Hashable {
         case .ignoredFolders: return "Ignored Folders"
         case .filterSets: return "Filter Sets"
         case .filter: return "Filter"
+        case .rules: return "Rules"
+        case .smartCollections: return "Smart Collections"
         case .snapshots: return "Snapshots"
         case .backup: return "Backup"
         case .export: return "Export"
@@ -480,6 +631,8 @@ private enum SettingsSection: String, CaseIterable, Identifiable, Hashable {
         case .ignoredFolders: return "folder.badge.minus"
         case .filterSets: return "bookmark"
         case .filter: return "tag"
+        case .rules: return "exclamationmark.triangle"
+        case .smartCollections: return "folder.badge.gearshape"
         case .snapshots: return "camera"
         case .backup: return "externaldrive"
         case .export: return "square.and.arrow.up"

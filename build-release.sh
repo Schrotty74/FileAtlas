@@ -15,12 +15,22 @@ if [ -z "$VERSION" ]; then
   echo "Verwendung: ./build-release.sh v1.0.0"
   exit 1
 fi
-if ! [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+if ! [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$ ]]; then
   echo "FEHLER: Ungueltiges Versionsformat: '$VERSION'"
-  echo "Erwartet: vX.Y.Z (z. B. v1.8.1)"
+  echo "Erwartet: vX.Y.Z oder vX.Y.Z-beta.N (z. B. v1.8.1 oder v1.9.0-beta.1)"
   exit 1
 fi
 APP_VERSION="${VERSION#v}"
+APP_VERSION="${APP_VERSION%%-beta.*}"
+IS_PRERELEASE=false
+RELEASE_TITLE="FileAtlas $VERSION"
+RELEASE_CREATE_ARGS=()
+if [[ "$VERSION" =~ -beta\.([0-9]+)$ ]]; then
+  IS_PRERELEASE=true
+  BETA_NUMBER="${BASH_REMATCH[1]}"
+  RELEASE_TITLE="FileAtlas $APP_VERSION Beta $BETA_NUMBER"
+  RELEASE_CREATE_ARGS+=(--prerelease)
+fi
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BUILD_DIR="$PROJECT_DIR/.build-release"
@@ -160,9 +170,10 @@ awk '
 gh release create "$VERSION" \
   "$DMG_PATH#FileAtlas.dmg" \
   "$ZIP_PATH#FileAtlas.zip" \
-  --title "FileAtlas $VERSION" \
+  --title "$RELEASE_TITLE" \
   --notes-file "$DEDUPED_NOTES_PATH" \
-  --repo Schrotty74/FileAtlas
+  --repo Schrotty74/FileAtlas \
+  "${RELEASE_CREATE_ARGS[@]}"
 
 echo ""
 echo "=== Fertig! Release $VERSION ist auf GitHub verfügbar. ==="

@@ -17,9 +17,14 @@ final class UIState {
     var showSnapshotPicker = false
     var showDiff = false
     var showFolderCompare = false
+    var showStorageAnalysis = false
+    var showCleanupQueue = false
+    var showAlertRuleResults = false
     var showSettingsPanel = false
     var isPresentingPresetEditor = false
     var editingPreset: FilterPreset? = nil
+    var isPresentingSmartCollectionEditor = false
+    var editingSmartCollection: SmartCollection? = nil
     var isSidebarVisible = true
     var fileListViewMode: FileListViewMode {
         didSet { UserDefaults.standard.set(fileListViewMode.rawValue, forKey: Self.fileListViewModeKey) }
@@ -64,6 +69,9 @@ struct ContentView: View {
         .sheet(isPresented: $ui.isPresentingPresetEditor) {
             PresetEditorView(original: ui.editingPreset)
         }
+        .sheet(isPresented: $ui.isPresentingSmartCollectionEditor) {
+            SmartCollectionEditorView(original: ui.editingSmartCollection)
+        }
         .sheet(isPresented: $ui.showSnapshotPicker) {
             SnapshotPickerView()
         }
@@ -72,6 +80,15 @@ struct ContentView: View {
         }
         .sheet(isPresented: $ui.showFolderCompare) {
             FolderCompareView()
+        }
+        .sheet(isPresented: $ui.showStorageAnalysis) {
+            StorageAnalysisView()
+        }
+        .sheet(isPresented: $ui.showCleanupQueue) {
+            CleanupQueueView()
+        }
+        .sheet(isPresented: $ui.showAlertRuleResults) {
+            AlertRuleResultsView()
         }
         .sheet(isPresented: $ui.showSettingsPanel) {
             MainSettingsPanel()
@@ -84,8 +101,69 @@ struct ContentView: View {
         .overlay(alignment: .bottom) {
             VStack(spacing: 8) {
                 AutoRescanBanner()
+                ScanChangeSummaryBanner { ui.showDiff = true }
+                AlertRuleBanner { ui.showAlertRuleResults = true }
                 BackupProgressBanner()
             }
+        }
+    }
+}
+
+private struct AlertRuleBanner: View {
+    @Environment(IndexViewModel.self) private var vm
+    let showDetails: () -> Void
+
+    var body: some View {
+        if vm.alertRuleMatchCount > 0 {
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(AppTheme.gold)
+                Text("Rules found \(vm.alertRuleMatchCount) matching item(s)")
+                    .font(.callout)
+                Button("Show") { showDetails() }
+                    .controlSize(.small)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 8)
+            .background(.regularMaterial, in: Capsule())
+            .overlay(Capsule().stroke(AppTheme.stroke, lineWidth: 0.5))
+            .padding(.bottom, 12)
+        }
+    }
+}
+
+private struct ScanChangeSummaryBanner: View {
+    @Environment(IndexViewModel.self) private var vm
+    let showDetails: () -> Void
+
+    var body: some View {
+        if let summary = vm.latestScanSummary {
+            HStack(spacing: 8) {
+                Image(systemName: summary.diff.isEmpty ? "checkmark.circle.fill" : "arrow.triangle.2.circlepath.circle.fill")
+                    .foregroundStyle(summary.diff.isEmpty ? AppTheme.theme.accentColor : AppTheme.gold)
+                Text(summary.diff.isEmpty
+                    ? "No changes since the last scan"
+                    : "Since last scan: \(summary.addedCount) new, \(summary.changedCount) changed, \(summary.removedCount) removed")
+                    .font(.callout)
+                if !summary.diff.isEmpty {
+                    Button("Details") {
+                        vm.showLatestScanChanges()
+                        showDetails()
+                    }
+                    .controlSize(.small)
+                }
+                Button {
+                    vm.dismissLatestScanSummary()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(AppTheme.theme.textSecondary)
+                .help("Dismiss")
+            }
+            .padding(.horizontal, 14).padding(.vertical, 8)
+            .background(.regularMaterial, in: Capsule())
+            .overlay(Capsule().stroke(AppTheme.stroke, lineWidth: 0.5))
+            .padding(.bottom, 12)
         }
     }
 }

@@ -41,6 +41,7 @@ private struct SidebarContent: View {
             RecentLocationsSection()
             SavedLocationsSection()
             PresetsSection()
+            SmartCollectionsSection()
 
             if vm.duplicateCount > 0 {
                 Section {
