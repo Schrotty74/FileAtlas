@@ -153,7 +153,17 @@ DEDUPED_NOTES_PATH="$BUILD_DIR/release-notes-deduped.md"
 
 echo "Generiere Release Notes..."
 if [ -n "$CUSTOM_NOTES_PATH" ]; then
-  NOTES_PATH="$CUSTOM_NOTES_PATH"
+  awk '
+    NR == 1 && /^#*[[:space:]]*FileAtlas[[:space:]]+/ {
+      skippedTitle = 1
+      next
+    }
+    NR == 2 && skippedTitle && /^$/ {
+      next
+    }
+    { print }
+  ' "$CUSTOM_NOTES_PATH" > "$CLEAN_NOTES_PATH"
+  NOTES_PATH="$CLEAN_NOTES_PATH"
 else
   gh api \
     -X POST \
