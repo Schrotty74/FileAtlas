@@ -18,6 +18,10 @@ FileAtlas ist eine native macOS-App zum Indizieren und Vergleichen von Dateien, 
 Das vollstaendige deutsche Handbuch: [FileAtlas Handbuch (PDF)](output/pdf/FileAtlas-Handbuch.pdf).
 The English edition is available here: [FileAtlas Manual (PDF)](output/pdf/FileAtlas-Manual-EN.pdf).
 
+## Hilfe beim Erststart
+
+Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, bietet die Startansicht eine Ordnerauswahl, das Handbuch und optionale Hilfe von ChatGPT, Google Gemini oder Claude. Beim Auswaehlen eines Dienstes kopiert FileAtlas eine allgemeine, datensparsame Frage mit dem oeffentlichen Handbuch-Link in die Zwischenablage und oeffnet danach den Dienst. Lokale Dateidaten oder andere Nutzerdaten werden niemals automatisch uebertragen. Details stehen in [KI-Hilfe und Datenschutzhinweise](AI_HELP.md).
+
 ## Funktionen
 
 - Lokale Dateiindizierung mit rekursivem Ordnerscan und Live-Fortschritt (AsyncStream)
@@ -56,7 +60,8 @@ The English edition is available here: [FileAtlas Manual (PDF)](output/pdf/FileA
 - Echte Systemsymbole fuer Dateien, Apps und Ordner, mit Umschalter fuer schnelle generische Icons in den Einstellungen
 - App-Bundle-Metadaten (Name, Version, Entwickler, Bundle-ID) im Detailbereich
 - Option fuer Auto-Scan beim Start in den Einstellungen
-- Update-Check-Benachrichtigung ueber GitHub Releases
+- Update-Check-Benachrichtigung ueber veroeffentlichte GitHub Releases, einschliesslich Betas
+- Datensparsame KI-Hilfe beim Erststart mit lokal eingebundenen Logos fuer ChatGPT, Gemini und Claude
 - Keine externen Abhaengigkeiten - nur reine Apple-Frameworks
 
 ## Voraussetzungen

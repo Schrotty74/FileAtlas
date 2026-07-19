@@ -20,10 +20,12 @@ struct AvailableUpdate: Identifiable, Equatable {
 private struct GitHubReleaseResponse: Decodable {
     let tagName: String
     let htmlURL: String?
+    let isDraft: Bool
 
     private enum CodingKeys: String, CodingKey {
         case tagName = "tag_name"
         case htmlURL = "html_url"
+        case isDraft = "draft"
     }
 }
 
@@ -95,6 +97,16 @@ final class IndexViewModel {
     }
 
     private(set) var recentScanRoots: [URL] = []
+
+    /// Die Erststart-Hilfe wird nur angezeigt, solange noch kein lokaler
+    /// Katalog oder Schnellzugriffs-Ort in FileAtlas hinterlegt ist.
+    var hasUserContent: Bool {
+        !scanRoots.isEmpty
+            || !recentScanRoots.isEmpty
+            || !entries.isEmpty
+            || indexedEntriesByRootPath.values.contains { !$0.isEmpty }
+    }
+
     private(set) var extensionTags: [String: Set<FileTag>] = [:] {
         didSet { recomputeDisplayedEntries() }
     }
@@ -168,7 +180,7 @@ final class IndexViewModel {
     private static let updateLatestTagKey = "FileAtlas.updateLatestTag"
     private static let updateLatestURLKey = "FileAtlas.updateLatestURL"
     private static let updateCheckInterval: TimeInterval = 24 * 60 * 60
-    private static let latestReleaseAPIURL = URL(string: "https://api.github.com/repos/Schrotty74/FileAtlas/releases/latest")!
+    private static let releasesAPIURL = URL(string: "https://api.github.com/repos/Schrotty74/FileAtlas/releases?per_page=20")!
     private static let latestReleaseWebURL = URL(string: "https://github.com/Schrotty74/FileAtlas/releases/latest")!
     private nonisolated static let searchDebounceDelay: Duration = .milliseconds(150)
     private nonisolated static let scanPublishInterval: Duration = .milliseconds(200)
@@ -345,7 +357,7 @@ final class IndexViewModel {
         defer { isCheckingForUpdates = false }
 
         do {
-            var request = URLRequest(url: Self.latestReleaseAPIURL)
+            var request = URLRequest(url: Self.releasesAPIURL)
             request.setValue("FileAtlas/\(Self.currentAppVersion())", forHTTPHeaderField: "User-Agent")
             request.timeoutInterval = 10
 
@@ -359,7 +371,16 @@ final class IndexViewModel {
                 return
             }
 
-            let release = try JSONDecoder().decode(GitHubReleaseResponse.self, from: data)
+            let releases = try JSONDecoder().decode([GitHubReleaseResponse].self, from: data)
+            guard let release = releases
+                .filter({ !$0.isDraft })
+                .max(by: { Self.versionComparison($0.tagName, $1.tagName) == .orderedAscending })
+            else {
+                if force {
+                    updateCheckStatusMessage = NSLocalizedString("Update check failed.", comment: "Manual update check failed status message.")
+                }
+                return
+            }
             let releaseURL = release.htmlURL.flatMap(URL.init(string:)) ?? Self.latestReleaseWebURL
             let updateAvailable = updateCachedRelease(tag: release.tagName, releaseURL: releaseURL)
             if force, !updateAvailable {
@@ -417,25 +438,51 @@ final class IndexViewModel {
     }
 
     private nonisolated static func isVersion(_ candidate: String, newerThan current: String) -> Bool {
-        let lhs = versionComponents(candidate)
-        let rhs = versionComponents(current)
-        let count = max(lhs.count, rhs.count)
+        versionComparison(candidate, current) == .orderedDescending
+    }
+
+    private nonisolated static func versionComparison(_ lhs: String, _ rhs: String) -> ComparisonResult {
+        let lhsComponents = versionComponents(lhs)
+        let rhsComponents = versionComponents(rhs)
+        let count = max(lhsComponents.count, rhsComponents.count)
 
         for index in 0..<count {
-            let left = index < lhs.count ? lhs[index] : 0
-            let right = index < rhs.count ? rhs[index] : 0
+            let left = index < lhsComponents.count ? lhsComponents[index] : 0
+            let right = index < rhsComponents.count ? rhsComponents[index] : 0
             if left != right {
-                return left > right
+                return left > right ? .orderedDescending : .orderedAscending
             }
         }
-        return false
+
+        let lhsBeta = betaNumber(in: lhs)
+        let rhsBeta = betaNumber(in: rhs)
+        switch (lhsBeta, rhsBeta) {
+        case let (left?, right?):
+            if left == right { return .orderedSame }
+            return left > right ? .orderedDescending : .orderedAscending
+        case (.some, .none):
+            return .orderedAscending
+        case (.none, .some):
+            return .orderedDescending
+        case (.none, .none):
+            return .orderedSame
+        }
     }
 
     private nonisolated static func versionComponents(_ version: String) -> [Int] {
         version
             .trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
-            .split { !$0.isNumber }
+            .split(separator: "-", maxSplits: 1)
+            .first?
+            .split(separator: ".")
             .compactMap { Int($0) }
+            ?? []
+    }
+
+    private nonisolated static func betaNumber(in version: String) -> Int? {
+        let lowercased = version.lowercased()
+        guard let range = lowercased.range(of: "-beta.") else { return nil }
+        return Int(lowercased[range.upperBound...])
     }
 
     // MARK: - Abgeleitete Liste (gefiltert + sortiert)

@@ -23,14 +23,14 @@ if ! [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$ ]]; then
   exit 1
 fi
 APP_VERSION="${VERSION#v}"
-APP_VERSION="${APP_VERSION%%-beta.*}"
+RELEASE_VERSION="${APP_VERSION%%-beta.*}"
 IS_PRERELEASE=false
 RELEASE_TITLE="FileAtlas $VERSION"
 RELEASE_CREATE_ARGS=()
 if [[ "$VERSION" =~ -beta\.([0-9]+)$ ]]; then
   IS_PRERELEASE=true
   BETA_NUMBER="${BASH_REMATCH[1]}"
-  RELEASE_TITLE="FileAtlas $APP_VERSION Beta $BETA_NUMBER"
+  RELEASE_TITLE="FileAtlas $RELEASE_VERSION Beta $BETA_NUMBER"
   RELEASE_CREATE_ARGS+=(--prerelease)
 fi
 

@@ -5,6 +5,7 @@
 //  Drei-Spalten-Wurzel: Sidebar | Dateiliste | Detailpanel.
 //
 
+import AppKit
 import SwiftUI
 
 /// Gemeinsamer UI-Zustand (Sheets, Spaltensichtbarkeit, Preset-Editor).
@@ -50,17 +51,23 @@ struct ContentView: View {
         @Bindable var vm = vm
         @Bindable var ui = ui
 
-        HSplitView {
-            if ui.isSidebarVisible {
-                SidebarView()
-                    .frame(minWidth: 220, idealWidth: 244, maxWidth: 300)
+        Group {
+            if vm.hasUserContent {
+                HSplitView {
+                    if ui.isSidebarVisible {
+                        SidebarView()
+                            .frame(minWidth: 220, idealWidth: 244, maxWidth: 300)
+                    }
+
+                    FileListView()
+                        .frame(minWidth: 480, idealWidth: 660)
+
+                    DetailPanelView()
+                        .frame(minWidth: 280, idealWidth: 320, maxWidth: 440)
+                }
+            } else {
+                FirstLaunchHelpView()
             }
-
-            FileListView()
-                .frame(minWidth: 480, idealWidth: 660)
-
-            DetailPanelView()
-                .frame(minWidth: 280, idealWidth: 320, maxWidth: 440)
         }
         .toolbar {
             MainToolbar(vm: vm, ui: ui, searchText: $vm.searchText, searchAllFolders: $vm.searchAllFolders)
@@ -111,6 +118,101 @@ struct ContentView: View {
                 BackupProgressBanner()
             }
         }
+    }
+}
+
+private struct FirstLaunchHelpView: View {
+    @Environment(IndexViewModel.self) private var vm
+    @Environment(LanguageManager.self) private var language
+
+    private var content: FirstLaunchHelpContent {
+        FirstLaunchHelpContent(language: language.effectiveLanguage)
+    }
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "folder.badge.gearshape")
+                .font(.system(size: 58, weight: .medium))
+                .foregroundStyle(AppTheme.theme.accentColor)
+
+            Text(content.title)
+                .font(.largeTitle.bold())
+
+            Text(content.introduction)
+                .font(.title3)
+                .foregroundStyle(AppTheme.theme.textSecondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 580)
+
+            HStack(spacing: 12) {
+                Button {
+                    vm.addFolders()
+                } label: {
+                    Label(content.addFolderTitle, systemImage: "folder.badge.plus")
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button {
+                    FirstLaunchHelpAction.openManual(for: language.effectiveLanguage)
+                } label: {
+                    Label(content.manualButtonTitle, systemImage: "book")
+                }
+                .buttonStyle(.bordered)
+            }
+
+            VStack(spacing: 10) {
+                Text(content.aiHeading)
+                    .font(.headline)
+
+                HStack(spacing: 12) {
+                    ForEach(FirstLaunchAIService.allCases) { service in
+                        Button {
+                            FirstLaunchHelpAction.copyPromptAndOpen(
+                                service,
+                                language: language.effectiveLanguage
+                            )
+                        } label: {
+                            HStack(spacing: 7) {
+                                AIServiceLogo(service: service)
+                                Text(service.title)
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .help(content.serviceHelp(service))
+                    }
+                }
+            }
+
+            Text(content.privacyNote)
+                .font(.callout)
+                .foregroundStyle(AppTheme.theme.textSecondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 620)
+        }
+        .padding(36)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private struct AIServiceLogo: View {
+    let service: FirstLaunchAIService
+
+    var body: some View {
+        Image(nsImage: image)
+            .resizable()
+            .scaledToFit()
+            .frame(width: 18, height: 18)
+            .accessibilityHidden(true)
+    }
+
+    private var image: NSImage {
+        guard let url = Bundle.main.url(
+            forResource: service.logoResource.name,
+            withExtension: service.logoResource.fileExtension
+        ) else {
+            return NSImage()
+        }
+        return NSImage(contentsOf: url) ?? NSImage()
     }
 }
 
