@@ -29,6 +29,7 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 - Security-Scoped Bookmarks (Zugriff bleibt nach App-Neustart erhalten)
 - Liquid-Glass-Seitenleiste (Desktop scheint durch)
 - Umschalter fuer Hell / Dunkel / System (unabhaengig von der macOS-Einstellung)
+- Zweckvolle Oberflaechenbewegungen: Live-Scan-Ergebnisse mit Ladeplatzhaltern, animierte Navigation und Filterchips, Rueckmeldung nach einem Backup sowie Uebergaenge in Analyse und Vergleich; mit Einstellung zum Reduzieren der Bewegung und Beachtung der macOS-Bedienungshilfen
 - DE/EN-Lokalisierung mit DACH-Regel (de_AT, de_DE, de_CH immer Deutsch)
 - Sortierbare, neu anordenbare Spalten (Name, Typ, Status, Tags, Groesse, Geaendert)
 - Einstellbare Zeilenhoehe (Kompakt / Normal / Gross)

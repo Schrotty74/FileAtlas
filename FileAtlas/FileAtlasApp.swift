@@ -11,6 +11,7 @@ struct FileAtlasApp: App {
     @State private var vm = IndexViewModel()
     @State private var appearance = AppearanceManager()
     @State private var language = LanguageManager()
+    @State private var motion = MotionPreferences()
     @State private var ui = UIState()
     @State private var backup = BackupManager()
 
@@ -20,6 +21,7 @@ struct FileAtlasApp: App {
                 .environment(vm)
                 .environment(appearance)
                 .environment(language)
+                .environment(motion)
                 .environment(ui)
                 .environment(backup)
                 .frame(minWidth: 980, minHeight: 620)
@@ -44,6 +46,7 @@ struct FileAtlasApp: App {
                 .environment(vm)
                 .environment(appearance)
                 .environment(language)
+                .environment(motion)
                 .environment(ui)
                 .environment(backup)
                 .environment(\.locale, language.locale)

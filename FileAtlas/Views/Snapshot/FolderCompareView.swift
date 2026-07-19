@@ -9,6 +9,8 @@ import AppKit
 struct FolderCompareView: View {
     @Environment(IndexViewModel.self) private var vm
     @Environment(\.dismiss) private var dismiss
+    @Environment(MotionPreferences.self) private var motion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @State private var folderA: URL?
     @State private var folderB: URL?
     @State private var rows: [FolderCompareRow] = []
@@ -31,6 +33,7 @@ struct FolderCompareView: View {
                 folderPicker(title: "Ordner B", url: folderB) { folderB = chooseFolder() }
                 Button("Vergleichen") { compare() }
                     .disabled(folderA == nil || folderB == nil)
+                    .buttonStyle(MotionButtonStyle())
             }
             .padding()
 
@@ -48,6 +51,7 @@ struct FolderCompareView: View {
                 }
                 .width(100)
             }
+            .animation(isMotionEnabled ? FileAtlasMotion.standard : nil, value: rows.map(\.relativePath))
         }
         .frame(width: 760, height: 520)
     }
@@ -62,6 +66,7 @@ struct FolderCompareView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .buttonStyle(MotionButtonStyle())
     }
 
     private func chooseFolder() -> URL? {
@@ -87,6 +92,10 @@ struct FolderCompareView: View {
             else { status = .onlyB }
             return FolderCompareRow(relativePath: key, status: status, size: left?.size ?? right?.size ?? 0)
         }
+    }
+
+    private var isMotionEnabled: Bool {
+        !motion.reduceMotion && !systemReduceMotion
     }
 }
 

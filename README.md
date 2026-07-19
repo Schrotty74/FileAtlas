@@ -29,6 +29,7 @@ When FileAtlas has no saved locations or indexed entries yet, a start screen off
 - Security-Scoped Bookmarks (access persists after app restart)
 - Liquid Glass sidebar (desktop shines through)
 - Light / Dark / System appearance switcher (independent of macOS setting)
+- Purposeful interface motion: live scan results with loading placeholders, animated navigation and filter chips, backup completion feedback, analysis and comparison transitions; includes a Reduce Motion setting that also follows macOS accessibility
 - DE/EN localization with DACH rule (de_AT, de_DE, de_CH always German)
 - Sortable, reorderable columns (Name, Type, Status, Tags, Size, Modified)
 - Adjustable row height (Compact / Normal / Large)

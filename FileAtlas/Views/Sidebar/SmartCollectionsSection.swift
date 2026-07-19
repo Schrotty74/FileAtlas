@@ -8,6 +8,8 @@ import SwiftUI
 struct SmartCollectionsSection: View {
     @Environment(IndexViewModel.self) private var vm
     @Environment(UIState.self) private var ui
+    @Environment(MotionPreferences.self) private var motion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     var body: some View {
         Section {
@@ -22,6 +24,7 @@ struct SmartCollectionsSection: View {
                         Text(vm.smartCollectionMatchCount(for: collection).formatted())
                             .font(.caption.monospacedDigit())
                             .foregroundStyle(AppTheme.theme.textSecondary)
+                            .contentTransition(motionEnabled ? .numericText() : .identity)
                     }
                     .contentShape(Rectangle())
                 }
@@ -54,5 +57,10 @@ struct SmartCollectionsSection: View {
         } header: {
             Text("Smart Collections")
         }
+        .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: vm.activeSmartCollectionID)
+    }
+
+    private var motionEnabled: Bool {
+        !motion.reduceMotion && !systemReduceMotion
     }
 }

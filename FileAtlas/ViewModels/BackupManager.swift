@@ -9,6 +9,18 @@
 import SwiftUI
 import AppKit
 
+struct BackupCompletion: Equatable {
+    let sourceName: String
+    let destinationName: String
+    let itemCount: Int
+    let archiveSize: Int64
+}
+
+private struct BackupExecutionResult: Sendable {
+    let artifactURL: URL
+    let itemCount: Int
+}
+
 @Observable
 @MainActor
 final class BackupManager {
@@ -22,8 +34,10 @@ final class BackupManager {
     private(set) var progressLabel: String = ""
     private(set) var activeSourceName: String = ""
     private(set) var currentItemName: String = ""
+    private(set) var isCancelling = false
+    private(set) var completedBackup: BackupCompletion? = nil
     var statusMessage: String? = nil
-    private var backupTask: Task<Void, Error>? = nil
+    private var backupTask: Task<BackupExecutionResult, Error>? = nil
 
     var isBackingUp: Bool { activeBackupLocation != nil }
 
@@ -123,6 +137,8 @@ final class BackupManager {
         progressFraction = 0
         progressLabel = NSLocalizedString("Preparing…", comment: "")
         statusMessage = nil
+        completedBackup = nil
+        isCancelling = false
 
         let password = config.passwordEnabled ? KeychainStore.password(for: locationPath) : nil
         let kind = config.kind
@@ -133,12 +149,16 @@ final class BackupManager {
         let destScoped = destDir.startAccessingSecurityScopedResource()
         let sourceScoped = source.startAccessingSecurityScopedResource()
 
-        let task = Task.detached(priority: .utility) { [weak self] () throws -> Void in
+        let task = Task.detached(priority: .utility) { [weak self] () throws -> BackupExecutionResult in
             try Task.checkCancellation()
+            var artifactURL: URL?
+            var completedFileCount = 0
 
             if kind == .indexOnly || kind == .both {
                 try Task.checkCancellation()
-                _ = try BackupEngine.writeIndex(location: source, destinationDir: destDir, timestamp: timestamp)
+                let result = try BackupEngine.writeIndex(location: source, destinationDir: destDir, timestamp: timestamp)
+                artifactURL = result.url
+                completedFileCount = result.itemCount
             }
 
             try Task.checkCancellation()
@@ -146,7 +166,7 @@ final class BackupManager {
             if kind == .fullOnly || kind == .both {
                 try Task.checkCancellation()
                 var lastPct = -1.0
-                _ = try BackupEngine.writeFullZip(
+                artifactURL = try BackupEngine.writeFullZip(
                     location: source, destinationDir: destDir, timestamp: timestamp,
                     password: password, shouldCancel: { Task.isCancelled },
                     options: BackupArchiveOptions(
@@ -154,6 +174,7 @@ final class BackupManager {
                         hashManifestEnabled: hashManifestEnabled
                     ),
                     progress: { fraction, files, currentPath in
+                        completedFileCount = files
                         let pct = (fraction * 100).rounded()
                         let itemName = currentPath.lastPathComponent
                         guard pct != lastPct || !itemName.isEmpty else { return }
@@ -164,8 +185,11 @@ final class BackupManager {
                             self?.progressLabel = label
                             self?.currentItemName = itemName
                         }
-                    })
+                    }
+                )
             }
+            guard let artifactURL else { throw CancellationError() }
+            return BackupExecutionResult(artifactURL: artifactURL, itemCount: completedFileCount)
         }
         backupTask = task
         let result = await task.result
@@ -174,11 +198,18 @@ final class BackupManager {
         if sourceScoped { source.stopAccessingSecurityScopedResource() }
 
         switch result {
-        case .success:
+        case .success(let result):
             config.lastBackupDate = Date()
             saveConfig(config)
+            completedBackup = BackupCompletion(
+                sourceName: source.lastPathComponent,
+                destinationName: destDir.lastPathComponent,
+                itemCount: result.itemCount,
+                archiveSize: Self.fileSize(at: result.artifactURL)
+            )
             statusMessage = NSLocalizedString("Backup completed.", comment: "")
         case .failure(let error):
+            completedBackup = nil
             statusMessage = Self.message(for: error)
         }
         backupTask = nil
@@ -187,6 +218,7 @@ final class BackupManager {
         currentItemName = ""
         progressFraction = 0
         progressLabel = ""
+        isCancelling = false
     }
 
     /// Sichert eine explizite Auswahl. Dieser manuelle Weg hat keinen Einfluss
@@ -207,15 +239,19 @@ final class BackupManager {
         progressLabel = NSLocalizedString("Preparing…", comment: "")
         statusMessage = nil
 
+        completedBackup = nil
+        isCancelling = false
+
         let destinationScoped = destination.startAccessingSecurityScopedResource()
         let uniqueAccessRoots = Dictionary(accessRoots.map { ($0.path(percentEncoded: false), $0) }) { first, _ in first }.values
         let scopedSources = uniqueAccessRoots.map { ($0, $0.startAccessingSecurityScopedResource()) }
         let timestamp = Self.timestamp()
 
-        let task = Task.detached(priority: .utility) { [weak self] () throws -> Void in
+        let task = Task.detached(priority: .utility) { [weak self] () throws -> BackupExecutionResult in
             try Task.checkCancellation()
             var lastPct = -1.0
-            _ = try BackupEngine.writeFullZip(
+            var completedFileCount = 0
+            let artifactURL = try BackupEngine.writeFullZip(
                 sources: sources,
                 destinationDir: destination,
                 timestamp: timestamp,
@@ -226,6 +262,7 @@ final class BackupManager {
                     hashManifestEnabled: hashManifestEnabled
                 ),
                 progress: { fraction, files, currentPath in
+                    completedFileCount = files
                     let pct = (fraction * 100).rounded()
                     let itemName = currentPath.lastPathComponent
                     guard pct != lastPct || !itemName.isEmpty else { return }
@@ -238,6 +275,7 @@ final class BackupManager {
                     }
                 }
             )
+            return BackupExecutionResult(artifactURL: artifactURL, itemCount: completedFileCount)
         }
         backupTask = task
         let result = await task.result
@@ -247,9 +285,16 @@ final class BackupManager {
         for (root, scoped) in scopedSources where scoped { root.stopAccessingSecurityScopedResource() }
 
         switch result {
-        case .success:
+        case .success(let result):
+            completedBackup = BackupCompletion(
+                sourceName: sources.count == 1 ? sources[0].lastPathComponent : "\(sources.count) selected items",
+                destinationName: destination.lastPathComponent,
+                itemCount: result.itemCount,
+                archiveSize: Self.fileSize(at: result.artifactURL)
+            )
             statusMessage = NSLocalizedString("Backup completed.", comment: "")
         case .failure(let error):
+            completedBackup = nil
             statusMessage = Self.message(for: error)
         }
         activeBackupLocation = nil
@@ -257,12 +302,19 @@ final class BackupManager {
         currentItemName = ""
         progressFraction = 0
         progressLabel = ""
+        isCancelling = false
     }
 
     func cancelBackup() {
         guard isBackingUp else { return }
         backupTask?.cancel()
+        isCancelling = true
         progressLabel = NSLocalizedString("Cancelling…", comment: "")
+    }
+
+    func dismissStatusMessage() {
+        statusMessage = nil
+        completedBackup = nil
     }
 
     /// Beim App-Start: für alle Orte fällige geplante Backups nacheinander ausführen.
@@ -296,6 +348,10 @@ final class BackupManager {
         let df = DateFormatter()
         df.dateFormat = "yyyy-MM-dd_HH-mm"
         return df.string(from: Date())
+    }
+
+    private static func fileSize(at url: URL) -> Int64 {
+        Int64((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
     }
 
     private static func message(for error: Error) -> String {

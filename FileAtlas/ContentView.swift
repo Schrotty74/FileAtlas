@@ -46,6 +46,8 @@ final class UIState {
 struct ContentView: View {
     @Environment(IndexViewModel.self) private var vm
     @Environment(UIState.self) private var ui
+    @Environment(MotionPreferences.self) private var motion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     var body: some View {
         @Bindable var vm = vm
@@ -69,6 +71,8 @@ struct ContentView: View {
                 FirstLaunchHelpView()
             }
         }
+        .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: vm.hasUserContent)
+        .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: ui.isSidebarVisible)
         .toolbar {
             MainToolbar(vm: vm, ui: ui, searchText: $vm.searchText, searchAllFolders: $vm.searchAllFolders)
         }
@@ -119,11 +123,18 @@ struct ContentView: View {
             }
         }
     }
+
+    private var motionEnabled: Bool {
+        !motion.reduceMotion && !systemReduceMotion
+    }
 }
 
 private struct FirstLaunchHelpView: View {
     @Environment(IndexViewModel.self) private var vm
     @Environment(LanguageManager.self) private var language
+    @Environment(MotionPreferences.self) private var motion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    @State private var hasAppeared = false
 
     private var content: FirstLaunchHelpContent {
         FirstLaunchHelpContent(language: language.effectiveLanguage)
@@ -166,18 +177,12 @@ private struct FirstLaunchHelpView: View {
 
                 HStack(spacing: 12) {
                     ForEach(FirstLaunchAIService.allCases) { service in
-                        Button {
+                        FirstLaunchAIServiceButton(service: service) {
                             FirstLaunchHelpAction.copyPromptAndOpen(
                                 service,
                                 language: language.effectiveLanguage
                             )
-                        } label: {
-                            HStack(spacing: 7) {
-                                AIServiceLogo(service: service)
-                                Text(service.title)
-                            }
                         }
-                        .buttonStyle(.bordered)
                         .help(content.serviceHelp(service))
                     }
                 }
@@ -189,8 +194,49 @@ private struct FirstLaunchHelpView: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 620)
         }
+        .opacity(hasAppeared || !motionEnabled ? 1 : 0)
+        .offset(y: hasAppeared || !motionEnabled ? 0 : 18)
+        .scaleEffect(hasAppeared || !motionEnabled ? 1 : 0.985)
+        .animation(motionEnabled ? FileAtlasMotion.staged : nil, value: hasAppeared)
         .padding(36)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .task { hasAppeared = true }
+    }
+
+    private var motionEnabled: Bool {
+        !motion.reduceMotion && !systemReduceMotion
+    }
+}
+
+private struct FirstLaunchAIServiceButton: View {
+    @Environment(MotionPreferences.self) private var motion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    let service: FirstLaunchAIService
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 7) {
+                AIServiceLogo(service: service)
+                    .offset(y: isMotionEnabled && isHovered ? -1 : 0)
+                Text(service.title)
+            }
+        }
+        .buttonStyle(.bordered)
+        .scaleEffect(isMotionEnabled && isHovered ? 1.025 : 1)
+        .offset(y: isMotionEnabled && isHovered ? -2 : 0)
+        .shadow(
+            color: isMotionEnabled && isHovered ? AppTheme.theme.accentColor.opacity(0.24) : .clear,
+            radius: 7,
+            y: 3
+        )
+        .animation(isMotionEnabled ? FileAtlasMotion.quick : nil, value: isHovered)
+        .onHover { isHovered = $0 }
+    }
+
+    private var isMotionEnabled: Bool {
+        !motion.reduceMotion && !systemReduceMotion
     }
 }
 
@@ -301,12 +347,16 @@ private struct AutoRescanBanner: View {
 /// Schmales Statusband am unteren Rand, während ein Backup läuft / nach Abschluss.
 private struct BackupProgressBanner: View {
     @Environment(BackupManager.self) private var backup
+    @Environment(MotionPreferences.self) private var motion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     var body: some View {
-        if backup.isBackingUp {
-            HStack(spacing: 10) {
+        Group {
+            if backup.isBackingUp {
+                HStack(spacing: 10) {
                 ProgressView(value: backup.progressFraction)
                     .frame(width: 140)
+                    .animation(motionEnabled ? FileAtlasMotion.quick : nil, value: backup.progressFraction)
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Backing up \(backup.activeSourceName)…")
                         .font(.callout.weight(.medium))
@@ -314,6 +364,7 @@ private struct BackupProgressBanner: View {
                         Text(backup.currentItemName)
                             .lineLimit(1)
                             .truncationMode(.middle)
+                            .contentTransition(motionEnabled ? .opacity : .identity)
                     } else {
                         Text(backup.progressLabel)
                     }
@@ -323,23 +374,48 @@ private struct BackupProgressBanner: View {
                 Text(backup.progressLabel)
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(AppTheme.theme.textSecondary)
-                Button("Cancel") {
-                    backup.cancelBackup()
+                    .contentTransition(motionEnabled ? .numericText() : .identity)
+                if backup.isCancelling {
+                    Label("Cancelling…", systemImage: "arrow.triangle.2.circlepath")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(AppTheme.theme.textSecondary)
+                        .transition(.opacity.combined(with: .scale(scale: 0.94)))
+                } else {
+                    Button("Cancel") {
+                        backup.cancelBackup()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .transition(.opacity.combined(with: .scale(scale: 0.94)))
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
             }
             .padding(.horizontal, 14).padding(.vertical, 8)
             .background(.regularMaterial, in: Capsule())
             .overlay(Capsule().stroke(AppTheme.stroke, lineWidth: 0.5))
-            .padding(.bottom, 12)
-            .transition(.move(edge: .bottom).combined(with: .opacity))
-        } else if let message = backup.statusMessage {
-            HStack(spacing: 8) {
-                Image(systemName: "checkmark.circle.fill").foregroundStyle(AppTheme.theme.accentColor)
-                Text(message).font(.callout)
+                .padding(.bottom, 12)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            } else if let message = backup.statusMessage {
+                HStack(spacing: 10) {
+                Image(systemName: backup.completedBackup == nil ? "exclamationmark.circle.fill" : "checkmark.circle.fill")
+                    .foregroundStyle(backup.completedBackup == nil ? AppTheme.gold : AppTheme.theme.accentColor)
+                    .symbolEffect(.bounce, value: backup.completedBackup != nil)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(message).font(.callout.weight(.medium))
+                    if let completion = backup.completedBackup {
+                        HStack(spacing: 7) {
+                            Text(String(format: NSLocalizedString("%lld files", comment: ""), completion.itemCount))
+                            Text(ByteCountFormatter.string(fromByteCount: completion.archiveSize, countStyle: .file))
+                            Text(completion.destinationName)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(AppTheme.theme.textSecondary)
+                        .contentTransition(motionEnabled ? .numericText() : .identity)
+                    }
+                }
                 Button {
-                    backup.statusMessage = nil
+                    backup.dismissStatusMessage()
                 } label: { Image(systemName: "xmark.circle.fill") }
                     .buttonStyle(.plain)
                     .foregroundStyle(AppTheme.theme.textSecondary)
@@ -347,9 +423,17 @@ private struct BackupProgressBanner: View {
             .padding(.horizontal, 14).padding(.vertical, 8)
             .background(.regularMaterial, in: Capsule())
             .overlay(Capsule().stroke(AppTheme.stroke, lineWidth: 0.5))
-            .padding(.bottom, 12)
-            .transition(.move(edge: .bottom).combined(with: .opacity))
+                .padding(.bottom, 12)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
+        .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: backup.isBackingUp)
+        .animation(motionEnabled ? FileAtlasMotion.quick : nil, value: backup.isCancelling)
+        .animation(motionEnabled ? FileAtlasMotion.quick : nil, value: backup.statusMessage)
+    }
+
+    private var motionEnabled: Bool {
+        !motion.reduceMotion && !systemReduceMotion
     }
 }
 
@@ -358,6 +442,7 @@ private struct BackupProgressBanner: View {
         .environment(IndexViewModel())
         .environment(AppearanceManager())
         .environment(LanguageManager())
+        .environment(MotionPreferences())
         .environment(UIState())
         .environment(BackupManager())
         .frame(width: 1100, height: 720)

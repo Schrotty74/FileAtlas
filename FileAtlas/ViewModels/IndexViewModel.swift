@@ -1163,6 +1163,7 @@ final class IndexViewModel {
                     guard let self, self.isScanning else { return }
                     self.currentScanPath = latestPath
                     self.scanProgressCount = latestCount
+                    self.entries = buffer
                     if !failures.isEmpty {
                         self.scanErrors.append(contentsOf: failures)
                     }

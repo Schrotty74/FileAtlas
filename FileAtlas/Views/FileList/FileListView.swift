@@ -12,6 +12,8 @@ struct FileListView: View {
     @Environment(IndexViewModel.self) private var vm
     @Environment(UIState.self) private var ui
     @Environment(BackupManager.self) private var backup
+    @Environment(MotionPreferences.self) private var motion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @AppStorage("FileListColumnCustomization") private var columnCustomizationData = Data()
     @State private var columnCustomization = TableColumnCustomization<FileEntry>()
     @State private var tagPickerEntry: FileEntry?
@@ -24,7 +26,9 @@ struct FileListView: View {
                 scanStatusBar
             }
 
-            if vm.entries.isEmpty && !vm.isScanning {
+            if vm.isScanning && vm.displayedEntries.isEmpty {
+                ScanLoadingPlaceholder()
+            } else if vm.entries.isEmpty && !vm.isScanning {
                 onboarding
             } else {
                 switch ui.fileListViewMode {
@@ -42,6 +46,9 @@ struct FileListView: View {
             }
         }
         .background(AppTheme.windowBackground)
+        .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: vm.isScanning)
+        .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: ui.fileListViewMode)
+        .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: vm.displayedEntries.map(\.id))
         .navigationTitle("FileAtlas")
         .onAppear(perform: restoreColumnCustomization)
         .onChange(of: columnCustomization) { _, newValue in
@@ -153,6 +160,7 @@ struct FileListView: View {
             .disabledCustomizationBehavior(.visibility)
         }
         .scrollContentBackground(.hidden)
+        .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: vm.displayedEntries.map(\.id))
     }
 
     private var compactList: some View {
@@ -165,10 +173,12 @@ struct FileListView: View {
                     .listRowInsets(EdgeInsets(top: 0, leading: 10, bottom: 0, trailing: 10))
                     .listRowBackground(Color.clear)
                     .contextMenu { rowContextMenu(for: entry) }
+                    .transition(rowTransition)
             }
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: vm.displayedEntries.map(\.id))
     }
 
     private func compactRow(for entry: FileEntry) -> some View {
@@ -374,7 +384,10 @@ struct FileListView: View {
 
     private var scanStatusBar: some View {
         HStack(spacing: 10) {
-            ProgressView().controlSize(.small)
+            Image(systemName: "arrow.triangle.2.circlepath")
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(AppTheme.theme.accentColor)
+                .symbolEffect(.rotate, options: .repeating, isActive: vm.isScanning && motionEnabled)
             Group {
                 if let autoScanLaunchMessage = vm.autoScanLaunchMessage {
                     Text(autoScanLaunchMessage)
@@ -387,6 +400,7 @@ struct FileListView: View {
             Text("\(vm.scanProgressCount) files")
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(AppTheme.theme.accentColor)
+                .contentTransition(motionEnabled ? .numericText() : .identity)
             Text(vm.currentScanPath)
                 .font(.caption)
                 .foregroundStyle(AppTheme.theme.textSecondary)
@@ -400,6 +414,7 @@ struct FileListView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(.thinMaterial)
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
 
     // MARK: - Onboarding
@@ -430,6 +445,7 @@ struct FileListView: View {
                 .tint(AppTheme.theme.accentColor)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .transition(.opacity.combined(with: .scale(scale: 0.98)))
         } else {
             // Orte vorhanden, aber noch nicht gescannt (z. B. nach Neustart).
             VStack(spacing: 14) {
@@ -454,6 +470,7 @@ struct FileListView: View {
                 .tint(AppTheme.theme.accentColor)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .transition(.opacity.combined(with: .scale(scale: 0.98)))
         }
     }
 
@@ -462,12 +479,14 @@ struct FileListView: View {
     private var footer: some View {
         HStack(spacing: 8) {
             Text(fileCountText)
+                .contentTransition(motionEnabled ? .numericText() : .identity)
             Text("·")
             Text(ByteCountFormatter.string(fromByteCount: vm.totalSize, countStyle: .file))
             if vm.displayedDuplicateCount > 0 {
                 Text("·")
                 Text(duplicateCountText)
                     .foregroundStyle(AppTheme.gold)
+                    .contentTransition(motionEnabled ? .numericText() : .identity)
             }
             Spacer()
         }
@@ -514,6 +533,71 @@ struct FileListView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .background(AppTheme.gold.opacity(0.08))
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+
+    private var motionEnabled: Bool {
+        !motion.reduceMotion && !systemReduceMotion
+    }
+
+    private var rowTransition: AnyTransition {
+        motionEnabled
+            ? .opacity.combined(with: .move(edge: .bottom))
+            : .identity
+    }
+}
+
+private struct ScanLoadingPlaceholder: View {
+    @Environment(MotionPreferences.self) private var motion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    @State private var highlightPosition = -0.8
+
+    var body: some View {
+        VStack(spacing: 10) {
+            ForEach(0..<7, id: \.self) { index in
+                HStack(spacing: 10) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .frame(width: 18, height: 18)
+                    VStack(alignment: .leading, spacing: 5) {
+                        RoundedRectangle(cornerRadius: 3)
+                            .frame(width: index.isMultiple(of: 3) ? 172 : 230, height: 11)
+                        RoundedRectangle(cornerRadius: 3)
+                            .frame(width: 98, height: 8)
+                    }
+                    Spacer()
+                    RoundedRectangle(cornerRadius: 3)
+                        .frame(width: 52, height: 9)
+                }
+                .foregroundStyle(AppTheme.theme.textSecondary.opacity(0.16))
+                .padding(.horizontal, 14)
+                .frame(height: 34)
+                .background {
+                    GeometryReader { proxy in
+                        LinearGradient(
+                            colors: [.clear, .white.opacity(0.16), .clear],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(width: proxy.size.width * 0.55)
+                        .offset(x: highlightPosition * proxy.size.width)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+            }
+        }
+        .padding(.top, 12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .task {
+            guard isMotionEnabled else { return }
+            withAnimation(.linear(duration: 1.35).repeatForever(autoreverses: false)) {
+                highlightPosition = 1.1
+            }
+        }
+    }
+
+    private var isMotionEnabled: Bool {
+        !motion.reduceMotion && !systemReduceMotion
     }
 }
 

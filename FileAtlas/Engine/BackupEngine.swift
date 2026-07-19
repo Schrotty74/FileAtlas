@@ -14,6 +14,11 @@ nonisolated struct BackupArchiveOptions: Sendable, Hashable {
     var hashManifestEnabled: Bool = false
 }
 
+nonisolated struct IndexBackupResult: Sendable {
+    let url: URL
+    let itemCount: Int
+}
+
 nonisolated struct BackupEngine {
 
     enum BackupError: Error, Sendable {
@@ -24,7 +29,7 @@ nonisolated struct BackupEngine {
     // MARK: - Index-Backup (nur Metadaten)
 
     /// Schreibt die Dateiliste des Ordners als JSON. Klein & schnell.
-    static func writeIndex(location: URL, destinationDir: URL, timestamp: String) throws -> URL {
+    static func writeIndex(location: URL, destinationDir: URL, timestamp: String) throws -> IndexBackupResult {
         let entries = indexEntries(of: location)
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
@@ -34,7 +39,7 @@ nonisolated struct BackupEngine {
         let name = "FileAtlas_Backup_\(location.lastPathComponent)_\(timestamp)_index.json"
         let url = destinationDir.appendingPathComponent(name)
         try data.write(to: url, options: .atomic)
-        return url
+        return IndexBackupResult(url: url, itemCount: entries.count)
     }
 
     /// Vollständige Metadaten-Liste einer Datei oder eines Ordners.

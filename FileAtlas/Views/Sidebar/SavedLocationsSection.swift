@@ -9,6 +9,8 @@ struct SavedLocationsSection: View {
     @Environment(IndexViewModel.self) private var vm
     @Environment(BackupManager.self) private var backup
     @Environment(UIState.self) private var ui
+    @Environment(MotionPreferences.self) private var motion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @State private var expandedPaths: Set<String> = []
     @State private var childrenByPath: [String: [URL]] = [:]
     @State private var loadingPaths: Set<String> = []
@@ -40,6 +42,7 @@ struct SavedLocationsSection: View {
         } header: {
             Text("Locations")
         }
+        .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: expandedPaths)
     }
 
     private var nodes: [LocationTreeNode] {
@@ -71,6 +74,10 @@ struct SavedLocationsSection: View {
     private func pathKey(for url: URL) -> String {
         url.path(percentEncoded: false)
     }
+
+    private var motionEnabled: Bool {
+        !motion.reduceMotion && !systemReduceMotion
+    }
 }
 
 struct LocationTreeNode: Identifiable {
@@ -90,6 +97,8 @@ struct LocationTreeRow: View {
     @Environment(IndexViewModel.self) private var vm
     @Environment(BackupManager.self) private var backup
     @Environment(UIState.self) private var ui
+    @Environment(MotionPreferences.self) private var motion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
     let url: URL
     let level: Int
@@ -142,6 +151,7 @@ struct LocationTreeRow: View {
                         Text("\(stats.count) Dateien · \(ByteCountFormatter.string(fromByteCount: stats.size, countStyle: .file))")
                             .font(.caption2)
                             .foregroundStyle(AppTheme.theme.textSecondary)
+                            .contentTransition(motionEnabled ? .numericText() : .identity)
                     }
                     if isSavedRoot && kind == .savedLocation, let last = backup.lastBackup(for: url) {
                         Text("Backup: \(last.formatted(date: .abbreviated, time: .shortened))")
@@ -167,8 +177,21 @@ struct LocationTreeRow: View {
             }
         }
         .padding(.leading, CGFloat(level) * 16)
+        .padding(.horizontal, 6)
+        .background {
+            if isSelected {
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 7)
+                            .stroke(AppTheme.theme.accentColor.opacity(0.3), lineWidth: 0.75)
+                    }
+            }
+        }
         .onHover { inside in hoveredPath = inside ? pathKey : nil }
         .contextMenu { contextMenu }
+        .transition(motionEnabled ? .opacity.combined(with: .move(edge: .top)) : .identity)
+        .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: isSelected)
     }
 
     private var rowIconName: String {
@@ -191,6 +214,8 @@ struct LocationTreeRow: View {
         } else {
             Image(systemName: disclosureIcon)
                 .font(.caption2)
+                .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                .animation(motionEnabled ? FileAtlasMotion.quick : nil, value: isExpanded)
                 .frame(width: 18, height: 22)
                 .contentShape(Rectangle())
                 .highPriorityGesture(TapGesture().onEnded {
@@ -355,5 +380,14 @@ struct LocationTreeRow: View {
                 loadingPaths.remove(pathKey)
             }
         }
+    }
+
+    private var motionEnabled: Bool {
+        !motion.reduceMotion && !systemReduceMotion
+    }
+
+    private var isSelected: Bool {
+        guard let selected = vm.selectedScanRoot else { return false }
+        return selected.standardizedFileURL == url.standardizedFileURL
     }
 }

@@ -7,6 +7,8 @@ import SwiftUI
 
 struct RecentLocationsSection: View {
     @Environment(IndexViewModel.self) private var vm
+    @Environment(MotionPreferences.self) private var motion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @State private var expandedPaths: Set<String> = []
     @State private var childrenByPath: [String: [URL]] = [:]
     @State private var loadingPaths: Set<String> = []
@@ -31,6 +33,7 @@ struct RecentLocationsSection: View {
             } header: {
                 Text("Schnellzugriff")
             }
+            .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: expandedPaths)
         }
     }
 
@@ -64,5 +67,9 @@ struct RecentLocationsSection: View {
 
     private func pathKey(for url: URL) -> String {
         url.path(percentEncoded: false)
+    }
+
+    private var motionEnabled: Bool {
+        !motion.reduceMotion && !systemReduceMotion
     }
 }

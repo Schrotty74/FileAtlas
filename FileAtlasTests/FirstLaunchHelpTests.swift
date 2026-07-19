@@ -1,8 +1,22 @@
+import Foundation
 import Testing
 @testable import FileAtlas
 
 @MainActor
 struct FirstLaunchHelpTests {
+    @Test
+    func motionPreferencePersistsInTheSelectedDefaultsStore() {
+        let suiteName = "FileAtlasTests.MotionPreferences.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let preferences = MotionPreferences(defaults: defaults)
+        #expect(!preferences.reduceMotion)
+
+        preferences.reduceMotion = true
+        #expect(MotionPreferences(defaults: defaults).reduceMotion)
+    }
+
     @Test
     func serviceURLsUseTheOfficialWebsites() {
         #expect(FirstLaunchAIService.chatGPT.websiteURL.absoluteString == "https://chatgpt.com/")

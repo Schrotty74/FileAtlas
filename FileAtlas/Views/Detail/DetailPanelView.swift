@@ -22,7 +22,10 @@ private struct AppBundleMetadata: Sendable, Equatable {
 
 struct DetailPanelView: View {
     @Environment(IndexViewModel.self) private var vm
+    @Environment(MotionPreferences.self) private var motion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @State private var appBundleMetadata: AppBundleMetadata?
+    @State private var areDuplicatesExpanded = false
 
     var body: some View {
         Group {
@@ -32,6 +35,9 @@ struct DetailPanelView: View {
                 placeholder
             }
         }
+        .id(vm.selectedEntry?.id)
+        .transition(motionEnabled ? .opacity.combined(with: .scale(scale: 0.985)) : .identity)
+        .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: vm.selectedEntry?.id)
         .background(AppTheme.surface)
     }
 
@@ -163,21 +169,45 @@ struct DetailPanelView: View {
             $0.duplicateGroupID != nil && $0.duplicateGroupID == entry.duplicateGroupID && $0.id != entry.id
         }
         return VStack(alignment: .leading, spacing: 6) {
-            Text("Identical files")
-                .font(.caption.weight(.semibold))
+            Button {
+                areDuplicatesExpanded.toggle()
+            } label: {
+                HStack {
+                    Text("Identical files")
+                        .font(.caption.weight(.semibold))
+                    Spacer()
+                    Text("\(others.count)")
+                        .font(.caption.monospacedDigit())
+                        .contentTransition(motionEnabled ? .numericText() : .identity)
+                    Image(systemName: "chevron.right")
+                        .font(.caption2.weight(.semibold))
+                        .rotationEffect(.degrees(areDuplicatesExpanded ? 90 : 0))
+                }
                 .foregroundStyle(AppTheme.gold)
-            ForEach(others) { other in
-                Text(other.pathKey)
-                    .font(.caption2)
-                    .foregroundStyle(AppTheme.theme.textSecondary)
-                    .lineLimit(2)
-                    .truncationMode(.middle)
-                    .textSelection(.enabled)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if areDuplicatesExpanded {
+                ForEach(Array(others.enumerated()), id: \.element.id) { index, other in
+                    Text(other.pathKey)
+                        .font(.caption2)
+                        .foregroundStyle(AppTheme.theme.textSecondary)
+                        .lineLimit(2)
+                        .truncationMode(.middle)
+                        .textSelection(.enabled)
+                        .transition(motionEnabled ? .opacity.combined(with: .move(edge: .top)) : .identity)
+                        .animation(
+                            motionEnabled ? FileAtlasMotion.staged.delay(0.025 * Double(index)) : nil,
+                            value: areDuplicatesExpanded
+                        )
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .background(AppTheme.gold.opacity(0.08), in: .rect(cornerRadius: AppTheme.theme.cornerRadius))
+        .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: areDuplicatesExpanded)
     }
 
     private func actions(_ entry: FileEntry) -> some View {
@@ -222,6 +252,10 @@ struct DetailPanelView: View {
         df.dateStyle = .medium
         df.timeStyle = .short
         return df.string(from: date)
+    }
+
+    private var motionEnabled: Bool {
+        !motion.reduceMotion && !systemReduceMotion
     }
 
     private func loadAppBundleMetadata(for entry: FileEntry) async {

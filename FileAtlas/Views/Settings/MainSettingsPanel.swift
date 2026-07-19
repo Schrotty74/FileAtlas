@@ -9,6 +9,7 @@ struct MainSettingsPanel: View {
     @Environment(IndexViewModel.self) private var vm
     @Environment(AppearanceManager.self) private var appearance
     @Environment(LanguageManager.self) private var language
+    @Environment(MotionPreferences.self) private var motion
     @Environment(BackupManager.self) private var backup
     @Environment(UIState.self) private var ui
     @Environment(\.dismiss) private var dismiss
@@ -114,6 +115,7 @@ struct MainSettingsPanel: View {
     private var appearanceSection: some View {
         @Bindable var appearance = appearance
         @Bindable var vm = vm
+        @Bindable var motion = motion
 
         return Form {
             Section("Appearance") {
@@ -134,6 +136,12 @@ struct MainSettingsPanel: View {
                     Text("Fast generic icons").tag(IconDisplayMode.generic)
                 }
                 .pickerStyle(.segmented)
+
+                Toggle("Reduce interface motion", isOn: $motion.reduceMotion)
+                    .tint(AppTheme.theme.accentColor)
+                Text("Also follows the macOS Reduce Motion accessibility setting.")
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.theme.textSecondary)
             }
         }
         .formStyle(.grouped)

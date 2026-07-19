@@ -289,6 +289,16 @@
         }
       }
     },
+    "Also follows the macOS Reduce Motion accessibility setting." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beruecksichtigt auch die macOS-Bedienungshilfe \"Bewegung reduzieren\"."
+          }
+        }
+      }
+    },
     "Appearance" : {
       "localizations" : {
         "de" : {

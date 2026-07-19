@@ -114,6 +114,8 @@ struct AlertRuleEditorView: View {
 }
 
 private struct AlertRuleChips: View {
+    @Environment(MotionPreferences.self) private var motion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     let items: [String]
     let onRemove: (String) -> Void
 
@@ -134,7 +136,11 @@ private struct AlertRuleChips: View {
                 .padding(.vertical, 3)
                 .background(AppTheme.theme.accentColor.opacity(0.15), in: Capsule())
                 .foregroundStyle(AppTheme.theme.accentColor)
+                .transition(isMotionEnabled ? .scale(scale: 0.82).combined(with: .opacity) : .identity)
             }
         }
+        .animation(isMotionEnabled ? FileAtlasMotion.emphasis : nil, value: items)
     }
+
+    private var isMotionEnabled: Bool { !motion.reduceMotion && !systemReduceMotion }
 }
