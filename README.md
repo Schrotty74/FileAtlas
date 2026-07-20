@@ -22,6 +22,13 @@ Die deutsche Ausgabe findest du hier: [FileAtlas Handbuch (PDF)](output/pdf/File
 
 When FileAtlas has no saved locations or indexed entries yet, a start screen offers a local folder picker, the manual, and optional help from ChatGPT, Google Gemini, or Claude. Selecting a service copies a general, privacy-safe question with the public manual link to the clipboard and then opens that service; FileAtlas never sends local file data or other user data automatically. See [AI help and privacy notes](AI_HELP.md).
 
+## New in 1.9
+
+- Six color themes, including Glass: a milky-translucent full-window surface with a continuous colorful glow and ambient light points.
+- Purposeful motion across scans, navigation, filters, backups, insights, and first launch, with a Reduce Motion setting that respects macOS accessibility.
+- Optional tooltips, improved resizable table columns and detail panel behavior, plus sturdier tag and duplicate handling.
+- Apple-silicon-aware scanning, adaptive duplicate hashing, and a memory-limited system icon cache.
+
 ## Features
 
 - Local file indexing with recursive folder scan and live progress (AsyncStream)
@@ -30,8 +37,8 @@ When FileAtlas has no saved locations or indexed entries yet, a start screen off
 - Security-Scoped Bookmarks (access persists after app restart)
 - Liquid Glass sidebar (desktop shines through)
 - Light / Dark / System appearance switcher (independent of macOS setting)
-- Six color themes: Midnight Teal, Retro, Graphite Lime, Autumn, Winter and Glass; each works with Light, Dark and System appearance
-- Purposeful interface motion: live scan results with loading placeholders, animated navigation and filter chips, theme-aware ambient effects inside the Liquid Glass sidebar, backup completion feedback, analysis and comparison transitions; includes a Reduce Motion setting that also follows macOS accessibility
+- Six color themes: Midnight Teal, Retro, Graphite Lime, Autumn, Winter and Glass; Glass uses a milky-translucent surface across the entire window
+- Purposeful interface motion: live scan results with loading placeholders, animated navigation and filter chips, theme-aware ambient effects, backup completion feedback, analysis and comparison transitions; includes a Reduce Motion setting that also follows macOS accessibility
 - Optional tooltips for toolbar, navigation and action icons, configurable in Settings -> Appearance
 - DE/EN localization with DACH rule (de_AT, de_DE, de_CH always German)
 - Sortable, reorderable columns (Name, Type, Status, Tags, Size, Modified)

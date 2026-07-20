@@ -22,6 +22,13 @@ The English edition is available here: [FileAtlas Manual (PDF)](output/pdf/FileA
 
 Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, bietet die Startansicht eine Ordnerauswahl, das Handbuch und optionale Hilfe von ChatGPT, Google Gemini oder Claude. Beim Auswaehlen eines Dienstes kopiert FileAtlas eine allgemeine, datensparsame Frage mit dem oeffentlichen Handbuch-Link in die Zwischenablage und oeffnet danach den Dienst. Lokale Dateidaten oder andere Nutzerdaten werden niemals automatisch uebertragen. Details stehen in [KI-Hilfe und Datenschutzhinweise](AI_HELP.md).
 
+## Neu in 1.9
+
+- Sechs Farbschemata, darunter Glas: eine milchig-transparente Oberflaeche ueber das ganze Fenster mit kontinuierlichem farbigem Glow und Lichtpunkten.
+- Zweckvolle Bewegung bei Scan, Navigation, Filtern, Backups, Insights und Erststart, mit Einstellung zum Reduzieren der Bewegung und Beachtung der macOS-Bedienungshilfen.
+- Optionale Tooltips, verbesserte anpassbare Tabellenspalten und Detailbereich sowie robustere Tag- und Duplikatbehandlung.
+- Apple-Silicon-bewusste Scans, adaptives Duplikat-Hashing und ein speicherbegrenzter System-Icon-Cache.
+
 ## Funktionen
 
 - Lokale Dateiindizierung mit rekursivem Ordnerscan und Live-Fortschritt (AsyncStream)
@@ -30,8 +37,8 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 - Security-Scoped Bookmarks (Zugriff bleibt nach App-Neustart erhalten)
 - Liquid-Glass-Seitenleiste (Desktop scheint durch)
 - Umschalter fuer Hell / Dunkel / System (unabhaengig von der macOS-Einstellung)
-- Sechs Farbschemata: Midnight Teal, Retro, Graphite Lime, Herbst, Winter und Glas; jedes funktioniert mit Hell, Dunkel und System
-- Zweckvolle Oberflaechenbewegungen: Live-Scan-Ergebnisse mit Ladeplatzhaltern, animierte Navigation und Filterchips, themenabhaengige Ambiente-Effekte in der Liquid-Glass-Seitenleiste, Rueckmeldung nach einem Backup sowie Uebergaenge in Analyse und Vergleich; mit Einstellung zum Reduzieren der Bewegung und Beachtung der macOS-Bedienungshilfen
+- Sechs Farbschemata: Midnight Teal, Retro, Graphite Lime, Herbst, Winter und Glas; Glas verwendet eine milchig-transparente Oberflaeche ueber das gesamte Fenster
+- Zweckvolle Oberflaechenbewegungen: Live-Scan-Ergebnisse mit Ladeplatzhaltern, animierte Navigation und Filterchips, themenabhaengige Ambiente-Effekte, Rueckmeldung nach einem Backup sowie Uebergaenge in Analyse und Vergleich; mit Einstellung zum Reduzieren der Bewegung und Beachtung der macOS-Bedienungshilfen
 - Optionale Tooltips fuer Toolbar-, Navigations- und Aktionssymbole, konfigurierbar in Einstellungen -> Darstellung
 - DE/EN-Lokalisierung mit DACH-Regel (de_AT, de_DE, de_CH immer Deutsch)
 - Sortierbare, neu anordenbare Spalten (Name, Typ, Status, Tags, Groesse, Geaendert)
