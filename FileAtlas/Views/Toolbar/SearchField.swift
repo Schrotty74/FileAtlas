@@ -36,7 +36,7 @@ struct SearchField: View {
             Toggle("Search all folders", isOn: $searchAllFolders)
                 .toggleStyle(.button)
                 .controlSize(.small)
-                .help("Search all folders")
+                .fileAtlasTooltip("Search all folders")
         }
     }
 }

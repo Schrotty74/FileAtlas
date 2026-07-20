@@ -21,6 +21,18 @@ nonisolated enum AppearanceMode: String, CaseIterable, Codable, Sendable {
     case dark
 }
 
+/// Farbpalette der App. Die Helligkeit wird weiterhin getrennt über `AppearanceMode` gesteuert.
+nonisolated enum ColorTheme: String, CaseIterable, Codable, Sendable, Identifiable {
+    case midnightTeal
+    case retro
+    case graphiteLime
+    case autumn
+    case winter
+    case glass
+
+    var id: String { rawValue }
+}
+
 /// Sortierbare Spalten der Dateitabelle.
 nonisolated enum SortField: String, CaseIterable, Codable, Sendable {
     case name

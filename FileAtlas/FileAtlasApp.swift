@@ -12,6 +12,7 @@ struct FileAtlasApp: App {
     @State private var appearance = AppearanceManager()
     @State private var language = LanguageManager()
     @State private var motion = MotionPreferences()
+    @State private var tooltips = TooltipPreferences()
     @State private var ui = UIState()
     @State private var backup = BackupManager()
 
@@ -22,6 +23,7 @@ struct FileAtlasApp: App {
                 .environment(appearance)
                 .environment(language)
                 .environment(motion)
+                .environment(tooltips)
                 .environment(ui)
                 .environment(backup)
                 .frame(minWidth: 980, minHeight: 620)
@@ -47,6 +49,7 @@ struct FileAtlasApp: App {
                 .environment(appearance)
                 .environment(language)
                 .environment(motion)
+                .environment(tooltips)
                 .environment(ui)
                 .environment(backup)
                 .environment(\.locale, language.locale)
@@ -114,6 +117,18 @@ struct FileAtlasCommands: Commands {
                 Text("Light").tag(AppearanceMode.light)
                 Text("Dark").tag(AppearanceMode.dark)
                 Text("System").tag(AppearanceMode.system)
+            }
+            .pickerStyle(.inline)
+
+            Picker("Color theme", selection: Binding(
+                get: { appearance.colorTheme },
+                set: { appearance.colorTheme = $0 })) {
+                Text("Midnight Teal").tag(ColorTheme.midnightTeal)
+                Text("Retro").tag(ColorTheme.retro)
+                Text("Graphite Lime").tag(ColorTheme.graphiteLime)
+                Text("Autumn").tag(ColorTheme.autumn)
+                Text("Winter").tag(ColorTheme.winter)
+                Text("Glass").tag(ColorTheme.glass)
             }
             .pickerStyle(.inline)
 

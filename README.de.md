@@ -25,11 +25,14 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 ## Funktionen
 
 - Lokale Dateiindizierung mit rekursivem Ordnerscan und Live-Fortschritt (AsyncStream)
+- Apple-Silicon-bewusste Leistung: gebuendelte Live-Scan-Updates, begrenztes adaptives Duplikat-Hashing und ein speicherbegrenzter System-Icon-Cache
 - Mehrere Ordner gleichzeitig scannen
 - Security-Scoped Bookmarks (Zugriff bleibt nach App-Neustart erhalten)
 - Liquid-Glass-Seitenleiste (Desktop scheint durch)
 - Umschalter fuer Hell / Dunkel / System (unabhaengig von der macOS-Einstellung)
-- Zweckvolle Oberflaechenbewegungen: Live-Scan-Ergebnisse mit Ladeplatzhaltern, animierte Navigation und Filterchips, Rueckmeldung nach einem Backup sowie Uebergaenge in Analyse und Vergleich; mit Einstellung zum Reduzieren der Bewegung und Beachtung der macOS-Bedienungshilfen
+- Sechs Farbschemata: Midnight Teal, Retro, Graphite Lime, Herbst, Winter und Glas; jedes funktioniert mit Hell, Dunkel und System
+- Zweckvolle Oberflaechenbewegungen: Live-Scan-Ergebnisse mit Ladeplatzhaltern, animierte Navigation und Filterchips, themenabhaengige Ambiente-Effekte in der Liquid-Glass-Seitenleiste, Rueckmeldung nach einem Backup sowie Uebergaenge in Analyse und Vergleich; mit Einstellung zum Reduzieren der Bewegung und Beachtung der macOS-Bedienungshilfen
+- Optionale Tooltips fuer Toolbar-, Navigations- und Aktionssymbole, konfigurierbar in Einstellungen -> Darstellung
 - DE/EN-Lokalisierung mit DACH-Regel (de_AT, de_DE, de_CH immer Deutsch)
 - Sortierbare, neu anordenbare Spalten (Name, Typ, Status, Tags, Groesse, Geaendert)
 - Einstellbare Zeilenhoehe (Kompakt / Normal / Gross)

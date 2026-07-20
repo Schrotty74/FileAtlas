@@ -183,8 +183,9 @@ final class IndexViewModel {
     private static let releasesAPIURL = URL(string: "https://api.github.com/repos/Schrotty74/FileAtlas/releases?per_page=20")!
     private static let latestReleaseWebURL = URL(string: "https://github.com/Schrotty74/FileAtlas/releases/latest")!
     private nonisolated static let searchDebounceDelay: Duration = .milliseconds(150)
-    private nonisolated static let scanPublishInterval: Duration = .milliseconds(200)
-    private nonisolated static let scanPublishBatchSize = 200
+    private nonisolated static let scanPublishInterval: Duration = .milliseconds(250)
+    private nonisolated static let scanPublishBatchSize = 400
+    private nonisolated static let scanDisplayRefreshInterval: Duration = .seconds(1)
     /// Bei neuen Default-Einträgen erhöhen, damit die Migration erneut läuft.
     private static let skippedFoldersMigrationVersion = 1
     static let defaultSkippedFolders = ["node_modules", ".git", "Firmware", "Cache", "Caches", ".Trashes", "__MACOSX"]
@@ -307,6 +308,11 @@ final class IndexViewModel {
             skippedFolderNames = cleaned                 // löst didSet → persistiert
         }
 
+        if ProcessInfo.processInfo.arguments.contains("-uiTestTagPopover") {
+            installTagPopoverTestFixture()
+            return
+        }
+
         loadPresets()
         restoreSavedLocations()
         loadRecentScanRoots()
@@ -315,6 +321,15 @@ final class IndexViewModel {
         loadAlertRules()
         loadSmartCollections()
         loadCachedUpdateResult()
+    }
+
+    private func installTagPopoverTestFixture() {
+        let root = URL(fileURLWithPath: "/tmp/FileAtlasUITests", isDirectory: true)
+        let now = Date()
+        entries = [
+            FileEntry(name: "Sample Video.mkv", path: root.appendingPathComponent("Sample Video.mkv"), size: 1_048_576, created: now, modified: now, fileExtension: "mkv", isDirectory: false),
+            FileEntry(name: "Sample Folder", path: root.appendingPathComponent("Sample Folder", isDirectory: true), size: 0, created: now, modified: now, fileExtension: "", isDirectory: true),
+        ]
     }
 
     /// Trimmt Einträge, verwirft Leere und entfernt case-insensitive Duplikate.
@@ -1142,11 +1157,13 @@ final class IndexViewModel {
         let engine = engine
         scanTask = Task.detached(priority: .userInitiated) { [weak self] in
             var buffer: [FileEntry] = []
+            var pendingEntries: [FileEntry] = []
             var pendingFailures: [ScanFailure] = []
             var latestPath = ""
             var latestCount = 0
             var lastPublishCount = 0
             var lastPublish = ContinuousClock.now
+            var lastDisplayRefresh = ContinuousClock.now
 
             func publishIfNeeded(force: Bool = false) async {
                 guard force
@@ -1154,18 +1171,32 @@ final class IndexViewModel {
                     || lastPublish.duration(to: .now) >= Self.scanPublishInterval
                 else { return }
 
+                let entriesToPublish = pendingEntries
+                pendingEntries.removeAll(keepingCapacity: true)
                 let failures = pendingFailures
                 pendingFailures.removeAll(keepingCapacity: true)
                 lastPublishCount = buffer.count
                 lastPublish = .now
+                let shouldRefreshDisplayedEntries = force
+                    || lastDisplayRefresh.duration(to: .now) >= Self.scanDisplayRefreshInterval
+                if shouldRefreshDisplayedEntries {
+                    lastDisplayRefresh = .now
+                }
 
                 await MainActor.run { [weak self] in
                     guard let self, self.isScanning else { return }
                     self.currentScanPath = latestPath
                     self.scanProgressCount = latestCount
-                    self.entries = buffer
+                    if !entriesToPublish.isEmpty {
+                        self.isUpdatingSelectionEntries = true
+                        self.entries.append(contentsOf: entriesToPublish)
+                        self.isUpdatingSelectionEntries = false
+                    }
                     if !failures.isEmpty {
                         self.scanErrors.append(contentsOf: failures)
+                    }
+                    if shouldRefreshDisplayedEntries {
+                        self.recomputeDisplayedEntries()
                     }
                 }
             }
@@ -1182,6 +1213,7 @@ final class IndexViewModel {
                 switch event {
                 case .found(let entry):
                     buffer.append(entry)
+                    pendingEntries.append(entry)
                     latestPath = entry.path.path(percentEncoded: false)
                     latestCount = buffer.count
                     await publishIfNeeded()

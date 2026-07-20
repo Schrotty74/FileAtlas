@@ -38,14 +38,14 @@ final class UIState {
     var showSelectionBackup = false
 
     init() {
-        let rawMode = UserDefaults.standard.string(forKey: Self.fileListViewModeKey)
-        self.fileListViewMode = rawMode.flatMap(FileListViewMode.init(rawValue:)) ?? .table
+        self.fileListViewMode = .list
     }
 }
 
 struct ContentView: View {
     @Environment(IndexViewModel.self) private var vm
     @Environment(UIState.self) private var ui
+    @Environment(AppearanceManager.self) private var appearance
     @Environment(MotionPreferences.self) private var motion
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
 
@@ -53,24 +53,34 @@ struct ContentView: View {
         @Bindable var vm = vm
         @Bindable var ui = ui
 
-        Group {
-            if vm.hasUserContent {
-                HSplitView {
-                    if ui.isSidebarVisible {
-                        SidebarView()
-                            .frame(minWidth: 220, idealWidth: 244, maxWidth: 300)
-                    }
-
-                    FileListView()
-                        .frame(minWidth: 480, idealWidth: 660)
-
-                    DetailPanelView()
-                        .frame(minWidth: 280, idealWidth: 320, maxWidth: 440)
-                }
+        ZStack {
+            if AppTheme.usesWindowGlass {
+                FullSurfaceGlassBackdrop(isGlowAnimated: motionEnabled && !vm.isScanning)
+                    .allowsHitTesting(false)
             } else {
-                FirstLaunchHelpView()
+                AppTheme.windowBackground
+            }
+
+            Group {
+                if vm.hasUserContent {
+                    HSplitView {
+                        if ui.isSidebarVisible {
+                            SidebarView()
+                                .frame(minWidth: 220, idealWidth: 244, maxWidth: 300)
+                        }
+
+                        FileListView()
+                            .frame(minWidth: 480, idealWidth: 660)
+
+                        DetailPanelView()
+                            .frame(minWidth: 220, idealWidth: 250, maxWidth: 300)
+                    }
+                } else {
+                    FirstLaunchHelpView()
+                }
             }
         }
+        .id(appearance.colorTheme)
         .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: vm.hasUserContent)
         .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: ui.isSidebarVisible)
         .toolbar {
@@ -129,6 +139,181 @@ struct ContentView: View {
     }
 }
 
+private struct FullSurfaceGlassBackdrop: NSViewRepresentable {
+    let isGlowAnimated: Bool
+
+    func makeNSView(context: Context) -> FullSurfaceGlassBackdropView {
+        let view = FullSurfaceGlassBackdropView()
+        view.setGlowAnimated(isGlowAnimated)
+        return view
+    }
+
+    func updateNSView(_ view: FullSurfaceGlassBackdropView, context: Context) {
+        view.setGlowAnimated(isGlowAnimated)
+    }
+}
+
+private final class FullSurfaceGlassBackdropView: NSVisualEffectView {
+    private let glowLayer = CAGradientLayer()
+    private let sparkLayer = CALayer()
+    private var isGlowAnimated = false
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        configure()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        configure()
+    }
+
+    override func layout() {
+        super.layout()
+        // The glow rotates continuously, so keep it well beyond every visible edge.
+        let horizontalInset = max(bounds.width * 0.85, 400)
+        let verticalInset = max(bounds.height * 0.85, 400)
+        let frame = bounds.insetBy(dx: -horizontalInset, dy: -verticalInset)
+        guard glowLayer.frame != frame else { return }
+
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        glowLayer.frame = frame
+        sparkLayer.frame = bounds
+        CATransaction.commit()
+        updateGlowAnimation()
+        rebuildSparks()
+    }
+
+    func setGlowAnimated(_ animated: Bool) {
+        guard isGlowAnimated != animated else { return }
+        isGlowAnimated = animated
+        updateGlowAnimation()
+        rebuildSparks()
+    }
+
+    private func configure() {
+        material = .sidebar
+        blendingMode = .behindWindow
+        state = .active
+        wantsLayer = true
+        layer?.masksToBounds = true
+
+        glowLayer.startPoint = CGPoint(x: 0, y: 0.10)
+        glowLayer.endPoint = CGPoint(x: 1, y: 0.90)
+        glowLayer.locations = [0, 0.12, 0.34, 0.56, 0.78, 1]
+        glowLayer.colors = [
+            NSColor.clear.cgColor,
+            NSColor.systemTeal.withAlphaComponent(0.26).cgColor,
+            NSColor.systemCyan.withAlphaComponent(0.38).cgColor,
+            NSColor.systemBlue.withAlphaComponent(0.30).cgColor,
+            NSColor.systemPink.withAlphaComponent(0.18).cgColor,
+            NSColor.clear.cgColor
+        ]
+        layer?.insertSublayer(glowLayer, at: 0)
+        layer?.insertSublayer(sparkLayer, above: glowLayer)
+    }
+
+    private func updateGlowAnimation() {
+        glowLayer.removeAnimation(forKey: "fullSurfaceGlowOpacity")
+        glowLayer.removeAnimation(forKey: "fullSurfaceGlowRotation")
+        glowLayer.opacity = isGlowAnimated ? 0.78 : 0.40
+
+        guard isGlowAnimated, bounds.width > 0 else { return }
+
+        let animation = CABasicAnimation(keyPath: "opacity")
+        animation.fromValue = 0.62
+        animation.toValue = 0.78
+        animation.duration = 1.6
+        animation.autoreverses = true
+        animation.repeatCount = .infinity
+        animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        glowLayer.add(animation, forKey: "fullSurfaceGlowOpacity")
+
+        let rotation = CABasicAnimation(keyPath: "transform.rotation.z")
+        rotation.fromValue = 0
+        rotation.toValue = CGFloat.pi * 2
+        rotation.duration = 12
+        rotation.repeatCount = .infinity
+        rotation.timingFunction = CAMediaTimingFunction(name: .linear)
+        glowLayer.add(rotation, forKey: "fullSurfaceGlowRotation")
+    }
+
+    private func rebuildSparks() {
+        sparkLayer.sublayers?.forEach { $0.removeFromSuperlayer() }
+        guard isGlowAnimated, bounds.width > 0, bounds.height > 0 else { return }
+
+        let colors = [
+            NSColor.systemCyan.cgColor,
+            NSColor.systemTeal.cgColor,
+            NSColor.systemBlue.cgColor,
+            NSColor.systemPink.cgColor,
+            NSColor.systemPurple.cgColor,
+            NSColor.systemYellow.cgColor,
+            NSColor.systemOrange.cgColor,
+            NSColor.systemGreen.cgColor
+        ]
+
+        for index in 0..<108 {
+            let spark = CAShapeLayer()
+            let size = CGFloat(3 + (index * 5) % 5)
+            spark.path = CGPath(ellipseIn: CGRect(x: -size / 2, y: -size / 2, width: size, height: size), transform: nil)
+            spark.fillColor = colors[(index * 3 + index / 8) % colors.count]
+            spark.shadowColor = spark.fillColor
+            spark.shadowRadius = 10
+            spark.shadowOpacity = 1
+            spark.opacity = 0
+
+            let center = sparkCenter(for: index)
+            let end = sparkEnd(from: center, index: index)
+            spark.position = center
+            sparkLayer.addSublayer(spark)
+
+            let movement = CAKeyframeAnimation(keyPath: "position")
+            movement.values = [center, midpoint(from: center, to: end, index: index), end]
+            movement.keyTimes = [0, 0.42, 1]
+
+            let fade = CAKeyframeAnimation(keyPath: "opacity")
+            fade.values = [0, 0.98, 0]
+            fade.keyTimes = [0, 0.12, 1]
+
+            let scale = CAKeyframeAnimation(keyPath: "transform.scale")
+            scale.values = [0.35, 1.25, 0.45]
+            scale.keyTimes = [0, 0.14, 1]
+
+            let group = CAAnimationGroup()
+            group.animations = [movement, fade, scale]
+            group.duration = 4.4 + Double((index * 3) % 6) * 0.35
+            group.repeatCount = .infinity
+            group.timeOffset = group.duration * Double(index % 16) / 16
+            group.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            spark.add(group, forKey: "glassSpark")
+        }
+    }
+
+    private func sparkCenter(for index: Int) -> CGPoint {
+        let horizontal = CGFloat((index * 47 + 13) % 97) / 96
+        let vertical = CGFloat((index * 29 + 31) % 89) / 88
+        return CGPoint(
+            x: bounds.width * (0.035 + horizontal * 0.93),
+            y: bounds.height * (0.05 + vertical * 0.90)
+        )
+    }
+
+    private func sparkEnd(from center: CGPoint, index: Int) -> CGPoint {
+        let angle = CGFloat((index * 73) % 360) * (.pi / 180)
+        let distance = CGFloat(28 + (index * 11) % 44)
+        return CGPoint(x: center.x + cos(angle) * distance, y: center.y + sin(angle) * distance)
+    }
+
+    private func midpoint(from start: CGPoint, to end: CGPoint, index: Int) -> CGPoint {
+        CGPoint(
+            x: (start.x + end.x) / 2 + CGFloat((index % 3) - 1) * 8,
+            y: (start.y + end.y) / 2 + CGFloat((index % 5) - 2) * 5
+        )
+    }
+}
+
 private struct FirstLaunchHelpView: View {
     @Environment(IndexViewModel.self) private var vm
     @Environment(LanguageManager.self) private var language
@@ -183,7 +368,7 @@ private struct FirstLaunchHelpView: View {
                                 language: language.effectiveLanguage
                             )
                         }
-                        .help(content.serviceHelp(service))
+                        .fileAtlasTooltip(text: Text(verbatim: content.serviceHelp(service)))
                     }
                 }
             }
@@ -311,7 +496,7 @@ private struct ScanChangeSummaryBanner: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(AppTheme.theme.textSecondary)
-                .help("Dismiss")
+                .fileAtlasTooltip("Dismiss")
             }
             .padding(.horizontal, 14).padding(.vertical, 8)
             .background(.regularMaterial, in: Capsule())
@@ -443,6 +628,7 @@ private struct BackupProgressBanner: View {
         .environment(AppearanceManager())
         .environment(LanguageManager())
         .environment(MotionPreferences())
+        .environment(TooltipPreferences())
         .environment(UIState())
         .environment(BackupManager())
         .frame(width: 1100, height: 720)

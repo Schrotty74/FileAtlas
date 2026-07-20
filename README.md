@@ -25,11 +25,14 @@ When FileAtlas has no saved locations or indexed entries yet, a start screen off
 ## Features
 
 - Local file indexing with recursive folder scan and live progress (AsyncStream)
+- Apple-silicon-aware performance: batched live scan updates, bounded adaptive duplicate hashing and a memory-limited system icon cache
 - Scan multiple folders simultaneously
 - Security-Scoped Bookmarks (access persists after app restart)
 - Liquid Glass sidebar (desktop shines through)
 - Light / Dark / System appearance switcher (independent of macOS setting)
-- Purposeful interface motion: live scan results with loading placeholders, animated navigation and filter chips, backup completion feedback, analysis and comparison transitions; includes a Reduce Motion setting that also follows macOS accessibility
+- Six color themes: Midnight Teal, Retro, Graphite Lime, Autumn, Winter and Glass; each works with Light, Dark and System appearance
+- Purposeful interface motion: live scan results with loading placeholders, animated navigation and filter chips, theme-aware ambient effects inside the Liquid Glass sidebar, backup completion feedback, analysis and comparison transitions; includes a Reduce Motion setting that also follows macOS accessibility
+- Optional tooltips for toolbar, navigation and action icons, configurable in Settings -> Appearance
 - DE/EN localization with DACH rule (de_AT, de_DE, de_CH always German)
 - Sortable, reorderable columns (Name, Type, Status, Tags, Size, Modified)
 - Adjustable row height (Compact / Normal / Large)

@@ -76,7 +76,7 @@ struct SnapshotPickerView: View {
                         }
                         .buttonStyle(.plain)
                         .foregroundStyle(AppTheme.theme.textSecondary)
-                        .help("Delete Snapshot")
+                        .fileAtlasTooltip("Delete Snapshot")
                     }
                     .contextMenu {
                         Button(role: .destructive) {

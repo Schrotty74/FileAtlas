@@ -9,6 +9,7 @@
 /* Begin PBXFileReference section */
 		5B48DA5D2FE10ED10012486B /* FileAtlas.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FileAtlas.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA17A1A00000000000000001 /* FileAtlasTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FileAtlasTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA17A1A00000000000000101 /* FileAtlasUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FileAtlasUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -20,6 +21,11 @@
 		FA17A1A00000000000000002 /* FileAtlasTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = FileAtlasTests;
+			sourceTree = "<group>";
+		};
+		FA17A1A00000000000000102 /* FileAtlasUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = FileAtlasUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -40,6 +46,7 @@
 			children = (
 				5B48DA5F2FE10ED10012486B /* FileAtlas */,
 				FA17A1A00000000000000002 /* FileAtlasTests */,
+				FA17A1A00000000000000102 /* FileAtlasUITests */,
 				5B48DA5E2FE10ED10012486B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -49,6 +56,7 @@
 			children = (
 				5B48DA5D2FE10ED10012486B /* FileAtlas.app */,
 				FA17A1A00000000000000001 /* FileAtlasTests.xctest */,
+				FA17A1A00000000000000101 /* FileAtlasUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -111,6 +119,25 @@
 			productReference = FA17A1A00000000000000001 /* FileAtlasTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		FA17A1A00000000000000104 /* FileAtlasUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FA17A1A00000000000000109 /* Build configuration list for PBXNativeTarget "FileAtlasUITests" */;
+			buildPhases = (
+				FA17A1A00000000000000105 /* Sources */,
+				FA17A1A00000000000000106 /* Frameworks */,
+				FA17A1A00000000000000107 /* Resources */,
+			);
+			dependencies = (
+				FA17A1A00000000000000111 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FA17A1A00000000000000102 /* FileAtlasUITests */,
+			);
+			name = FileAtlasUITests;
+			productName = FileAtlasUITests;
+			productReference = FA17A1A00000000000000101 /* FileAtlasUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -125,6 +152,10 @@
 						CreatedOnToolsVersion = 26.6;
 					};
 					FA17A1A00000000000000004 = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = 5B48DA5C2FE10ED10012486B;
+					};
+					FA17A1A00000000000000104 = {
 						CreatedOnToolsVersion = 26.6;
 						TestTargetID = 5B48DA5C2FE10ED10012486B;
 					};
@@ -146,6 +177,7 @@
 			targets = (
 				5B48DA5C2FE10ED10012486B /* FileAtlas */,
 				FA17A1A00000000000000004 /* FileAtlasTests */,
+				FA17A1A00000000000000104 /* FileAtlasUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -165,6 +197,12 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FA17A1A00000000000000107 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -182,6 +220,12 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FA17A1A00000000000000105 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -192,6 +236,12 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FA17A1A00000000000000106 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -199,6 +249,18 @@
 			isa = PBXTargetDependency;
 			target = 5B48DA5C2FE10ED10012486B /* FileAtlas */;
 			targetProxy = FA17A1A00000000000000003 /* PBXContainerItemProxy */;
+		};
+		FA17A1A00000000000000110 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5B48DA552FE10ED10012486B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5B48DA5C2FE10ED10012486B;
+			remoteInfo = FileAtlas;
+		};
+		FA17A1A00000000000000111 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5B48DA5C2FE10ED10012486B /* FileAtlas */;
+			targetProxy = FA17A1A00000000000000110 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -453,6 +515,34 @@
 			};
 			name = Release;
 		};
+		FA17A1A0000000000000010A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				PRODUCT_BUNDLE_IDENTIFIER = app.fileatlas.FileAtlasUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
+				TEST_TARGET_NAME = FileAtlas;
+			};
+			name = Debug;
+		};
+		FA17A1A0000000000000010B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				PRODUCT_BUNDLE_IDENTIFIER = app.fileatlas.FileAtlasUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
+				TEST_TARGET_NAME = FileAtlas;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -479,6 +569,15 @@
 			buildConfigurations = (
 				FA17A1A0000000000000000A /* Debug */,
 				FA17A1A0000000000000000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FA17A1A00000000000000109 /* Build configuration list for PBXNativeTarget "FileAtlasUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FA17A1A0000000000000010A /* Debug */,
+				FA17A1A0000000000000010B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -26,7 +26,7 @@ struct GitHubMark: View {
             .frame(width: size, height: size)
         }
         .buttonStyle(.plain)
-        .help("FileAtlas auf GitHub")
+        .fileAtlasTooltip("FileAtlas auf GitHub")
         .accessibilityLabel("FileAtlas auf GitHub")
     }
 }
@@ -50,7 +50,7 @@ struct DiscordMark: View {
             .frame(width: size, height: size)
         }
         .buttonStyle(.plain)
-        .help("FileAtlas-Community auf Discord")
+        .fileAtlasTooltip("FileAtlas-Community auf Discord")
         .accessibilityLabel("FileAtlas-Community auf Discord")
     }
 }

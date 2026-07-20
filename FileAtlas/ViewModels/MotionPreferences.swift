@@ -24,6 +24,46 @@ final class MotionPreferences {
     }
 }
 
+@Observable
+@MainActor
+final class TooltipPreferences {
+    private static let showTooltipsKey = "FileAtlas.showTooltips"
+    private let defaults: UserDefaults
+
+    var showTooltips: Bool {
+        didSet { defaults.set(showTooltips, forKey: Self.showTooltipsKey) }
+    }
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        showTooltips = defaults.object(forKey: Self.showTooltipsKey) as? Bool ?? true
+    }
+}
+
+private struct FileAtlasTooltipModifier: ViewModifier {
+    @Environment(TooltipPreferences.self) private var preferences
+    let title: Text
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if preferences.showTooltips {
+            content.help(title)
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    func fileAtlasTooltip(_ title: LocalizedStringKey) -> some View {
+        modifier(FileAtlasTooltipModifier(title: Text(title)))
+    }
+
+    func fileAtlasTooltip(text title: Text) -> some View {
+        modifier(FileAtlasTooltipModifier(title: title))
+    }
+}
+
 enum FileAtlasMotion {
     static let quick = Animation.easeOut(duration: 0.18)
     static let standard = Animation.easeInOut(duration: 0.28)

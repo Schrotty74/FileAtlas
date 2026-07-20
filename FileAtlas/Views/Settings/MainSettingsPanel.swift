@@ -10,6 +10,7 @@ struct MainSettingsPanel: View {
     @Environment(AppearanceManager.self) private var appearance
     @Environment(LanguageManager.self) private var language
     @Environment(MotionPreferences.self) private var motion
+    @Environment(TooltipPreferences.self) private var tooltips
     @Environment(BackupManager.self) private var backup
     @Environment(UIState.self) private var ui
     @Environment(\.dismiss) private var dismiss
@@ -116,6 +117,7 @@ struct MainSettingsPanel: View {
         @Bindable var appearance = appearance
         @Bindable var vm = vm
         @Bindable var motion = motion
+        @Bindable var tooltips = tooltips
 
         return Form {
             Section("Appearance") {
@@ -124,6 +126,16 @@ struct MainSettingsPanel: View {
                     Text("Dark").tag(AppearanceMode.dark)
                     Text("System").tag(AppearanceMode.system)
                 }
+
+                Picker("Color theme", selection: $appearance.colorTheme) {
+                    Text("Midnight Teal").tag(ColorTheme.midnightTeal)
+                    Text("Retro").tag(ColorTheme.retro)
+                    Text("Graphite Lime").tag(ColorTheme.graphiteLime)
+                    Text("Autumn").tag(ColorTheme.autumn)
+                    Text("Winter").tag(ColorTheme.winter)
+                    Text("Glass").tag(ColorTheme.glass)
+                }
+
                 Picker("Zeilenhöhe", selection: $vm.rowDensity) {
                     ForEach(FileRowDensity.allCases) { density in
                         Text(density.title).tag(density)
@@ -142,6 +154,9 @@ struct MainSettingsPanel: View {
                 Text("Also follows the macOS Reduce Motion accessibility setting.")
                     .font(.caption)
                     .foregroundStyle(AppTheme.theme.textSecondary)
+
+                Toggle("Show tooltips", isOn: $tooltips.showTooltips)
+                    .tint(AppTheme.theme.accentColor)
             }
         }
         .formStyle(.grouped)

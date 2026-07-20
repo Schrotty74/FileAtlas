@@ -236,7 +236,7 @@ struct LocationTreeRow: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(AppTheme.theme.textSecondary)
-            .help("Remove Location")
+            .fileAtlasTooltip("Remove Location")
         } else if isSavedRoot && kind == .quickAccess {
             Button {
                 vm.removeRecentScanRoot(url)
@@ -246,7 +246,7 @@ struct LocationTreeRow: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(AppTheme.theme.textSecondary)
-            .help("Remove from Quick Access")
+            .fileAtlasTooltip("Remove from Quick Access")
         }
     }
 

@@ -18,6 +18,37 @@ struct FirstLaunchHelpTests {
     }
 
     @Test
+    func tooltipPreferenceDefaultsToVisibleAndPersists() {
+        let suiteName = "FileAtlasTests.TooltipPreferences.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let preferences = TooltipPreferences(defaults: defaults)
+        #expect(preferences.showTooltips)
+
+        preferences.showTooltips = false
+        #expect(!TooltipPreferences(defaults: defaults).showTooltips)
+    }
+
+    @Test
+    func colorThemePersistsIndependentlyFromAppearance() {
+        let suiteName = "FileAtlasTests.AppearanceManager.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let appearance = AppearanceManager(defaults: defaults, appliesToApplication: false)
+        #expect(appearance.mode == .system)
+        #expect(appearance.colorTheme == .midnightTeal)
+
+        appearance.mode = .dark
+        appearance.colorTheme = .graphiteLime
+
+        let restored = AppearanceManager(defaults: defaults, appliesToApplication: false)
+        #expect(restored.mode == .dark)
+        #expect(restored.colorTheme == .graphiteLime)
+    }
+
+    @Test
     func serviceURLsUseTheOfficialWebsites() {
         #expect(FirstLaunchAIService.chatGPT.websiteURL.absoluteString == "https://chatgpt.com/")
         #expect(FirstLaunchAIService.gemini.websiteURL.absoluteString == "https://gemini.google.com/")

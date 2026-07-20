@@ -93,10 +93,10 @@ struct FileListView: View {
                         }
                     }
                 }
-                .frame(minHeight: vm.rowDensity.rowHeight)
+                .frame(maxWidth: .infinity, minHeight: vm.rowDensity.rowHeight, alignment: .leading)
                 .contextMenu { rowContextMenu(for: entry) }
             }
-            .width(min: 180, ideal: 280, max: .infinity)
+            .width(min: 180, ideal: 280, max: 600)
             .customizationID("name")
             .disabledCustomizationBehavior(.visibility)
 
@@ -105,7 +105,7 @@ struct FileListView: View {
                     .font(.caption)
                     .foregroundStyle(AppTheme.theme.textSecondary)
                     .lineLimit(1)
-                    .frame(height: vm.rowDensity.rowHeight)
+                    .frame(maxWidth: .infinity, minHeight: vm.rowDensity.rowHeight, alignment: .leading)
                     .contextMenu { rowContextMenu(for: entry) }
             }
             .width(min: 64, ideal: FileColumnWidth.kind, max: 160)
@@ -121,7 +121,7 @@ struct FileListView: View {
                             .foregroundStyle(AppTheme.theme.textSecondary.opacity(0.5))
                     }
                 }
-                .frame(height: vm.rowDensity.rowHeight)
+                .frame(maxWidth: .infinity, minHeight: vm.rowDensity.rowHeight, alignment: .leading)
                 .contextMenu { rowContextMenu(for: entry) }
             }
             .width(min: 72, ideal: FileColumnWidth.status, max: 180)
@@ -129,8 +129,8 @@ struct FileListView: View {
             .disabledCustomizationBehavior(.visibility)
 
             TableColumn("Tags") { entry in
-                tagMenu(for: entry)
-                    .frame(height: vm.rowDensity.rowHeight)
+                tagMenu(for: entry, alignment: .leading)
+                    .frame(maxWidth: .infinity, minHeight: vm.rowDensity.rowHeight, alignment: .leading)
                     .contextMenu { rowContextMenu(for: entry) }
             }
             .width(min: 96, ideal: 140, max: 220)
@@ -141,7 +141,7 @@ struct FileListView: View {
                 Text(entry.formattedSize)
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(AppTheme.theme.textSecondary)
-                    .frame(maxWidth: .infinity, minHeight: vm.rowDensity.rowHeight, alignment: .trailing)
+                    .frame(maxWidth: .infinity, minHeight: vm.rowDensity.rowHeight, alignment: .leading)
                     .contextMenu { rowContextMenu(for: entry) }
             }
             .width(min: 64, ideal: FileColumnWidth.size, max: 150)
@@ -152,7 +152,7 @@ struct FileListView: View {
                 Text(FileRowView.dateString(entry.modified))
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(AppTheme.theme.textSecondary)
-                    .frame(maxWidth: .infinity, minHeight: vm.rowDensity.rowHeight, alignment: .trailing)
+                    .frame(maxWidth: .infinity, minHeight: vm.rowDensity.rowHeight, alignment: .leading)
                     .contextMenu { rowContextMenu(for: entry) }
             }
             .width(min: 110, ideal: FileColumnWidth.modified, max: 240)
@@ -160,6 +160,8 @@ struct FileListView: View {
             .disabledCustomizationBehavior(.visibility)
         }
         .scrollContentBackground(.hidden)
+        .alternatingRowBackgrounds(AppTheme.usesWindowGlass ? .disabled : .enabled)
+        .background(GlassTableRowBackgroundConfiguration(isEnabled: AppTheme.usesWindowGlass))
         .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: vm.displayedEntries.map(\.id))
     }
 
@@ -204,15 +206,14 @@ struct FileListView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             tagMenu(for: entry)
-                .frame(minWidth: 72, idealWidth: 120, maxWidth: 160, alignment: .leading)
+                .frame(width: 160, alignment: .leading)
                 .layoutPriority(1)
-
-            Spacer(minLength: 8)
 
             Text(entry.formattedSize)
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(AppTheme.theme.textSecondary)
                 .lineLimit(1)
+                .frame(width: 76, alignment: .trailing)
         }
         .frame(minHeight: vm.rowDensity.rowHeight)
         .contentShape(Rectangle())
@@ -295,13 +296,18 @@ struct FileListView: View {
         NSPasteboard.general.setString(entry.pathKey, forType: .string)
     }
 
-    private func tagMenu(for entry: FileEntry) -> some View {
+    private func tagMenu(for entry: FileEntry, alignment: Alignment = .center) -> some View {
         Button {
             tagPickerEntry = entry
         } label: {
-            tagSummary(for: entry)
+            ZStack(alignment: alignment) {
+                Color.clear
+                tagSummary(for: entry)
+            }
+            .frame(width: 160, alignment: alignment)
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("tag-button")
         .popover(isPresented: Binding(
             get: { tagPickerEntry?.id == entry.id },
             set: { isPresented in if !isPresented { tagPickerEntry = nil } }
@@ -547,6 +553,107 @@ struct FileListView: View {
     }
 }
 
+/// Applies the Glass-theme alternation to native row views so it spans the full table width.
+@MainActor
+private struct GlassTableRowBackgroundConfiguration: NSViewRepresentable {
+    let isEnabled: Bool
+
+    func makeNSView(context: Context) -> GlassTableRowBackgroundProbe {
+        GlassTableRowBackgroundProbe()
+    }
+
+    func updateNSView(_ nsView: GlassTableRowBackgroundProbe, context: Context) {
+        nsView.configure(isEnabled: isEnabled)
+    }
+}
+
+@MainActor
+private final class GlassTableRowBackgroundProbe: NSView {
+    private weak var tableView: NSTableView?
+    private var isEnabled = false
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    func configure(isEnabled: Bool) {
+        self.isEnabled = isEnabled
+        DispatchQueue.main.async { [weak self] in
+            self?.connectAndApply()
+        }
+    }
+
+    private func connectAndApply() {
+        if tableView == nil {
+            guard let tableView = findTableView() else { return }
+            self.tableView = tableView
+
+            if let clipView = tableView.enclosingScrollView?.contentView {
+                clipView.postsBoundsChangedNotifications = true
+                NotificationCenter.default.addObserver(
+                    self,
+                    selector: #selector(handleVisibleRowsChanged),
+                    name: NSView.boundsDidChangeNotification,
+                    object: clipView
+                )
+            }
+        }
+
+        applyRowBackgrounds()
+    }
+
+    @objc private func handleVisibleRowsChanged() {
+        applyRowBackgrounds()
+    }
+
+    private func applyRowBackgrounds() {
+        guard let tableView else { return }
+
+        tableView.usesAlternatingRowBackgroundColors = !isEnabled
+
+        for row in 0..<tableView.numberOfRows {
+            guard let rowView = tableView.rowView(atRow: row, makeIfNecessary: false) else { continue }
+
+            if isEnabled {
+                rowView.backgroundColor = row.isMultiple(of: 2)
+                    ? .clear
+                    : NSColor(red: 0.025, green: 0.06, blue: 0.11, alpha: 0.46)
+            } else {
+                let colors = NSColor.alternatingContentBackgroundColors
+                rowView.backgroundColor = colors[row % colors.count]
+            }
+        }
+    }
+
+    private func findTableView() -> NSTableView? {
+        var view: NSView? = superview
+
+        while let current = view {
+            if let tableView = current as? NSTableView {
+                return tableView
+            }
+            if let tableView = firstTableView(in: current) {
+                return tableView
+            }
+            view = current.superview
+        }
+
+        return nil
+    }
+
+    private func firstTableView(in view: NSView) -> NSTableView? {
+        for subview in view.subviews {
+            if let tableView = subview as? NSTableView {
+                return tableView
+            }
+            if let tableView = firstTableView(in: subview) {
+                return tableView
+            }
+        }
+        return nil
+    }
+}
+
 private struct ScanLoadingPlaceholder: View {
     @Environment(MotionPreferences.self) private var motion
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
@@ -660,6 +767,7 @@ private struct SpaceKeyMonitor: NSViewRepresentable {
 
 private struct TagPickerPopover: View {
     @Environment(IndexViewModel.self) private var vm
+    @Environment(\.dismiss) private var dismiss
     let entry: FileEntry
     @Binding var newTagName: String
 
@@ -681,6 +789,7 @@ private struct TagPickerPopover: View {
                                 TagPill(tag: tag)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityIdentifier("tag-option-\(tag.title.lowercased())")
                         }
                     }
                 }
@@ -706,7 +815,9 @@ private struct TagPickerPopover: View {
 
                     if !FileTag.predefined.contains(where: { $0.title == tag.title }) {
                         Button {
-                            vm.removeCustomTag(tag)
+                            dismissThenPerform {
+                                vm.removeCustomTag(tag)
+                            }
                         } label: {
                             Image(systemName: "trash")
                         }
@@ -803,12 +914,21 @@ private struct TagPickerPopover: View {
 
         let isNewlyApplied = !vm.hasTag(tag, for: entry)
 
-        if addToCustomTags {
-            vm.addCustomTag(tag.title)
-        }
+        dismissThenPerform {
+            if addToCustomTags {
+                vm.addCustomTag(tag.title)
+            }
 
-        if isNewlyApplied || !addToCustomTags {
-            vm.toggleTag(tag, for: entry)
+            if isNewlyApplied || !addToCustomTags {
+                vm.toggleTag(tag, for: entry)
+            }
+        }
+    }
+
+    private func dismissThenPerform(_ action: @escaping @MainActor () -> Void) {
+        dismiss()
+        Task { @MainActor in
+            action()
         }
     }
 }

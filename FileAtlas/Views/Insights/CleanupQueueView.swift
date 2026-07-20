@@ -51,7 +51,7 @@ struct CleanupQueueView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .foregroundStyle(AppTheme.theme.textSecondary)
-                                .help("Remove from cleanup queue")
+                                .fileAtlasTooltip("Remove from cleanup queue")
                             }
                         }
                     } header: {

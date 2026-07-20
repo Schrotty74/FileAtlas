@@ -5,6 +5,7 @@
 //  Werkzeugleiste: Suchfeld, Scan/Abbrechen, Filter, Vergleich, Export.
 //
 
+import AppKit
 import SwiftUI
 
 struct MainToolbar: ToolbarContent {
@@ -12,6 +13,7 @@ struct MainToolbar: ToolbarContent {
     let ui: UIState
     @Binding var searchText: String
     @Binding var searchAllFolders: Bool
+    @Environment(TooltipPreferences.self) private var tooltips
 
     var body: some ToolbarContent {
         @Bindable var ui = ui
@@ -32,14 +34,10 @@ struct MainToolbar: ToolbarContent {
         }
 
         ToolbarItemGroup(placement: .primaryAction) {
-            Picker("View Mode", selection: $ui.fileListViewMode) {
-                ForEach(FileListViewMode.allCases) { mode in
-                    Label(viewModeTitle(for: mode), systemImage: mode.systemImage)
-                        .tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
+            ViewModeSegmentedControl(
+                selection: $ui.fileListViewMode,
+                showTooltips: tooltips.showTooltips
+            )
             .frame(width: 92)
 
             if vm.isScanning {
@@ -48,6 +46,7 @@ struct MainToolbar: ToolbarContent {
                 } label: {
                     Label("Cancel Scan", systemImage: "xmark.circle")
                 }
+                .fileAtlasTooltip("Cancel Scan")
             } else {
                 Button {
                     vm.rescanSelectedRoot()
@@ -55,6 +54,7 @@ struct MainToolbar: ToolbarContent {
                     Label(vm.entries.isEmpty ? "Scan" : "Rescan", systemImage: "arrow.clockwise")
                 }
                 .disabled(vm.scanRoots.isEmpty)
+                .fileAtlasTooltip(vm.entries.isEmpty ? "Scan" : "Rescan")
             }
 
             Button {
@@ -63,20 +63,21 @@ struct MainToolbar: ToolbarContent {
                 Label("Storage Analysis", systemImage: "chart.bar.xaxis")
             }
             .disabled(vm.entries.isEmpty)
-            .help("Storage Analysis")
+            .fileAtlasTooltip("Storage Analysis")
 
             Button {
                 ui.showCleanupQueue = true
             } label: {
                 Label("Cleanup Queue", systemImage: "trash")
             }
-            .help("Cleanup Queue")
+            .fileAtlasTooltip("Cleanup Queue")
 
             Button {
                 ui.showSettingsPanel = true
             } label: {
                 Label("Settings", systemImage: "gearshape")
             }
+            .fileAtlasTooltip("Settings")
 
             Menu {
                 Button("Export as Excel…") { vm.export(format: .xlsx) }
@@ -86,13 +87,65 @@ struct MainToolbar: ToolbarContent {
                 Label("Export", systemImage: "square.and.arrow.up")
             }
             .disabled(vm.displayedEntries.isEmpty)
+            .fileAtlasTooltip("Export")
         }
     }
 
-    private func viewModeTitle(for mode: FileListViewMode) -> LocalizedStringKey {
+}
+
+private struct ViewModeSegmentedControl: NSViewRepresentable {
+    @Binding var selection: FileListViewMode
+    let showTooltips: Bool
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(selection: $selection)
+    }
+
+    func makeNSView(context: Context) -> NSSegmentedControl {
+        let control = NSSegmentedControl()
+        control.segmentCount = FileListViewMode.allCases.count
+        control.trackingMode = .selectOne
+        control.target = context.coordinator
+        control.action = #selector(Coordinator.selectSegment(_:))
+        control.setAccessibilityLabel(String(localized: "View Mode"))
+
+        for (index, mode) in FileListViewMode.allCases.enumerated() {
+            control.setImage(
+                NSImage(systemSymbolName: mode.systemImage, accessibilityDescription: Self.localizedTitle(for: mode)),
+                forSegment: index
+            )
+            control.setWidth(46, forSegment: index)
+        }
+
+        return control
+    }
+
+    func updateNSView(_ control: NSSegmentedControl, context: Context) {
+        context.coordinator.selection = $selection
+        control.selectedSegment = FileListViewMode.allCases.firstIndex(of: selection) ?? 0
+
+        for (index, mode) in FileListViewMode.allCases.enumerated() {
+            control.setToolTip(showTooltips ? Self.localizedTitle(for: mode) : nil, forSegment: index)
+        }
+    }
+
+    private static func localizedTitle(for mode: FileListViewMode) -> String {
         switch mode {
-        case .table: return "Table"
-        case .list: return "List"
+        case .table: return String(localized: "Table")
+        case .list: return String(localized: "List")
+        }
+    }
+
+    final class Coordinator: NSObject {
+        var selection: Binding<FileListViewMode>
+
+        init(selection: Binding<FileListViewMode>) {
+            self.selection = selection
+        }
+
+        @MainActor @objc func selectSegment(_ sender: NSSegmentedControl) {
+            guard FileListViewMode.allCases.indices.contains(sender.selectedSegment) else { return }
+            selection.wrappedValue = FileListViewMode.allCases[sender.selectedSegment]
         }
     }
 }

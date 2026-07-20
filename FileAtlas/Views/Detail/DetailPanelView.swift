@@ -28,15 +28,17 @@ struct DetailPanelView: View {
     @State private var areDuplicatesExpanded = false
 
     var body: some View {
-        Group {
-            if let entry = vm.selectedEntry {
-                detail(for: entry)
-            } else {
-                placeholder
+        ZStack {
+            Group {
+                if let entry = vm.selectedEntry {
+                    detail(for: entry)
+                } else {
+                    placeholder
+                }
             }
+            .id(vm.selectedEntry?.id)
+            .transition(motionEnabled ? .opacity.combined(with: .scale(scale: 0.985)) : .identity)
         }
-        .id(vm.selectedEntry?.id)
-        .transition(motionEnabled ? .opacity.combined(with: .scale(scale: 0.985)) : .identity)
         .animation(motionEnabled ? FileAtlasMotion.standard : nil, value: vm.selectedEntry?.id)
         .background(AppTheme.surface)
     }

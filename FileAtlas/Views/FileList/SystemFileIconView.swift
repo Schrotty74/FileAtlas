@@ -70,8 +70,10 @@ struct SystemFileIconView: View {
 private actor SystemFileIconCache {
     static let shared = SystemFileIconCache()
     private nonisolated static let fallbackIconExtensions: Set<String> = ["mkv"]
+    private static let maximumCachedIcons = 512
 
     private var icons: [String: NSImage] = [:]
+    private var insertionOrder: [String] = []
 
     func icon(for entry: FileEntry) -> NSImage {
         let key = Self.cacheKey(for: entry)
@@ -80,7 +82,12 @@ private actor SystemFileIconCache {
         }
 
         let image = NSWorkspace.shared.icon(forFile: entry.path.path(percentEncoded: false))
+        if icons.count >= Self.maximumCachedIcons, let oldestKey = insertionOrder.first {
+            icons.removeValue(forKey: oldestKey)
+            insertionOrder.removeFirst()
+        }
         icons[key] = image
+        insertionOrder.append(key)
         return image
     }
 
