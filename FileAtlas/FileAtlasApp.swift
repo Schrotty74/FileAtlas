@@ -8,6 +8,7 @@ import AppKit
 
 @main
 struct FileAtlasApp: App {
+    @NSApplicationDelegateAdaptor(FileAtlasApplicationDelegate.self) private var appDelegate
     @State private var vm = IndexViewModel()
     @State private var appearance = AppearanceManager()
     @State private var language = LanguageManager()
@@ -54,6 +55,12 @@ struct FileAtlasApp: App {
                 .environment(backup)
                 .environment(\.locale, language.locale)
         }
+    }
+}
+
+private final class FileAtlasApplicationDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        true
     }
 }
 
