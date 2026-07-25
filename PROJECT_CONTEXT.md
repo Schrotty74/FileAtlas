@@ -1,6 +1,6 @@
 # FileAtlas Project Context
 
-**Status date:** 2026-07-23
+**Status date:** 2026-07-25
 **Audience:** new development chats and maintainers. Read this file before changing code.
 
 ## Read Order
@@ -128,6 +128,3 @@ public documentation.
   user-approved UI automation.
 - The PDF manuals are tracked artifacts, but their original generator is not
   tracked here. Do not assume an external generator or regenerate blindly.
-- At the start of this documentation update, the working tree had intentional
-  uncommitted changes in `FileAtlas/FileAtlasApp.swift` and both manual PDFs.
-  Preserve them; do not reset or discard them without explicit instruction.

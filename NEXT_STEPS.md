@@ -1,15 +1,14 @@
 # FileAtlas Next Steps
 
-**Last reviewed:** 2026-07-23
+**Last reviewed:** 2026-07-25
 
 This is the current handoff list, not a product wishlist. Update it after
 significant implementation or workflow changes.
 
 ## Priority 0: Preserve Current Work
 
-- The working tree contains uncommitted application and manual changes. Before
-  any future commit, release, or reset, inspect the diff and decide their scope
-  explicitly. Do not discard them as cleanup.
+- Before any future commit, release, or reset, inspect the working tree and
+  decide the scope explicitly. Do not discard local changes as cleanup.
 
 ## Priority 1: Documentation Process
 
@@ -40,4 +39,3 @@ significant implementation or workflow changes.
 No unresolved functional defect is documented in the repository at this review.
 Do not convert an unverified observation into a known bug; reproduce it first
 and record the smallest useful evidence.
-
