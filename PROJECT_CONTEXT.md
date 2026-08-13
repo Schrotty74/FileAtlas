@@ -1,6 +1,6 @@
 # FileAtlas Project Context
 
-**Status date:** 2026-07-25
+**Status date:** 2026-08-13
 **Audience:** new development chats and maintainers. Read this file before changing code.
 
 ## Read Order
@@ -70,9 +70,12 @@ public documentation.
   cleanup queue, rules, snapshots, folder comparison, storage analysis, and
   duplicate detection.
 - Backups support index-only, full ZIP, and selected items; optional encryption,
-  compression, hash manifests, cancellation, and daily/weekly schedules. A
-  schedule is evaluated while the app runs or starts; it is not a background
-  daemon.
+  compression, hash manifests, cancellation, daily/weekly schedules, per-location
+  history, and retention. A schedule is evaluated while the app runs or starts;
+  it is not a background daemon.
+- Rules can add matching items to the reviewable cleanup queue. Smart collections
+  additionally support maximum size, tags, saved locations, and excluded file
+  types. Saved locations display an unavailable state when they cannot be reached.
 - English/German localization with the DACH German rule, independent light/dark/
   system appearance, six color themes, optional tooltips, and Reduce Motion.
 - The Glass theme is one full-window AppKit visual-effect background with shared

@@ -95,6 +95,10 @@ final class IndexViewModel {
     var autoScanOnLaunchMode: AutoScanOnLaunchMode {
         didSet { UserDefaults.standard.set(autoScanOnLaunchMode.rawValue, forKey: Self.autoScanOnLaunchModeKey) }
     }
+    /// Standard: Duplikate nur innerhalb desselben gespeicherten Orts vergleichen.
+    var compareDuplicatesAcrossLocations: Bool {
+        didSet { UserDefaults.standard.set(compareDuplicatesAcrossLocations, forKey: Self.compareDuplicatesAcrossLocationsKey) }
+    }
 
     private(set) var recentScanRoots: [URL] = []
 
@@ -168,6 +172,7 @@ final class IndexViewModel {
     private static let rowDensityKey = "FileAtlas.rowDensity"
     private static let iconDisplayModeKey = "FileAtlas.iconDisplayMode"
     private static let autoScanOnLaunchModeKey = "FileAtlas.autoScanOnLaunchMode"
+    private static let compareDuplicatesAcrossLocationsKey = "FileAtlas.compareDuplicatesAcrossLocations"
     private static let cachedRootPathsOnQuitKey = "FileAtlas.cachedRootPathsOnQuit"
     private static let recentScanRootsKey = "FileAtlas.recentScanRoots"
     private static let legacyFileTagsKey = "FileAtlas.fileTags"
@@ -281,6 +286,7 @@ final class IndexViewModel {
             .flatMap(IconDisplayMode.init(rawValue:)) ?? .real
         self.autoScanOnLaunchMode = defaults.string(forKey: Self.autoScanOnLaunchModeKey)
             .flatMap(AutoScanOnLaunchMode.init(rawValue:)) ?? .off
+        self.compareDuplicatesAcrossLocations = defaults.bool(forKey: Self.compareDuplicatesAcrossLocationsKey)
 
         if let stored = defaults.stringArray(forKey: Self.skippedFoldersKey) {
             // Einmalige Migration: fehlende Default-Einträge ergänzen.
@@ -527,7 +533,7 @@ final class IndexViewModel {
         }
         if let collection = activeSmartCollection {
             let now = Date()
-            list = list.filter { collection.contains($0, now: now) }
+            list = list.filter { collection.contains($0, tags: tags(for: $0), now: now) }
         }
         if showOnlyDuplicates {
             list = list.filter { $0.isDuplicate }
@@ -657,7 +663,7 @@ final class IndexViewModel {
     var cleanupQueueSize: Int64 { cleanupQueue.reduce(0) { $0 + $1.size } }
     func smartCollectionMatchCount(for collection: SmartCollection) -> Int {
         let now = Date()
-        return entriesAcrossIndexedRoots().filter { collection.contains($0, now: now) }.count
+        return entriesAcrossIndexedRoots().filter { collection.contains($0, tags: tags(for: $0), now: now) }.count
     }
     var hasExportableContent: Bool { currentDiff != nil || !entries.isEmpty }
     var hasActiveDisplayFilter: Bool {
@@ -814,7 +820,10 @@ final class IndexViewModel {
 
     private func showIndexedEntries(_ indexedEntries: [FileEntry], for root: URL) {
         isUpdatingSelectionEntries = true
-        entries = indexedEntries
+        // Keep the complete in-memory index when changing locations. Replacing it
+        // with one root's entries made the next location depend on stale fallback data.
+        let allIndexedEntries = entriesAcrossIndexedRoots()
+        entries = allIndexedEntries.isEmpty ? indexedEntries : allIndexedEntries
         selectedScanRoot = root
         isUpdatingSelectionEntries = false
         selection = []
@@ -1155,6 +1164,7 @@ final class IndexViewModel {
                 .filter { !$0.isEmpty }
         )
         let engine = engine
+        let compareDuplicatesAcrossLocations = compareDuplicatesAcrossLocations
         scanTask = Task.detached(priority: .userInitiated) { [weak self] in
             var buffer: [FileEntry] = []
             var pendingEntries: [FileEntry] = []
@@ -1232,7 +1242,9 @@ final class IndexViewModel {
 
             guard !Task.isCancelled else { return }
             let detector = DuplicateDetector()
-            let marked = await detector.markDuplicates(in: buffer)
+            let marked = compareDuplicatesAcrossLocations
+                ? await detector.markDuplicates(in: buffer)
+                : await detector.markDuplicates(in: buffer, within: roots)
             guard !Task.isCancelled else { return }
 
             await MainActor.run { [weak self] in
@@ -1440,6 +1452,12 @@ final class IndexViewModel {
                 AlertRuleMatch(rule: rule, entries: entries.filter { rule.matches($0, now: now) })
             }
             .filter { !$0.entries.isEmpty }
+
+        for result in latestAlertRuleMatches where result.rule.action == .addToCleanupQueue {
+            for entry in result.entries {
+                addToCleanupQueue(entry)
+            }
+        }
     }
 
     // MARK: - Snapshots
@@ -1522,6 +1540,25 @@ final class IndexViewModel {
 
     func isInCleanupQueue(_ entry: FileEntry) -> Bool {
         cleanupQueue.contains { $0.pathKey == entry.pathKey }
+    }
+
+    @discardableResult
+    func queueDuplicateSiblings(keeping entry: FileEntry) -> Int {
+        guard let groupID = entry.duplicateGroupID else { return 0 }
+        let siblings = entriesAcrossIndexedRoots().filter {
+            $0.duplicateGroupID == groupID && $0.id != entry.id
+        }
+        for sibling in siblings { addToCleanupQueue(sibling) }
+        return siblings.count
+    }
+
+    enum LocationAvailability {
+        case available
+        case unavailable
+    }
+
+    func availability(for location: URL) -> LocationAvailability {
+        FileManager.default.fileExists(atPath: location.path(percentEncoded: false)) ? .available : .unavailable
     }
 
     func moveCleanupQueueToTrash() {

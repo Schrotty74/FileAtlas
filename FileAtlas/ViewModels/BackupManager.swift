@@ -60,6 +60,10 @@ final class BackupManager {
         config(for: location).lastBackupDate
     }
 
+    func backupHistory(for location: URL) -> [BackupRecord] {
+        config(for: location).history.sorted { $0.date > $1.date }
+    }
+
     func destinationDisplayName(for location: URL) -> String? {
         resolveDestination(config(for: location))?.lastPathComponent
     }
@@ -200,6 +204,13 @@ final class BackupManager {
         switch result {
         case .success(let result):
             config.lastBackupDate = Date()
+            let record = BackupRecord(
+                artifactURL: result.artifactURL,
+                itemCount: result.itemCount,
+                archiveSize: Self.fileSize(at: result.artifactURL)
+            )
+            config.history.append(record)
+            pruneHistory(&config, destination: destDir)
             saveConfig(config)
             completedBackup = BackupCompletion(
                 sourceName: source.lastPathComponent,
@@ -352,6 +363,25 @@ final class BackupManager {
 
     private static func fileSize(at url: URL) -> Int64 {
         Int64((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+    }
+
+    private func pruneHistory(_ config: inout BackupConfig, destination: URL) {
+        let sorted = config.history.sorted { $0.date > $1.date }
+        guard config.retentionCount > 0, sorted.count > config.retentionCount else {
+            config.history = sorted
+            return
+        }
+
+        let kept = Array(sorted.prefix(config.retentionCount))
+        let removed = sorted.dropFirst(config.retentionCount)
+        let destinationPath = destination.standardizedFileURL.path(percentEncoded: false)
+        for record in removed {
+            let artifact = record.artifactURL.standardizedFileURL
+            guard artifact.deletingLastPathComponent().path(percentEncoded: false) == destinationPath else { continue }
+            try? FileManager.default.removeItem(at: artifact)
+            try? FileManager.default.removeItem(at: artifact.deletingPathExtension().appendingPathExtension("sha256"))
+        }
+        config.history = kept
     }
 
     private static func message(for error: Error) -> String {

@@ -79,6 +79,38 @@ nonisolated struct DuplicateDetector {
         return result
     }
 
+    /// Prüft jeden Scan-Ort getrennt. Eine Kopie in einem anderen gespeicherten
+    /// Ort (zum Beispiel iCloud und ein lokales Backup) ist kein Aufräum-Duplikat.
+    func markDuplicates(in entries: [FileEntry], within roots: [URL]) async -> [FileEntry] {
+        guard roots.count > 1 else { return await markDuplicates(in: entries) }
+
+        var grouped: [Int: [FileEntry]] = [:]
+        for entry in entries {
+            let rootIndex = roots.indices
+                .filter { Self.isPath(entry.path, inside: roots[$0]) }
+                .max { roots[$0].path.count < roots[$1].path.count }
+            if let rootIndex {
+                grouped[rootIndex, default: []].append(entry)
+            }
+        }
+
+        var markedByID: [FileEntry.ID: FileEntry] = [:]
+        for rootIndex in roots.indices {
+            guard !Task.isCancelled else { return entries }
+            let marked = await markDuplicates(in: grouped[rootIndex] ?? [])
+            for entry in marked {
+                markedByID[entry.id] = entry
+            }
+        }
+        return entries.map { markedByID[$0.id] ?? $0 }
+    }
+
+    private static func isPath(_ candidate: URL, inside root: URL) -> Bool {
+        let candidatePath = candidate.standardizedFileURL.path(percentEncoded: false)
+        let rootPath = root.standardizedFileURL.path(percentEncoded: false)
+        return candidatePath == rootPath || candidatePath.hasPrefix(rootPath + "/")
+    }
+
     private static let nonHashablePackageExtensions: Set<String> = [
         "app", "bundle", "framework", "xcodeproj", "xcworkspace", "playground",
         "plugin", "kext", "appex", "xpc", "qlgenerator", "prefpane", "component",

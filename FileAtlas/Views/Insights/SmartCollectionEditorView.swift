@@ -15,9 +15,15 @@ struct SmartCollectionEditorView: View {
     @State private var newExtension = ""
     @State private var hasMinimumSize = false
     @State private var minimumSizeMB = 100
+    @State private var hasMaximumSize = false
+    @State private var maximumSizeMB = 1_000
     @State private var hasModifiedLimit = false
     @State private var modifiedWithinDays = 30
     @State private var duplicatesOnly = false
+    @State private var selectedTagTitles: Set<String> = []
+    @State private var selectedFolderPaths: Set<String> = []
+    @State private var excludedExtensions: [String] = []
+    @State private var newExcludedExtension = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -58,6 +64,10 @@ struct SmartCollectionEditorView: View {
                     if hasMinimumSize {
                         Stepper("\(minimumSizeMB) MB", value: $minimumSizeMB, in: 1...1_000_000)
                     }
+                    Toggle("Maximum size", isOn: $hasMaximumSize)
+                    if hasMaximumSize {
+                        Stepper("\(maximumSizeMB) MB", value: $maximumSizeMB, in: 1...1_000_000)
+                    }
                     Toggle("Modified within", isOn: $hasModifiedLimit)
                     if hasModifiedLimit {
                         Stepper("Last \(modifiedWithinDays) days", value: $modifiedWithinDays, in: 1...10_000)
@@ -67,15 +77,64 @@ struct SmartCollectionEditorView: View {
                 Section("Status") {
                     Toggle("Duplicates only", isOn: $duplicatesOnly)
                 }
+
+                Section("Tags") {
+                    if vm.availableTags.isEmpty {
+                        Text("No tags available yet.")
+                            .foregroundStyle(AppTheme.theme.textSecondary)
+                    } else {
+                        ForEach(vm.availableTags) { tag in
+                            Toggle(tag.title, isOn: Binding(
+                                get: { selectedTagTitles.contains(tag.title) },
+                                set: { enabled in
+                                    if enabled { selectedTagTitles.insert(tag.title) }
+                                    else { selectedTagTitles.remove(tag.title) }
+                                }
+                            ))
+                        }
+                    }
+                }
+
+                Section("Locations") {
+                    ForEach(vm.knownFilterScopeFolders, id: \.path) { folder in
+                        Toggle(folder.lastPathComponent, isOn: Binding(
+                            get: { selectedFolderPaths.contains(folder.path(percentEncoded: false)) },
+                            set: { enabled in
+                                let path = folder.path(percentEncoded: false)
+                                if enabled { selectedFolderPaths.insert(path) }
+                                else { selectedFolderPaths.remove(path) }
+                            }
+                        ))
+                    }
+                    if vm.knownFilterScopeFolders.isEmpty {
+                        Text("Add a location first to limit this collection to a folder.")
+                            .foregroundStyle(AppTheme.theme.textSecondary)
+                    }
+                }
+
+                Section("Exclude file types") {
+                    HStack {
+                        TextField("Extension, e.g. tmp", text: $newExcludedExtension)
+                            .onSubmit(addExcludedExtension)
+                        Button("Add", action: addExcludedExtension)
+                            .disabled(newExcludedExtension.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                    if !excludedExtensions.isEmpty {
+                        SmartCollectionChips(items: excludedExtensions) { value in
+                            excludedExtensions.removeAll { $0 == value }
+                        }
+                    }
+                }
             }
             .formStyle(.grouped)
         }
-        .frame(width: 460, height: 500)
+        .frame(width: 520, height: 680)
         .onAppear(perform: load)
     }
 
     private var hasCondition: Bool {
-        !extensions.isEmpty || hasMinimumSize || hasModifiedLimit || duplicatesOnly
+        !extensions.isEmpty || hasMinimumSize || hasMaximumSize || hasModifiedLimit || duplicatesOnly
+            || !selectedTagTitles.isEmpty || !selectedFolderPaths.isEmpty || !excludedExtensions.isEmpty
     }
 
     private func load() {
@@ -84,9 +143,14 @@ struct SmartCollectionEditorView: View {
         extensions = original.extensions
         hasMinimumSize = original.minimumSize != nil
         minimumSizeMB = max(1, Int((original.minimumSize ?? 100_000_000) / 1_000_000))
+        hasMaximumSize = original.maximumSize != nil
+        maximumSizeMB = max(1, Int((original.maximumSize ?? 1_000_000_000) / 1_000_000))
         hasModifiedLimit = original.modifiedWithinDays != nil
         modifiedWithinDays = original.modifiedWithinDays ?? 30
         duplicatesOnly = original.duplicatesOnly
+        selectedTagTitles = Set(original.tagTitles)
+        selectedFolderPaths = Set(original.scopedFolderPaths)
+        excludedExtensions = original.excludedExtensions
     }
 
     private func addExtension() {
@@ -96,14 +160,25 @@ struct SmartCollectionEditorView: View {
         newExtension = ""
     }
 
+    private func addExcludedExtension() {
+        let value = FilterPreset.normalize(newExcludedExtension)
+        guard !value.isEmpty else { return }
+        if !excludedExtensions.contains(value) { excludedExtensions.append(value) }
+        newExcludedExtension = ""
+    }
+
     private func save() {
         vm.saveSmartCollection(SmartCollection(
             id: original?.id ?? UUID(),
             name: name.trimmingCharacters(in: .whitespacesAndNewlines),
             extensions: extensions,
             minimumSize: hasMinimumSize ? Int64(minimumSizeMB) * 1_000_000 : nil,
+            maximumSize: hasMaximumSize ? Int64(maximumSizeMB) * 1_000_000 : nil,
             modifiedWithinDays: hasModifiedLimit ? modifiedWithinDays : nil,
-            duplicatesOnly: duplicatesOnly
+            duplicatesOnly: duplicatesOnly,
+            tagTitles: Array(selectedTagTitles).sorted(),
+            scopedFolderPaths: Array(selectedFolderPaths).sorted(),
+            excludedExtensions: excludedExtensions
         ))
         dismiss()
     }

@@ -5,6 +5,13 @@
 
 import Foundation
 
+nonisolated enum AlertRuleAction: String, Codable, CaseIterable, Sendable, Identifiable {
+    case notify
+    case addToCleanupQueue
+
+    var id: String { rawValue }
+}
+
 /// Eine lokale Regel, die nach einem Scan passende Dateien meldet.
 nonisolated struct AlertRule: Identifiable, Codable, Hashable, Sendable {
     let id: UUID
@@ -13,6 +20,7 @@ nonisolated struct AlertRule: Identifiable, Codable, Hashable, Sendable {
     var minimumSize: Int64?
     var olderThanDays: Int?
     var isEnabled: Bool
+    var action: AlertRuleAction
 
     init(
         id: UUID = UUID(),
@@ -20,7 +28,8 @@ nonisolated struct AlertRule: Identifiable, Codable, Hashable, Sendable {
         extensions: [String] = [],
         minimumSize: Int64? = nil,
         olderThanDays: Int? = nil,
-        isEnabled: Bool = true
+        isEnabled: Bool = true,
+        action: AlertRuleAction = .notify
     ) {
         self.id = id
         self.name = name
@@ -28,6 +37,23 @@ nonisolated struct AlertRule: Identifiable, Codable, Hashable, Sendable {
         self.minimumSize = minimumSize
         self.olderThanDays = olderThanDays
         self.isEnabled = isEnabled
+        self.action = action
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, extensions, minimumSize, olderThanDays, isEnabled, action
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        extensions = (try c.decodeIfPresent([String].self, forKey: .extensions) ?? [])
+            .map(FilterPreset.normalize).filter { !$0.isEmpty }
+        minimumSize = try c.decodeIfPresent(Int64.self, forKey: .minimumSize)
+        olderThanDays = try c.decodeIfPresent(Int.self, forKey: .olderThanDays)
+        isEnabled = try c.decodeIfPresent(Bool.self, forKey: .isEnabled) ?? true
+        action = try c.decodeIfPresent(AlertRuleAction.self, forKey: .action) ?? .notify
     }
 
     func matches(_ entry: FileEntry, now: Date = Date()) -> Bool {

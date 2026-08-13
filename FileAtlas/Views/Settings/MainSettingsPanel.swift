@@ -27,6 +27,10 @@ struct MainSettingsPanel: View {
     @State private var editingAlertRule: AlertRule?
     @State private var showAlertRuleEditor = false
 
+    private func text(_ german: String, _ english: String) -> String {
+        language.effectiveLanguage == .de ? german : english
+    }
+
     var body: some View {
         HStack(spacing: 0) {
             List {
@@ -34,7 +38,7 @@ struct MainSettingsPanel: View {
                     Button {
                         selectedSection = section
                     } label: {
-                        Label(section.title, systemImage: section.systemImage)
+                        Label(section.title(isGerman: language.effectiveLanguage == .de), systemImage: section.systemImage)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
                     }
@@ -54,10 +58,10 @@ struct MainSettingsPanel: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    Text((selectedSection ?? .appearance).title)
+                    Text((selectedSection ?? .appearance).title(isGerman: language.effectiveLanguage == .de))
                         .font(.headline)
                     Spacer()
-                    Button("Done") { dismiss() }
+                    Button(text("Fertig", "Done")) { dismiss() }
                         .keyboardShortcut(.defaultAction)
                 }
                 .padding()
@@ -120,42 +124,42 @@ struct MainSettingsPanel: View {
         @Bindable var tooltips = tooltips
 
         return Form {
-            Section("Appearance") {
-                Picker("Appearance", selection: $appearance.mode) {
-                    Text("Light").tag(AppearanceMode.light)
-                    Text("Dark").tag(AppearanceMode.dark)
-                    Text("System").tag(AppearanceMode.system)
+            Section(text("Darstellung", "Appearance")) {
+                Picker(text("Darstellung", "Appearance"), selection: $appearance.mode) {
+                    Text(text("Hell", "Light")).tag(AppearanceMode.light)
+                    Text(text("Dunkel", "Dark")).tag(AppearanceMode.dark)
+                    Text(text("System", "System")).tag(AppearanceMode.system)
                 }
 
-                Picker("Color theme", selection: $appearance.colorTheme) {
+                Picker(text("Farbthema", "Color theme"), selection: $appearance.colorTheme) {
                     Text("Midnight Teal").tag(ColorTheme.midnightTeal)
                     Text("Retro").tag(ColorTheme.retro)
                     Text("Graphite Lime").tag(ColorTheme.graphiteLime)
-                    Text("Autumn").tag(ColorTheme.autumn)
+                    Text(text("Herbst", "Autumn")).tag(ColorTheme.autumn)
                     Text("Winter").tag(ColorTheme.winter)
-                    Text("Glass").tag(ColorTheme.glass)
+                    Text(text("Glas", "Glass")).tag(ColorTheme.glass)
                 }
 
-                Picker("Zeilenhöhe", selection: $vm.rowDensity) {
+                Picker(text("Zeilenhöhe", "Row height"), selection: $vm.rowDensity) {
                     ForEach(FileRowDensity.allCases) { density in
                         Text(density.title).tag(density)
                     }
                 }
                 .pickerStyle(.segmented)
 
-                Picker("Icon display", selection: $vm.iconDisplayMode) {
-                    Text("Real icons").tag(IconDisplayMode.real)
-                    Text("Fast generic icons").tag(IconDisplayMode.generic)
+                Picker(text("Icon-Anzeige", "Icon display"), selection: $vm.iconDisplayMode) {
+                    Text(text("Echte Symbole", "Real icons")).tag(IconDisplayMode.real)
+                    Text(text("Schnelle Standardsymbole", "Fast generic icons")).tag(IconDisplayMode.generic)
                 }
                 .pickerStyle(.segmented)
 
-                Toggle("Reduce interface motion", isOn: $motion.reduceMotion)
+                Toggle(text("Bewegungen reduzieren", "Reduce interface motion"), isOn: $motion.reduceMotion)
                     .tint(AppTheme.theme.accentColor)
-                Text("Also follows the macOS Reduce Motion accessibility setting.")
+                Text(text("Berücksichtigt auch die macOS-Bedienungshilfe „Bewegung reduzieren“.", "Also follows the macOS Reduce Motion accessibility setting."))
                     .font(.caption)
                     .foregroundStyle(AppTheme.theme.textSecondary)
 
-                Toggle("Show tooltips", isOn: $tooltips.showTooltips)
+                Toggle(text("Tooltips anzeigen", "Show tooltips"), isOn: $tooltips.showTooltips)
                     .tint(AppTheme.theme.accentColor)
             }
         }
@@ -166,8 +170,8 @@ struct MainSettingsPanel: View {
         @Bindable var language = language
 
         return Form {
-            Section("Language") {
-                Picker("Language", selection: $language.language) {
+            Section(text("Sprache", "Language")) {
+                Picker(text("Sprache", "Language"), selection: $language.language) {
                     Text("Deutsch").tag(AppLanguage.de)
                     Text("English").tag(AppLanguage.en)
                     Text("System").tag(AppLanguage.auto)
@@ -181,35 +185,41 @@ struct MainSettingsPanel: View {
         @Bindable var vm = vm
 
         return Form {
-            Section("Scan Settings") {
-                Picker("Auto-scan on launch", selection: $vm.autoScanOnLaunchMode) {
+            Section(text("Scan-Einstellungen", "Scan Settings")) {
+                Picker(text("Automatisch beim Start scannen", "Auto-scan on launch"), selection: $vm.autoScanOnLaunchMode) {
                     ForEach(AutoScanOnLaunchMode.allCases) { mode in
                         Text(autoScanOnLaunchTitle(for: mode)).tag(mode)
                     }
                 }
                 .pickerStyle(.radioGroup)
 
-                Button("Rescan now") { vm.startScan() }
+                Toggle(text("Duplikate über alle Orte vergleichen", "Compare duplicates across all locations"), isOn: $vm.compareDuplicatesAcrossLocations)
+                    .tint(AppTheme.theme.accentColor)
+                Text(text("Aus vergleicht Duplikate nur innerhalb desselben gespeicherten Orts. Aktivieren, um Kopien zwischen Orten wie iCloud und einem lokalen Backup zu vergleichen. Gilt ab dem nächsten Scan.", "Off compares duplicates only within the same saved location. Turn this on to compare copies between locations such as iCloud and a local backup. Applies on the next scan."))
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.theme.textSecondary)
+
+                Button(text("Jetzt erneut scannen", "Rescan now")) { vm.startScan() }
                     .disabled(vm.scanRoots.isEmpty || vm.isScanning)
-                Button("Clear Cache", role: .destructive) {
+                Button(text("Cache leeren", "Clear Cache"), role: .destructive) {
                     showClearCacheConfirmation = true
                 }
                 .disabled(vm.isScanning)
-                .confirmationDialog("Clear Cache?", isPresented: $showClearCacheConfirmation, titleVisibility: .visible) {
-                    Button("Clear Cache", role: .destructive) {
+                .confirmationDialog(text("Cache leeren?", "Clear Cache?"), isPresented: $showClearCacheConfirmation, titleVisibility: .visible) {
+                    Button(text("Cache leeren", "Clear Cache"), role: .destructive) {
                         vm.clearIndexCache()
                         cacheClearMessage = NSLocalizedString("Cache cleared.", comment: "")
                     }
-                    Button("Cancel", role: .cancel) {}
+                    Button(text("Abbrechen", "Cancel"), role: .cancel) {}
                 } message: {
-                    Text("This clears cached scan results. Files on disk are not changed.")
+                    Text(text("Dadurch werden zwischengespeicherte Scan-Ergebnisse gelöscht. Dateien auf dem Datenträger bleiben unverändert.", "This clears cached scan results. Files on disk are not changed."))
                 }
                 if let cacheClearMessage {
                     Text(cacheClearMessage)
                         .font(.caption)
                         .foregroundStyle(AppTheme.theme.accentColor)
                 }
-                Text("Ignored folder rules apply on the next scan.")
+                Text(text("Regeln für ignorierte Ordner gelten ab dem nächsten Scan.", "Ignored folder rules apply on the next scan."))
                     .font(.caption)
                     .foregroundStyle(AppTheme.theme.textSecondary)
             }
@@ -217,18 +227,18 @@ struct MainSettingsPanel: View {
         .formStyle(.grouped)
     }
 
-    private func autoScanOnLaunchTitle(for mode: AutoScanOnLaunchMode) -> LocalizedStringKey {
+    private func autoScanOnLaunchTitle(for mode: AutoScanOnLaunchMode) -> String {
         switch mode {
-        case .off: return "Off"
-        case .allSavedAndRecent: return "Scan all Orte and Schnellzugriff folders"
-        case .restoreCached: return "Restore last cached folders"
+        case .off: return text("Aus", "Off")
+        case .allSavedAndRecent: return text("Alle Orte und Schnellzugriff scannen", "Scan all saved and quick-access folders")
+        case .restoreCached: return text("Zuletzt zwischengespeicherte Ordner wiederherstellen", "Restore last cached folders")
         }
     }
 
     private var ignoredFoldersSection: some View {
         Form {
-            Section("Ignored Folders") {
-                Text("Folders whose name starts with one of these (prefix match, case-insensitive) are shown as a single entry and not scanned — e.g. “Firmware” also matches “Firmware.19.0.1”. Applies on next scan.")
+            Section(text("Ignorierte Ordner", "Ignored Folders")) {
+                Text(text("Ordner, deren Name mit einem dieser Werte beginnt (Präfixvergleich, Groß-/Kleinschreibung egal), werden als einzelner Eintrag angezeigt und nicht durchsucht. Beispiel: „Firmware“ passt auch auf „Firmware.19.0.1“. Gilt ab dem nächsten Scan.", "Folders whose name starts with one of these (prefix match, case-insensitive) are shown as a single entry and not scanned — e.g. “Firmware” also matches “Firmware.19.0.1”. Applies on next scan."))
                     .font(.caption)
                     .foregroundStyle(AppTheme.theme.textSecondary)
 
@@ -254,11 +264,11 @@ struct MainSettingsPanel: View {
                 }
 
                 HStack {
-                    TextField("Ignored folder", text: $newIgnoredFolder)
+                    TextField(text("Ignorierter Ordner", "Ignored folder"), text: $newIgnoredFolder)
                         .onSubmit(addIgnoredFolder)
-                    Button("Add") { addIgnoredFolder() }
+                    Button(text("Hinzufügen", "Add")) { addIgnoredFolder() }
                         .disabled(newIgnoredFolder.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    Button("Choose…") { vm.addSkippedFoldersViaPanel() }
+                    Button(text("Auswählen…", "Choose…")) { vm.addSkippedFoldersViaPanel() }
                 }
             }
         }
@@ -267,23 +277,23 @@ struct MainSettingsPanel: View {
 
     private var filterSetsSection: some View {
         Form {
-            Section("Filter Sets") {
-                Picker("Active filter set", selection: activePresetBinding) {
-                    Text("None").tag(FilterPreset.ID?.none)
+            Section(text("Filtersets", "Filter Sets")) {
+                Picker(text("Aktives Filterset", "Active filter set"), selection: activePresetBinding) {
+                    Text(text("Keine", "None")).tag(FilterPreset.ID?.none)
                     ForEach(vm.presets) { preset in
                         Text(preset.name).tag(FilterPreset.ID?.some(preset.id))
                     }
                 }
 
                 if vm.presets.isEmpty {
-                    Text("Keine Filtersets gespeichert")
+                    Text(text("Keine Filtersets gespeichert", "No filter sets saved"))
                         .foregroundStyle(AppTheme.theme.textSecondary)
                 } else {
                     ForEach(vm.presets) { preset in
                         HStack {
                             Text(preset.name)
                             Spacer()
-                            Button("Edit…") {
+                            Button(text("Bearbeiten…", "Edit…")) {
                                 editingPreset = preset
                                 showPresetEditor = true
                             }
@@ -301,7 +311,7 @@ struct MainSettingsPanel: View {
                     editingPreset = nil
                     showPresetEditor = true
                 } label: {
-                    Label("New Filter Set…", systemImage: "plus")
+                    Label(text("Neues Filterset…", "New Filter Set…"), systemImage: "plus")
                 }
             }
         }
@@ -312,8 +322,8 @@ struct MainSettingsPanel: View {
         @Bindable var vm = vm
 
         return Form {
-            Section("Modified date") {
-                Toggle("Filter by modified date", isOn: $filterByDate)
+            Section(text("Änderungsdatum", "Modified date")) {
+                Toggle(text("Nach Änderungsdatum filtern", "Filter by modified date"), isOn: $filterByDate)
                     .onChange(of: filterByDate) { _, on in
                         if !on {
                             vm.dateFrom = nil
@@ -324,23 +334,23 @@ struct MainSettingsPanel: View {
                         }
                     }
                 if filterByDate {
-                    DatePicker("From", selection: Binding(
+                    DatePicker(text("Von", "From"), selection: Binding(
                         get: { vm.dateFrom ?? Date.distantPast },
                         set: { vm.dateFrom = $0 }), displayedComponents: .date)
-                    DatePicker("To", selection: Binding(
+                    DatePicker(text("Bis", "To"), selection: Binding(
                         get: { vm.dateTo ?? Date() },
                         set: { vm.dateTo = $0 }), displayedComponents: .date)
                 }
             }
 
-            Section("Duplicates") {
-                Toggle("Only duplicates", isOn: $vm.showOnlyDuplicates)
+            Section(text("Duplikate", "Duplicates")) {
+                Toggle(text("Nur Duplikate", "Only duplicates"), isOn: $vm.showOnlyDuplicates)
                     .tint(AppTheme.theme.accentColor)
             }
 
-            Section("Tags") {
-                Picker("Tag filter", selection: $vm.selectedTagFilter) {
-                    Text("All tags").tag(FileTag?.none)
+            Section(text("Tags", "Tags")) {
+                Picker(text("Tag-Filter", "Tag filter"), selection: $vm.selectedTagFilter) {
+                    Text(text("Alle Tags", "All tags")).tag(FileTag?.none)
                     ForEach(vm.availableTags) { tag in
                         Text(tag.title).tag(FileTag?.some(tag))
                     }
@@ -348,7 +358,7 @@ struct MainSettingsPanel: View {
             }
 
             Section {
-                Text("Tip: type “> 10 MB” or “< 500 KB” in the search field to filter by size.")
+                Text(text("Tipp: „> 10 MB“ oder „< 500 KB“ im Suchfeld eingeben, um nach Größe zu filtern.", "Tip: type “> 10 MB” or “< 500 KB” in the search field to filter by size."))
                     .font(.caption)
                     .foregroundStyle(AppTheme.theme.textSecondary)
             }
@@ -358,13 +368,13 @@ struct MainSettingsPanel: View {
 
     private var rulesSection: some View {
         Form {
-            Section("Rules") {
-                Text("Rules are checked after every completed scan and only report matches; they do not hide or delete files.")
+            Section(text("Regeln", "Rules")) {
+                Text(text("Regeln werden nach jedem abgeschlossenen Scan geprüft und melden nur Treffer. Sie blenden keine Dateien aus und löschen nichts.", "Rules are checked after every completed scan and only report matches; they do not hide or delete files."))
                     .font(.caption)
                     .foregroundStyle(AppTheme.theme.textSecondary)
 
                 if vm.alertRules.isEmpty {
-                    Text("No rules created")
+                    Text(text("Keine Regeln erstellt", "No rules created"))
                         .foregroundStyle(AppTheme.theme.textSecondary)
                 } else {
                     ForEach(vm.alertRules) { rule in
@@ -378,7 +388,7 @@ struct MainSettingsPanel: View {
                             Spacer()
                             Toggle("", isOn: ruleEnabledBinding(for: rule))
                                 .labelsHidden()
-                            Button("Edit…") {
+                            Button(text("Bearbeiten…", "Edit…")) {
                                 editingAlertRule = rule
                                 showAlertRuleEditor = true
                             }
@@ -397,9 +407,9 @@ struct MainSettingsPanel: View {
                         editingAlertRule = nil
                         showAlertRuleEditor = true
                     } label: {
-                        Label("New Rule…", systemImage: "plus")
+                        Label(text("Neue Regel…", "New Rule…"), systemImage: "plus")
                     }
-                    Button("Run Rules Now") { vm.evaluateAlertRulesNow() }
+                    Button(text("Regeln jetzt ausführen", "Run Rules Now")) { vm.evaluateAlertRulesNow() }
                         .disabled(vm.entries.isEmpty || vm.alertRules.isEmpty)
                 }
             }
@@ -409,13 +419,13 @@ struct MainSettingsPanel: View {
 
     private var smartCollectionsSection: some View {
         Form {
-            Section("Smart Collections") {
-                Text("Collections update from the current index and never move, hide, or delete files.")
+            Section(text("Intelligente Sammlungen", "Smart Collections")) {
+                Text(text("Sammlungen aktualisieren sich aus dem aktuellen Index und verschieben, verbergen oder löschen keine Dateien.", "Collections update from the current index and never move, hide, or delete files."))
                     .font(.caption)
                     .foregroundStyle(AppTheme.theme.textSecondary)
 
                 if vm.smartCollections.isEmpty {
-                    Text("No smart collections created")
+                    Text(text("Keine intelligenten Sammlungen erstellt", "No smart collections created"))
                         .foregroundStyle(AppTheme.theme.textSecondary)
                 } else {
                     ForEach(vm.smartCollections) { collection in
@@ -430,7 +440,7 @@ struct MainSettingsPanel: View {
                             Text(vm.smartCollectionMatchCount(for: collection).formatted())
                                 .font(.caption.monospacedDigit())
                                 .foregroundStyle(AppTheme.theme.textSecondary)
-                            Button("Edit…") {
+                            Button(text("Bearbeiten…", "Edit…")) {
                                 ui.editingSmartCollection = collection
                                 ui.isPresentingSmartCollectionEditor = true
                             }
@@ -448,7 +458,7 @@ struct MainSettingsPanel: View {
                     ui.editingSmartCollection = nil
                     ui.isPresentingSmartCollectionEditor = true
                 } label: {
-                    Label("New Smart Collection…", systemImage: "plus")
+                    Label(text("Neue intelligente Sammlung…", "New Smart Collection…"), systemImage: "plus")
                 }
             }
         }
@@ -461,12 +471,13 @@ struct MainSettingsPanel: View {
             parts.append(collection.extensions.map { $0.uppercased() }.joined(separator: ", "))
         }
         if let minimumSize = collection.minimumSize {
-            parts.append("from \(ByteCountFormatter.string(fromByteCount: minimumSize, countStyle: .file))")
+            let size = ByteCountFormatter.string(fromByteCount: minimumSize, countStyle: .file)
+            parts.append(text("ab \(size)", "from \(size)"))
         }
         if let modifiedWithinDays = collection.modifiedWithinDays {
-            parts.append("last \(modifiedWithinDays) days")
+            parts.append(text("letzte \(modifiedWithinDays) Tage", "last \(modifiedWithinDays) days"))
         }
-        if collection.duplicatesOnly { parts.append("duplicates") }
+        if collection.duplicatesOnly { parts.append(text("Duplikate", "duplicates")) }
         return parts.joined(separator: " · ")
     }
 
@@ -474,10 +485,11 @@ struct MainSettingsPanel: View {
         var parts: [String] = []
         if !rule.extensions.isEmpty { parts.append(rule.extensions.map { $0.uppercased() }.joined(separator: ", ")) }
         if let minimumSize = rule.minimumSize {
-            parts.append("from \(ByteCountFormatter.string(fromByteCount: minimumSize, countStyle: .file))")
+            let size = ByteCountFormatter.string(fromByteCount: minimumSize, countStyle: .file)
+            parts.append(text("ab \(size)", "from \(size)"))
         }
         if let olderThanDays = rule.olderThanDays {
-            parts.append("older than \(olderThanDays) days")
+            parts.append(text("älter als \(olderThanDays) Tage", "older than \(olderThanDays) days"))
         }
         return parts.joined(separator: " · ")
     }
@@ -499,9 +511,9 @@ struct MainSettingsPanel: View {
 
     private var backupSection: some View {
         Form {
-            Section("Backup") {
+            Section(text("Backup", "Backup")) {
                 if vm.scanRoots.isEmpty {
-                    Text("Keine Scan-Orte konfiguriert")
+                    Text(text("Keine Scan-Orte konfiguriert", "No scan locations configured"))
                         .foregroundStyle(AppTheme.theme.textSecondary)
                 } else {
                     ForEach(vm.scanRoots, id: \.self) { url in
@@ -515,7 +527,7 @@ struct MainSettingsPanel: View {
                                 }
                             }
                             Spacer()
-                            Button("Settings") {
+                            Button(text("Einstellungen", "Settings")) {
                                 backupSettingsLocation = url
                                 showBackupSettings = true
                             }
@@ -529,11 +541,11 @@ struct MainSettingsPanel: View {
 
     private var exportSection: some View {
         Form {
-            Section("Export") {
+            Section(text("Export", "Export")) {
                 HStack {
-                    Button("Excel exportieren") { vm.export(format: .xlsx) }
-                    Button("PDF exportieren") { vm.export(format: .pdf) }
-                    Button("CSV exportieren") { vm.export(format: .csv) }
+                    Button(text("Excel exportieren", "Export Excel")) { vm.export(format: .xlsx) }
+                    Button(text("PDF exportieren", "Export PDF")) { vm.export(format: .pdf) }
+                    Button(text("CSV exportieren", "Export CSV")) { vm.export(format: .csv) }
                 }
                 .disabled(!vm.hasExportableContent)
             }
@@ -543,7 +555,7 @@ struct MainSettingsPanel: View {
 
     private var infoContactSection: some View {
         Form {
-            Section("Info & Contact") {
+            Section(text("Info & Kontakt", "Info & Contact")) {
                 Text(appVersionText)
                     .foregroundStyle(AppTheme.theme.textPrimary)
 
@@ -571,7 +583,7 @@ struct MainSettingsPanel: View {
                             ProgressView()
                                 .controlSize(.small)
                         }
-                        Text("Check for updates")
+                        Text(text("Nach Updates suchen", "Check for updates"))
                     }
                 }
                 .disabled(vm.isCheckingForUpdates)
@@ -583,10 +595,10 @@ struct MainSettingsPanel: View {
                 }
 
                 if let issuesURL = URL(string: "https://github.com/Schrotty74/FileAtlas/issues") {
-                    Link("Report a bug on GitHub", destination: issuesURL)
+                    Link(text("Fehler auf GitHub melden", "Report a bug on GitHub"), destination: issuesURL)
                 }
 
-                Text("Please report bugs and suggestions directly on GitHub.")
+                Text(text("Bitte Fehler und Vorschläge direkt auf GitHub melden.", "Please report bugs and suggestions directly on GitHub."))
                     .font(.caption)
                     .foregroundStyle(AppTheme.theme.textSecondary)
             }
@@ -597,7 +609,7 @@ struct MainSettingsPanel: View {
     private var appVersionText: String {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
-        return "Version \(version ?? build ?? "-")"
+        return text("Version \(version ?? build ?? "-")", "Version \(version ?? build ?? "-")")
     }
 
     private var activePresetBinding: Binding<FilterPreset.ID?> {
@@ -629,20 +641,20 @@ private enum SettingsSection: String, CaseIterable, Identifiable, Hashable {
 
     var id: String { rawValue }
 
-    var title: LocalizedStringKey {
+    func title(isGerman: Bool) -> String {
         switch self {
-        case .appearance: return "Appearance"
-        case .language: return "Language"
-        case .scan: return "Scan Settings"
-        case .ignoredFolders: return "Ignored Folders"
-        case .filterSets: return "Filter Sets"
+        case .appearance: return isGerman ? "Darstellung" : "Appearance"
+        case .language: return isGerman ? "Sprache" : "Language"
+        case .scan: return isGerman ? "Scan-Einstellungen" : "Scan Settings"
+        case .ignoredFolders: return isGerman ? "Ignorierte Ordner" : "Ignored Folders"
+        case .filterSets: return isGerman ? "Filtersets" : "Filter Sets"
         case .filter: return "Filter"
-        case .rules: return "Rules"
-        case .smartCollections: return "Smart Collections"
+        case .rules: return isGerman ? "Regeln" : "Rules"
+        case .smartCollections: return isGerman ? "Intelligente Sammlungen" : "Smart Collections"
         case .snapshots: return "Snapshots"
         case .backup: return "Backup"
         case .export: return "Export"
-        case .infoContact: return "Info & Contact"
+        case .infoContact: return isGerman ? "Info & Kontakt" : "Info & Contact"
         }
     }
 

@@ -49,6 +49,17 @@ struct FirstLaunchHelpTests {
     }
 
     @Test
+    func duplicateComparisonDefaultsToSeparateLocations() {
+        let suiteName = "FileAtlasTests.DuplicateScope.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        #expect(!defaults.bool(forKey: "FileAtlas.compareDuplicatesAcrossLocations"))
+        defaults.set(true, forKey: "FileAtlas.compareDuplicatesAcrossLocations")
+        #expect(defaults.bool(forKey: "FileAtlas.compareDuplicatesAcrossLocations"))
+    }
+
+    @Test
     func serviceURLsUseTheOfficialWebsites() {
         #expect(FirstLaunchAIService.chatGPT.websiteURL.absoluteString == "https://chatgpt.com/")
         #expect(FirstLaunchAIService.gemini.websiteURL.absoluteString == "https://gemini.google.com/")

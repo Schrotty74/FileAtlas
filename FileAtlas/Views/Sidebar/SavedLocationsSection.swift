@@ -147,6 +147,10 @@ struct LocationTreeRow: View {
                             .foregroundStyle(AppTheme.theme.textSecondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
+                    } else if kind == .savedLocation && isSavedRoot && vm.availability(for: url) == .unavailable {
+                        Label("Unavailable - reconnect or add this location again", systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.orange)
                     } else if let stats = vm.stats(for: url) {
                         Text("\(stats.count) Dateien · \(ByteCountFormatter.string(fromByteCount: stats.size, countStyle: .file))")
                             .font(.caption2)

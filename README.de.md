@@ -51,7 +51,7 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 - Bundle-Erkennung (`.app`, `.framework`, `.xcodeproj` als einzelne Eintraege, Unterelemente werden uebersprungen)
 - Extension-Whitelist-Filter (nur bestimmte Dateitypen indexieren)
 - Kein Auto-Rescan wenn Ordner bereits indexiert ist
-- Duplikaterkennung (Groessengruppierung -> SHA-256-Hash, goldenes Abzeichen)
+- Duplikaterkennung (Groessengruppierung -> SHA-256-Hash, goldenes Abzeichen) standardmaessig je gespeichertem Ort; Vergleich ueber alle Orte optional
 - Snapshots nach jedem Scan (max. 10, JSON) mit Diff-Vergleich und Loeschen
 - Automatische „Was hat sich geaendert?“-Zusammenfassung nach jedem weiteren Scan
 - Speicheranalyse fuer die groessten indexierten Eintraege, Dateitypen und Duplikate
@@ -65,6 +65,11 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 - Export: Excel (`.xlsx`), PDF, CSV
 - Backup: Index-Backup (JSON), Vollbackup oder gezielt ausgewaehlte Dateien und Ordner (ZIP, optional AES-256, Passwort im Schluesselbund)
 - Backup-Zeitplan: Aus / Taeglich / Woechentlich pro Speicherort
+- Backup-Verlauf je gespeichertem Ort mit Finder-Anzeige und Aufbewahrung der letzten 3, 5 oder 10 FileAtlas-Archive
+- Duplikat-Aufraeumhilfe: eine Kopie behalten und die anderen geprueften Duplikate in die pruefbare Aufraeumwarteschlange legen
+- Regeln koennen passende Dateien optional in die Aufraeumwarteschlange aufnehmen; das Verschieben in den Papierkorb braucht weiterhin eine Bestaetigung
+- Smart Collections koennen zusaetzlich maximale Groesse, Tags, Orte und ausgeschlossene Dateitypen verwenden
+- Gespeicherte Orte zeigen einen Nicht-verfuegbar-Status, wenn ein Laufwerk oder Ort aktuell nicht erreichbar ist
 - Einstellungsfenster mit Seitenleistennavigation (im Stil der macOS-Systemeinstellungen)
 - Info & Kontakt-Bereich in den Einstellungen
 - Cache leeren in den Einstellungen

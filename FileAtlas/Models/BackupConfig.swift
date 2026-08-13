@@ -30,6 +30,24 @@ nonisolated enum BackupSchedule: String, Codable, CaseIterable, Sendable {
     }
 }
 
+nonisolated struct BackupRecord: Codable, Identifiable, Sendable, Hashable {
+    let id: UUID
+    let date: Date
+    let artifactPath: String
+    let itemCount: Int
+    let archiveSize: Int64
+
+    init(date: Date = Date(), artifactURL: URL, itemCount: Int, archiveSize: Int64) {
+        self.id = UUID()
+        self.date = date
+        self.artifactPath = artifactURL.path(percentEncoded: false)
+        self.itemCount = itemCount
+        self.archiveSize = archiveSize
+    }
+
+    var artifactURL: URL { URL(fileURLWithPath: artifactPath) }
+}
+
 /// Persistierte Backup-Konfiguration eines Ortes (Schlüssel = Pfad des Ortes).
 nonisolated struct BackupConfig: Codable, Identifiable, Sendable, Hashable {
     var id: String { locationPath }
@@ -45,9 +63,33 @@ nonisolated struct BackupConfig: Codable, Identifiable, Sendable, Hashable {
     /// Security-Scoped-Bookmark des Zielordners.
     var destinationBookmark: Data? = nil
     var lastBackupDate: Date? = nil
+    /// 0 deaktiviert das automatische Aufräumen alter Sicherungen.
+    var retentionCount: Int = 5
+    var history: [BackupRecord] = []
 
     init(locationPath: String) {
         self.locationPath = locationPath
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case locationPath, kind, schedule, passwordEnabled, compressionEnabled
+        case hashManifestEnabled, sourceBookmark, destinationBookmark, lastBackupDate
+        case retentionCount, history
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        locationPath = try c.decode(String.self, forKey: .locationPath)
+        kind = try c.decodeIfPresent(BackupKind.self, forKey: .kind) ?? .indexOnly
+        schedule = try c.decodeIfPresent(BackupSchedule.self, forKey: .schedule) ?? .off
+        passwordEnabled = try c.decodeIfPresent(Bool.self, forKey: .passwordEnabled) ?? false
+        compressionEnabled = try c.decodeIfPresent(Bool.self, forKey: .compressionEnabled) ?? true
+        hashManifestEnabled = try c.decodeIfPresent(Bool.self, forKey: .hashManifestEnabled) ?? false
+        sourceBookmark = try c.decodeIfPresent(Data.self, forKey: .sourceBookmark)
+        destinationBookmark = try c.decodeIfPresent(Data.self, forKey: .destinationBookmark)
+        lastBackupDate = try c.decodeIfPresent(Date.self, forKey: .lastBackupDate)
+        retentionCount = max(0, try c.decodeIfPresent(Int.self, forKey: .retentionCount) ?? 5)
+        history = try c.decodeIfPresent([BackupRecord].self, forKey: .history) ?? []
     }
 
     /// Ist gemäß Zeitplan ein automatisches Backup fällig?

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 struct BackupSettingsView: View {
     let location: URL
@@ -23,6 +24,7 @@ struct BackupSettingsView: View {
     @State private var destinationName: String?
     @State private var sourceName = ""
     @State private var estimatedSize: Int64?
+    @State private var retentionCount = 5
 
     private var includesFull: Bool { kind != .indexOnly }
 
@@ -120,6 +122,43 @@ struct BackupSettingsView: View {
                         .foregroundStyle(AppTheme.theme.textSecondary)
                 }
 
+                Section("Retention") {
+                    Picker("Keep backups", selection: $retentionCount) {
+                        Text("Keep all").tag(0)
+                        Text("Last 3").tag(3)
+                        Text("Last 5").tag(5)
+                        Text("Last 10").tag(10)
+                    }
+                    Text("Older FileAtlas backup archives in this destination are removed after a successful backup.")
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.theme.textSecondary)
+                }
+
+                let history = backup.backupHistory(for: location)
+                if !history.isEmpty {
+                    Section("Backup History") {
+                        ForEach(history) { record in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(record.date.formatted(date: .abbreviated, time: .shortened))
+                                    Text("\(record.itemCount) files · \(ByteCountFormatter.string(fromByteCount: record.archiveSize, countStyle: .file))")
+                                        .font(.caption)
+                                        .foregroundStyle(AppTheme.theme.textSecondary)
+                                }
+                                Spacer()
+                                Button {
+                                    NSWorkspace.shared.activateFileViewerSelecting([record.artifactURL])
+                                } label: {
+                                    Image(systemName: "folder")
+                                }
+                                .buttonStyle(.borderless)
+                                .disabled(!FileManager.default.fileExists(atPath: record.artifactURL.path(percentEncoded: false)))
+                                .fileAtlasTooltip("Show in Finder")
+                            }
+                        }
+                    }
+                }
+
                 Section {
                     HStack {
                         Text("Estimated size")
@@ -175,6 +214,7 @@ struct BackupSettingsView: View {
         passwordEnabled = config.passwordEnabled
         compressionEnabled = config.compressionEnabled
         hashManifestEnabled = config.hashManifestEnabled
+        retentionCount = config.retentionCount
         refreshSource()
         refreshDestination()
     }
@@ -203,6 +243,7 @@ struct BackupSettingsView: View {
         config.passwordEnabled = passwordEnabled
         config.compressionEnabled = compressionEnabled
         config.hashManifestEnabled = hashManifestEnabled
+        config.retentionCount = retentionCount
         backup.saveConfig(config)
 
         if includesFull && passwordEnabled {

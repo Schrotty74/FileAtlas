@@ -51,7 +51,7 @@ When FileAtlas has no saved locations or indexed entries yet, a start screen off
 - Bundle recognition (`.app`, `.framework`, `.xcodeproj` treated as single entries, descendants skipped)
 - Extension whitelist filter (only index specific file types)
 - No auto-rescan if folder is already indexed
-- Duplicate detection (size grouping -> SHA-256 hash, gold badge)
+- Duplicate detection (size grouping -> SHA-256 hash, gold badge) per saved location by default; optional comparison across all locations
 - Snapshots after each scan (max. 10, JSON) with diff comparison and delete
 - Automatic "what changed?" summary after each follow-up scan
 - Storage analysis for largest indexed items, file types and duplicates
@@ -65,6 +65,11 @@ When FileAtlas has no saved locations or indexed entries yet, a start screen off
 - Export: Excel (`.xlsx`), PDF, CSV
 - Backup: Index backup (JSON), full backup, or selected files and folders (ZIP, optional AES-256, password in Keychain)
 - Backup schedule: Off / Daily / Weekly per location
+- Backup history per saved location with Finder reveal and retention for the last 3, 5, or 10 FileAtlas archives
+- Duplicate cleanup helper: keep one copy and add the other verified duplicates to the reviewable cleanup queue
+- Rules can optionally add matching files to the cleanup queue; moving anything to Trash still needs confirmation
+- Smart Collections can also use maximum size, tags, locations, and excluded file types
+- Saved locations show an unavailable state when a drive or location cannot currently be reached
 - Settings panel with sidebar navigation (macOS System Settings style)
 - Info & Contact section in Settings
 - Clear cache option in Settings

@@ -18,6 +18,7 @@ struct AlertRuleEditorView: View {
     @State private var hasAgeLimit = false
     @State private var olderThanDays = 365
     @State private var isEnabled = true
+    @State private var action: AlertRuleAction = .notify
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -70,6 +71,16 @@ struct AlertRuleEditorView: View {
                         Stepper("More than \(olderThanDays) days ago", value: $olderThanDays, in: 1...10_000)
                     }
                 }
+
+                Section("When matches are found") {
+                    Picker("Action", selection: $action) {
+                        Text("Show notification").tag(AlertRuleAction.notify)
+                        Text("Add to Cleanup Queue").tag(AlertRuleAction.addToCleanupQueue)
+                    }
+                    Text("The cleanup queue always requires a separate confirmation before anything moves to the Trash.")
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.theme.textSecondary)
+                }
             }
             .formStyle(.grouped)
         }
@@ -90,6 +101,7 @@ struct AlertRuleEditorView: View {
         hasAgeLimit = original.olderThanDays != nil
         olderThanDays = original.olderThanDays ?? 365
         isEnabled = original.isEnabled
+        action = original.action
     }
 
     private func addExtension() {
@@ -106,7 +118,8 @@ struct AlertRuleEditorView: View {
             extensions: extensions,
             minimumSize: hasMinimumSize ? Int64(minimumSizeMB) * 1_000_000 : nil,
             olderThanDays: hasAgeLimit ? olderThanDays : nil,
-            isEnabled: isEnabled
+            isEnabled: isEnabled,
+            action: action
         )
         vm.saveAlertRule(rule)
         dismiss()

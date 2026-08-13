@@ -39,6 +39,7 @@ struct FileAtlasApp: App {
                     vm.persistCachedRootPathsForAutoScan()
                 }
         }
+        .defaultSize(width: 1180, height: 760)
         .windowToolbarStyle(.unified(showsTitle: false))
         .commands {
             FileAtlasCommands(vm: vm, ui: ui, appearance: appearance, language: language)
@@ -72,87 +73,91 @@ struct FileAtlasCommands: Commands {
     let appearance: AppearanceManager
     let language: LanguageManager
 
+    private func menuText(_ german: String, _ english: String) -> String {
+        language.effectiveLanguage == .de ? german : english
+    }
+
     var body: some Commands {
         // „Datei"-Menü
         CommandGroup(replacing: .newItem) {
-            Button("Add Folder…") { vm.addFolders() }
+            Button(menuText("Ordner hinzufügen…", "Add Folder…")) { vm.addFolders() }
                 .keyboardShortcut("o", modifiers: .command)
-            Button("Rescan") { vm.startScan() }
+            Button(menuText("Erneut scannen", "Rescan")) { vm.startScan() }
                 .keyboardShortcut("r", modifiers: .command)
                 .disabled(vm.scanRoots.isEmpty)
-            Button("Cancel Scan") { vm.cancelScan() }
+            Button(menuText("Scan abbrechen", "Cancel Scan")) { vm.cancelScan() }
                 .disabled(!vm.isScanning)
 
             Divider()
 
-            Button("Open Selected File") { vm.openSelectedEntry() }
+            Button(menuText("Ausgewählte Datei öffnen", "Open Selected File")) { vm.openSelectedEntry() }
                 .keyboardShortcut(.return, modifiers: .command)
                 .disabled(vm.selectedEntry == nil)
-            Button("Show in Finder") { vm.revealSelectedEntryInFinder() }
+            Button(menuText("Im Finder zeigen", "Show in Finder")) { vm.revealSelectedEntryInFinder() }
                 .keyboardShortcut("r", modifiers: [.command, .shift])
                 .disabled(vm.selectedEntry == nil)
-            Button("Quick Look") { vm.quickLookSelectedEntry() }
+            Button(menuText("Schnellansicht", "Quick Look")) { vm.quickLookSelectedEntry() }
                 .disabled(vm.selectedEntry == nil)
 
             Divider()
 
-            Button("Export as Excel…") { vm.export(format: .xlsx) }
+            Button(menuText("Als Excel exportieren…", "Export as Excel…")) { vm.export(format: .xlsx) }
                 .keyboardShortcut("e", modifiers: .command)
-            Button("Export as PDF…") { vm.export(format: .pdf) }
-            Button("Export as CSV…") { vm.export(format: .csv) }
+            Button(menuText("Als PDF exportieren…", "Export as PDF…")) { vm.export(format: .pdf) }
+            Button(menuText("Als CSV exportieren…", "Export as CSV…")) { vm.export(format: .csv) }
 
             Divider()
 
-            Button("Save Snapshot") { vm.saveSnapshot() }
+            Button(menuText("Snapshot sichern", "Save Snapshot")) { vm.saveSnapshot() }
                 .disabled(vm.entries.isEmpty)
-            Button("Compare with Snapshot…") { ui.showSnapshotPicker = true }
+            Button(menuText("Mit Snapshot vergleichen…", "Compare with Snapshot…")) { ui.showSnapshotPicker = true }
                 .disabled(vm.entries.isEmpty)
-            Button("Compare Two Folders…") { ui.showFolderCompare = true }
+            Button(menuText("Zwei Ordner vergleichen…", "Compare Two Folders…")) { ui.showFolderCompare = true }
 
             Divider()
 
-            Button("Storage Analysis") { ui.showStorageAnalysis = true }
+            Button(menuText("Speicheranalyse", "Storage Analysis")) { ui.showStorageAnalysis = true }
                 .disabled(vm.entries.isEmpty)
-            Button("Cleanup Queue") { ui.showCleanupQueue = true }
+            Button(menuText("Aufräumwarteschlange", "Cleanup Queue")) { ui.showCleanupQueue = true }
         }
 
         // „Darstellung"-Menü
-        CommandMenu("Appearance") {
-            Picker("Appearance", selection: Binding(
+        CommandMenu(menuText("Darstellung", "Appearance")) {
+            Picker(menuText("Darstellung", "Appearance"), selection: Binding(
                 get: { appearance.mode },
                 set: { appearance.mode = $0 })) {
-                Text("Light").tag(AppearanceMode.light)
-                Text("Dark").tag(AppearanceMode.dark)
-                Text("System").tag(AppearanceMode.system)
+                Text(menuText("Hell", "Light")).tag(AppearanceMode.light)
+                Text(menuText("Dunkel", "Dark")).tag(AppearanceMode.dark)
+                Text(menuText("System", "System")).tag(AppearanceMode.system)
             }
             .pickerStyle(.inline)
 
-            Picker("Color theme", selection: Binding(
+            Picker(menuText("Farbthema", "Color theme"), selection: Binding(
                 get: { appearance.colorTheme },
                 set: { appearance.colorTheme = $0 })) {
                 Text("Midnight Teal").tag(ColorTheme.midnightTeal)
                 Text("Retro").tag(ColorTheme.retro)
                 Text("Graphite Lime").tag(ColorTheme.graphiteLime)
-                Text("Autumn").tag(ColorTheme.autumn)
-                Text("Winter").tag(ColorTheme.winter)
-                Text("Glass").tag(ColorTheme.glass)
+                Text(menuText("Herbst", "Autumn")).tag(ColorTheme.autumn)
+                Text(menuText("Winter", "Winter")).tag(ColorTheme.winter)
+                Text(menuText("Glas", "Glass")).tag(ColorTheme.glass)
             }
             .pickerStyle(.inline)
 
             Divider()
 
-            Picker("Language", selection: Binding(
+            Picker(menuText("Sprache", "Language"), selection: Binding(
                 get: { language.language },
                 set: { language.language = $0 })) {
                 Text("Deutsch").tag(AppLanguage.de)
                 Text("English").tag(AppLanguage.en)
-                Text("System").tag(AppLanguage.auto)
+                Text(menuText("System", "System")).tag(AppLanguage.auto)
             }
             .pickerStyle(.inline)
 
             Divider()
 
-            Button("Toggle Sidebar") {
+            Button(menuText("Seitenleiste ein-/ausblenden", "Toggle Sidebar")) {
                 ui.isSidebarVisible.toggle()
             }
             .keyboardShortcut("s", modifiers: [.command, .control])

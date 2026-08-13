@@ -272,6 +272,14 @@ struct FileListView: View {
             }
         }
 
+        if entry.isDuplicate, entry.duplicateGroupID != nil {
+            Button {
+                _ = vm.queueDuplicateSiblings(keeping: entry)
+            } label: {
+                Label("Keep This Copy and Queue Other Duplicates", systemImage: "checkmark.shield")
+            }
+        }
+
         Divider()
 
         Button {

@@ -4,6 +4,38 @@ import Testing
 
 struct BackupEngineTests {
     @Test
+    func legacyBackupConfigGetsSafeHistoryDefaults() throws {
+        let data = Data(#"{"locationPath":"/Example"}"#.utf8)
+        let config = try JSONDecoder().decode(BackupConfig.self, from: data)
+
+        #expect(config.retentionCount == 5)
+        #expect(config.history.isEmpty)
+    }
+
+    @Test
+    func smartCollectionCanCombineTagFolderAndMaximumSize() {
+        let entry = FileEntry(
+            name: "Installer.dmg",
+            path: URL(fileURLWithPath: "/Catalog/Installer.dmg"),
+            size: 50_000_000,
+            created: .now,
+            modified: .now,
+            fileExtension: "dmg",
+            isDirectory: false
+        )
+        let collection = SmartCollection(
+            name: "Small installers",
+            extensions: ["dmg"],
+            maximumSize: 100_000_000,
+            tagTitles: ["Checked"],
+            scopedFolderPaths: ["/Catalog"]
+        )
+
+        #expect(collection.contains(entry, tags: [FileTag("Checked")]))
+        #expect(!collection.contains(entry, tags: []))
+    }
+
+    @Test
     func indexBackupReportsTheIndexedItemCount() throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("FileAtlasTests-\(UUID().uuidString)", isDirectory: true)
