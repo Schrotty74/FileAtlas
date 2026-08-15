@@ -1,35 +1,84 @@
 # FileAtlas for macOS – File Indexer, Duplicate Finder & Folder Comparison
 
-FileAtlas is a native, privacy-focused macOS file indexer and duplicate finder for scanning folders, inspecting metadata, comparing folder snapshots, analyzing storage, exporting reports and managing local backups.
-
 ![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue) ![Swift 6](https://img.shields.io/badge/Swift-6-orange) ![License: GPLv3](https://img.shields.io/badge/License-GPLv3-green) ![Security: Clean](https://img.shields.io/badge/Security-Clean-brightgreen) [![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/RbsvqRCPQ)
 
-<p align="center"><img src="FileAtlas/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" width="150" alt="FileAtlas macOS file indexer and duplicate finder app icon"></p>
+<p align="center">
+  <img src="FileAtlas/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" width="150" alt="FileAtlas App Icon">
+</p>
 
-FileAtlas is built with pure Apple frameworks. It helps scan folders, inspect metadata, detect duplicate files, compare snapshots and folders, find large indexed items, export reports, and manage backups without external dependencies.
+FileAtlas is a native, privacy-focused macOS file indexer, duplicate finder and folder comparison app built with pure Apple frameworks. It helps scan folders, inspect metadata, detect duplicates, compare snapshots, analyze storage, export reports, and manage backups without external dependencies.
 
 > **Security:** No private data, API keys, or certificates have been published in this repository. FileAtlas stores scan data locally. If update checks are enabled, the app only contacts GitHub Releases to look for a newer version. See [SECURITY.md](SECURITY.md) for the full audit.
 
+
 [🇩🇪 Deutsche Beschreibung](README.de.md)
-
-## Highlights
-
-- Recursive local file indexing with live progress
-- Duplicate file detection using SHA-256
-- Folder and snapshot comparison with automatic "what changed?" summaries
-- Storage analysis for largest indexed items, file types and duplicates
-- Quick search and saveable filters by name, extension and size
-- Smart Collections, tags, rules and safe cleanup queue
-- Excel, PDF and CSV report export
-- Local JSON and ZIP backups with optional AES-256 protection
-- QuickLook previews and native macOS file/app icons
-- German and English interface
-- No external dependencies; pure Apple frameworks
 
 ## Manual
 
-Read the complete English usage guide: [FileAtlas Manual (PDF)](output/pdf/FileAtlas-Manual-EN.pdf).  
+Read the complete English usage guide: [FileAtlas Manual (PDF)](output/pdf/FileAtlas-Manual-EN.pdf).
 Die deutsche Ausgabe findest du hier: [FileAtlas Handbuch (PDF)](output/pdf/FileAtlas-Handbuch.pdf).
+
+## First-Launch Help
+
+When FileAtlas has no saved locations or indexed entries yet, a start screen offers a local folder picker, the manual, and optional help from ChatGPT, Google Gemini, or Claude. Selecting a service copies a general, privacy-safe question with the public manual link to the clipboard and then opens that service; FileAtlas never sends local file data or other user data automatically. See [AI help and privacy notes](AI_HELP.md).
+
+## New in 1.9
+
+- Six color themes, including Glass: a milky-translucent full-window surface with a continuous colorful glow and ambient light points.
+- Purposeful motion across scans, navigation, filters, backups, insights, and first launch, with a Reduce Motion setting that respects macOS accessibility.
+- Optional tooltips, improved resizable table columns and detail panel behavior, plus sturdier tag and duplicate handling.
+- Apple-silicon-aware scanning, adaptive duplicate hashing, and a memory-limited system icon cache.
+
+## Features
+
+- Local file indexing with recursive folder scan and live progress (AsyncStream)
+- Apple-silicon-aware performance: batched live scan updates, bounded adaptive duplicate hashing and a memory-limited system icon cache
+- Scan multiple folders simultaneously
+- Security-Scoped Bookmarks (access persists after app restart)
+- Liquid Glass sidebar (desktop shines through)
+- Light / Dark / System appearance switcher (independent of macOS setting)
+- Six color themes: Midnight Teal, Retro, Graphite Lime, Autumn, Winter and Glass; Glass uses a milky-translucent surface across the entire window
+- Purposeful interface motion: live scan results with loading placeholders, animated navigation and filter chips, theme-aware ambient effects, backup completion feedback, analysis and comparison transitions; includes a Reduce Motion setting that also follows macOS accessibility
+- Optional tooltips for toolbar, navigation and action icons, configurable in Settings -> Appearance
+- DE/EN localization with DACH rule (de_AT, de_DE, de_CH always German)
+- Sortable, reorderable columns (Name, Type, Status, Tags, Size, Modified)
+- Adjustable row height (Compact / Normal / Large)
+- QuickLook preview (Space bar) with inline file preview in detail panel
+- Compact list view mode, switchable with table view
+- Quick search by name, extension, size (`> 10 MB`, `< 500 KB`)
+- Saveable filter sets with include/exclude lists
+- Ignored folders (skipped during scan, shown as single entry with total size)
+- Bundle recognition (`.app`, `.framework`, `.xcodeproj` treated as single entries, descendants skipped)
+- Extension whitelist filter (only index specific file types)
+- No auto-rescan if folder is already indexed
+- Duplicate detection (size grouping -> SHA-256 hash, gold badge) per saved location by default; optional comparison across all locations
+- Snapshots after each scan (max. 10, JSON) with diff comparison and delete
+- Automatic "what changed?" summary after each follow-up scan
+- Storage analysis for largest indexed items, file types and duplicates
+- Safe cleanup queue: review items first, then move them to the macOS Trash with confirmation
+- Rules for file type, minimum size and file age, with scan-time match notifications
+- Smart Collections: saved dynamic views for file type, size, recent changes and duplicates
+- Folder comparison (two folders directly)
+- Tags (predefined + custom, color-coded pills, extension-based and applied globally across all folders)
+- Subfolder expansion in sidebar (multi-level, lazy-loaded without UI freeze)
+- Quick access (last 5 scanned folders in sidebar, manually managed)
+- Export: Excel (`.xlsx`), PDF, CSV
+- Backup: Index backup (JSON), full backup, or selected files and folders (ZIP, optional AES-256, password in Keychain)
+- Backup schedule: Off / Daily / Weekly per location
+- Backup history per saved location with Finder reveal and retention for the last 3, 5, or 10 FileAtlas archives
+- Duplicate cleanup helper: keep one copy and add the other verified duplicates to the reviewable cleanup queue
+- Rules can optionally add matching files to the cleanup queue; moving anything to Trash still needs confirmation
+- Smart Collections can also use maximum size, tags, locations, and excluded file types
+- Saved locations show an unavailable state when a drive or location cannot currently be reached
+- Settings panel with sidebar navigation (macOS System Settings style)
+- Info & Contact section in Settings
+- Clear cache option in Settings
+- Real system icons for files, apps and folders, with a toggle for fast generic icons in Settings
+- App bundle metadata (name, version, developer, bundle ID) shown in detail panel
+- Auto-scan on launch option in Settings
+- Update check notification via published GitHub Releases, including betas
+- Privacy-safe first-launch AI help with local ChatGPT, Gemini and Claude logos
+- No external dependencies - pure Apple frameworks only
 
 ## Requirements
 
@@ -45,9 +94,25 @@ Die deutsche Ausgabe findest du hier: [FileAtlas Handbuch (PDF)](output/pdf/File
 
 Alternatively, download the latest DMG or ZIP from the [Releases](../../releases) page.
 
-## Privacy
+## macOS Gatekeeper Notice
 
-FileAtlas indexes user-selected folders locally. Scan data stays on the Mac. Optional update checks contact only GitHub Releases. The first-launch AI help copies only a general privacy-safe question and public manual link; it never sends local file data automatically.
+FileAtlas is not signed with an Apple Developer certificate. On first launch macOS may block the app with the message *"FileAtlas cannot be opened because it is from an unidentified developer."*
+
+**To open the app anyway:**
+
+1. Double-click `FileAtlas.app` — macOS will block it and show a warning
+2. Click **Done**
+3. Open **System Settings → Privacy & Security**
+4. Scroll down and click **Open Anyway** next to FileAtlas
+5. Confirm by clicking **Open** in the final dialog
+
+macOS remembers your choice — this step is only required once.
+
+> If macOS shows **"FileAtlas.app is damaged"** instead of the security warning, open Terminal and run:
+> ```bash
+> xattr -cr FileAtlas.app
+> ```
+> Then try opening the app again.
 
 ## Community
 
@@ -55,4 +120,4 @@ Questions, feedback and discussions are welcome on [Discord](https://discord.gg/
 
 ## License
 
-FileAtlas is licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE).
+FileAtlas is licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for the full license text.
