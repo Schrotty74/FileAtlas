@@ -118,6 +118,10 @@ macOS remembers your choice — this step is only required once.
 
 Questions, feedback and discussions are welcome on [Discord](https://discord.gg/RbsvqRCPQ).
 
+## Repo activity
+
+![Repobeats analytics image](https://repobeats.axiom.co/api/embed/49bbb02c7f824b86f12c94cfeaba700d9143ae70.svg "Repobeats analytics image")
+
 ## License
 
 FileAtlas is licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for the full license text.
