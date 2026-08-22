@@ -12,6 +12,7 @@ struct BackupSettingsView: View {
     let location: URL
 
     @Environment(BackupManager.self) private var backup
+    @Environment(LanguageManager.self) private var language
     @Environment(\.dismiss) private var dismiss
 
     @State private var kind: BackupKind = .indexOnly
@@ -19,14 +20,20 @@ struct BackupSettingsView: View {
     @State private var passwordEnabled = false
     @State private var compressionEnabled = true
     @State private var hashManifestEnabled = false
+    @State private var incrementalEnabled = false
     @State private var password = ""
     @State private var hasDestination = false
     @State private var destinationName: String?
     @State private var sourceName = ""
     @State private var estimatedSize: Int64?
     @State private var retentionCount = 5
+    @State private var inspectedArchive: URL?
 
     private var includesFull: Bool { kind != .indexOnly }
+
+    private func text(_ de: String, _ en: String) -> String {
+        language.effectiveLanguage == .de ? de : en
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -80,6 +87,11 @@ struct BackupSettingsView: View {
                             .tint(AppTheme.theme.accentColor)
                         Toggle("Create SHA-256 hash manifest", isOn: $hashManifestEnabled)
                             .tint(AppTheme.theme.accentColor)
+                        Toggle(text("Inkrementelle Sicherungen nach der ersten Vollsicherung", "Incremental backups after the first full backup"), isOn: $incrementalEnabled)
+                            .tint(AppTheme.theme.accentColor)
+                        Text(text("Nur Dateien, die sich seit der letzten erfolgreichen Sicherung geaendert haben, kommen in spaetere inkrementelle Archive.", "Only files changed since the last successful backup are added to later incremental archives."))
+                            .font(.caption)
+                            .foregroundStyle(AppTheme.theme.textSecondary)
                         Text("Large already-compressed files are streamed for speed and cancellation responsiveness.")
                             .font(.caption)
                             .foregroundStyle(AppTheme.theme.textSecondary)
@@ -146,6 +158,18 @@ struct BackupSettingsView: View {
                                         .foregroundStyle(AppTheme.theme.textSecondary)
                                 }
                                 Spacer()
+                                if record.isIncremental {
+                                    Text(text("Inkrementell", "Incremental"))
+                                        .font(.caption)
+                                        .foregroundStyle(AppTheme.theme.textSecondary)
+                                }
+                                Button {
+                                    inspectedArchive = record.artifactURL
+                                } label: {
+                                    Image(systemName: "checklist")
+                                }
+                                .buttonStyle(.borderless)
+                                .disabled(!FileManager.default.fileExists(atPath: record.artifactURL.path(percentEncoded: false)))
                                 Button {
                                     NSWorkspace.shared.activateFileViewerSelecting([record.artifactURL])
                                 } label: {
@@ -203,6 +227,14 @@ struct BackupSettingsView: View {
         .task {
             refreshEstimate()
         }
+        .sheet(isPresented: Binding(
+            get: { inspectedArchive != nil },
+            set: { if !$0 { inspectedArchive = nil } }
+        )) {
+            if let archiveURL = inspectedArchive {
+                ArchiveInspectorView(archiveURL: archiveURL)
+            }
+        }
     }
 
     // MARK: - Laden / Speichern
@@ -214,6 +246,7 @@ struct BackupSettingsView: View {
         passwordEnabled = config.passwordEnabled
         compressionEnabled = config.compressionEnabled
         hashManifestEnabled = config.hashManifestEnabled
+        incrementalEnabled = config.incrementalEnabled
         retentionCount = config.retentionCount
         refreshSource()
         refreshDestination()
@@ -243,6 +276,7 @@ struct BackupSettingsView: View {
         config.passwordEnabled = passwordEnabled
         config.compressionEnabled = compressionEnabled
         config.hashManifestEnabled = hashManifestEnabled
+        config.incrementalEnabled = incrementalEnabled
         config.retentionCount = retentionCount
         backup.saveConfig(config)
 

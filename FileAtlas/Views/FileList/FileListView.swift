@@ -12,6 +12,7 @@ struct FileListView: View {
     @Environment(IndexViewModel.self) private var vm
     @Environment(UIState.self) private var ui
     @Environment(BackupManager.self) private var backup
+    @Environment(LanguageManager.self) private var language
     @Environment(MotionPreferences.self) private var motion
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @AppStorage("FileListColumnCustomization") private var columnCustomizationData = Data()
@@ -255,6 +256,15 @@ struct FileListView: View {
             Label("Back Up Selected Items…", systemImage: "arrow.down.doc")
         }
         .disabled(backup.isBackingUp)
+
+        if entry.fileExtension.lowercased() == "zip" {
+            Button {
+                ui.archiveURL = entry.path
+                ui.showArchiveInspector = true
+            } label: {
+                Label(language.effectiveLanguage == .de ? "Archiv pruefen…" : "Inspect Archive…", systemImage: "archivebox")
+            }
+        }
 
         Divider()
 

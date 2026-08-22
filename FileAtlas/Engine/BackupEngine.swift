@@ -149,6 +149,44 @@ nonisolated struct BackupEngine {
         return url
     }
 
+    /// Schreibt nur Dateien, die seit dem letzten erfolgreichen Vollbackup geaendert wurden.
+    /// Die Pfade innerhalb des ZIP bleiben relativ zur gewaehlten Quelle erhalten.
+    static func writeIncrementalZip(
+        location: URL,
+        destinationDir: URL,
+        timestamp: String,
+        after date: Date,
+        password: String?,
+        shouldCancel: @escaping () -> Bool,
+        options: BackupArchiveOptions = BackupArchiveOptions(),
+        progress: @escaping (_ fraction: Double, _ currentFiles: Int, _ currentPath: URL) -> Void
+    ) throws -> URL {
+        let changed = ZipArchiver.regularFiles(in: location).filter { file in
+            let modified = (try? file.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
+            return modified > date
+        }
+        let total = max(1, changed.reduce(Int64(0)) { partial, file in
+            partial + Int64((try? file.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0)
+        })
+        let name = "FileAtlas_Incremental_\(location.lastPathComponent)_\(timestamp).zip"
+        let url = destinationDir.appendingPathComponent(name)
+        try ZipArchiver.create(
+            source: location,
+            destination: url,
+            password: password,
+            options: options,
+            includedFilePaths: Set(changed.map { $0.path(percentEncoded: false) }),
+            shouldCancel: shouldCancel,
+            progress: { bytes, files, currentPath in
+                progress(Double(bytes) / Double(total), files, currentPath)
+            }
+        )
+        if options.hashManifestEnabled {
+            try writeHashManifest(forFiles: changed, base: location, zipURL: url, timestamp: timestamp, shouldCancel: shouldCancel)
+        }
+        return url
+    }
+
     // MARK: - Hilfen
 
     /// Geschätzte Gesamtgröße des Ordners (Bytes).
@@ -185,6 +223,23 @@ nonisolated struct BackupEngine {
             }
         }
 
+        let manifestURL = zipURL.deletingPathExtension().appendingPathExtension("sha256")
+        try lines.joined(separator: "\n").appending("\n").write(to: manifestURL, atomically: true, encoding: .utf8)
+    }
+
+    private static func writeHashManifest(
+        forFiles files: [URL],
+        base: URL,
+        zipURL: URL,
+        timestamp: String,
+        shouldCancel: () -> Bool
+    ) throws {
+        var lines = ["# FileAtlas SHA-256 manifest", "# Incremental source: \(base.path(percentEncoded: false))", "# Created: \(timestamp)", ""]
+        for file in files {
+            if shouldCancel() { throw ZipArchiver.ZipError.cancelled }
+            guard let hash = sha256(of: file, shouldCancel: shouldCancel) else { continue }
+            lines.append("\(hash)  \(ZipArchiver.relativePath(of: file, base: base))")
+        }
         let manifestURL = zipURL.deletingPathExtension().appendingPathExtension("sha256")
         try lines.joined(separator: "\n").appending("\n").write(to: manifestURL, atomically: true, encoding: .utf8)
     }

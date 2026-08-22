@@ -18,7 +18,6 @@ final class UIState {
     var showSnapshotPicker = false
     var showDiff = false
     var showFolderCompare = false
-    var showStorageAnalysis = false
     var showCleanupQueue = false
     var showAlertRuleResults = false
     var showSettingsPanel = false
@@ -36,6 +35,9 @@ final class UIState {
     var showBackupSettings = false
     var selectionBackupEntries: [FileEntry] = []
     var showSelectionBackup = false
+    var archiveURL: URL? = nil
+    var showArchiveInspector = false
+    var showSimilarImages = false
 
     init() {
         self.fileListViewMode = .list
@@ -104,9 +106,6 @@ struct ContentView: View {
         .sheet(isPresented: $ui.showFolderCompare) {
             FolderCompareView()
         }
-        .sheet(isPresented: $ui.showStorageAnalysis) {
-            StorageAnalysisView()
-        }
         .sheet(isPresented: $ui.showCleanupQueue) {
             CleanupQueueView()
         }
@@ -123,6 +122,14 @@ struct ContentView: View {
         }
         .sheet(isPresented: $ui.showSelectionBackup) {
             SelectionBackupView(entries: ui.selectionBackupEntries)
+        }
+        .sheet(isPresented: $ui.showArchiveInspector) {
+            if let archiveURL = ui.archiveURL {
+                ArchiveInspectorView(archiveURL: archiveURL)
+            }
+        }
+        .sheet(isPresented: $ui.showSimilarImages) {
+            SimilarImagesView()
         }
         .overlay(alignment: .bottom) {
             VStack(spacing: 8) {

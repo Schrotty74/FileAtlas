@@ -31,12 +31,14 @@ nonisolated struct ZipArchiver {
         destination: URL,
         password: String?,
         options: BackupArchiveOptions = BackupArchiveOptions(),
+        includedFilePaths: Set<String>? = nil,
         shouldCancel: () -> Bool = { false },
         progress: (_ bytesProcessed: Int64, _ filesProcessed: Int, _ currentPath: URL) -> Void = { _, _, _ in }
     ) throws {
         try create(
             sources: [source], destination: destination, password: password,
             options: options, includeSourceDirectory: false,
+            includedFilePaths: includedFilePaths,
             shouldCancel: shouldCancel, progress: progress
         )
     }
@@ -48,10 +50,15 @@ nonisolated struct ZipArchiver {
         password: String?,
         options: BackupArchiveOptions = BackupArchiveOptions(),
         includeSourceDirectory: Bool = true,
+        includedFilePaths: Set<String>? = nil,
         shouldCancel: () -> Bool = { false },
         progress: (_ bytesProcessed: Int64, _ filesProcessed: Int, _ currentPath: URL) -> Void = { _, _, _ in }
     ) throws {
-        let files = archiveFiles(in: sources, includeSourceDirectory: includeSourceDirectory)
+        let files = archiveFiles(
+            in: sources,
+            includeSourceDirectory: includeSourceDirectory,
+            includedFilePaths: includedFilePaths
+        )
 
         FileManager.default.createFile(atPath: destination.path, contents: nil)
         guard let handle = try? FileHandle(forWritingTo: destination) else {
@@ -284,10 +291,16 @@ nonisolated struct ZipArchiver {
         let name: String
     }
 
-    private static func archiveFiles(in sources: [URL], includeSourceDirectory: Bool) -> [ArchiveFile] {
+    private static func archiveFiles(
+        in sources: [URL],
+        includeSourceDirectory: Bool,
+        includedFilePaths: Set<String>?
+    ) -> [ArchiveFile] {
         guard includeSourceDirectory || sources.count != 1 else {
             let source = sources[0]
-            return regularFiles(in: source).map {
+            return regularFiles(in: source).filter { file in
+                includedFilePaths?.contains(file.path(percentEncoded: false)) ?? true
+            }.map {
                 ArchiveFile(url: $0, name: relativePath(of: $0, base: source))
             }
         }
@@ -304,7 +317,7 @@ nonisolated struct ZipArchiver {
             }
 
             let sourceIsFile = (try? source.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile == true
-            for file in regularFiles(in: source) {
+            for file in regularFiles(in: source) where includedFilePaths?.contains(file.path(percentEncoded: false)) ?? true {
                 let name = sourceIsFile
                     ? topLevelName
                     : "\(topLevelName)/\(relativePath(of: file, base: source))"

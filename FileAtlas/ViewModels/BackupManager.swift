@@ -19,6 +19,7 @@ struct BackupCompletion: Equatable {
 private struct BackupExecutionResult: Sendable {
     let artifactURL: URL
     let itemCount: Int
+    let isIncremental: Bool
 }
 
 @Observable
@@ -148,6 +149,8 @@ final class BackupManager {
         let kind = config.kind
         let compressionEnabled = config.compressionEnabled
         let hashManifestEnabled = config.hashManifestEnabled
+        let incrementalEnabled = config.incrementalEnabled
+        let lastBackupDate = config.lastBackupDate
         let timestamp = Self.timestamp()
 
         let destScoped = destDir.startAccessingSecurityScopedResource()
@@ -170,14 +173,11 @@ final class BackupManager {
             if kind == .fullOnly || kind == .both {
                 try Task.checkCancellation()
                 var lastPct = -1.0
-                artifactURL = try BackupEngine.writeFullZip(
-                    location: source, destinationDir: destDir, timestamp: timestamp,
-                    password: password, shouldCancel: { Task.isCancelled },
-                    options: BackupArchiveOptions(
-                        compressionEnabled: compressionEnabled,
-                        hashManifestEnabled: hashManifestEnabled
-                    ),
-                    progress: { fraction, files, currentPath in
+                let options = BackupArchiveOptions(
+                    compressionEnabled: compressionEnabled,
+                    hashManifestEnabled: hashManifestEnabled
+                )
+                let reportProgress: (Double, Int, URL) -> Void = { fraction, files, currentPath in
                         completedFileCount = files
                         let pct = (fraction * 100).rounded()
                         let itemName = currentPath.lastPathComponent
@@ -190,10 +190,26 @@ final class BackupManager {
                             self?.currentItemName = itemName
                         }
                     }
-                )
+                if incrementalEnabled, let lastBackupDate {
+                    artifactURL = try BackupEngine.writeIncrementalZip(
+                        location: source, destinationDir: destDir, timestamp: timestamp,
+                        after: lastBackupDate, password: password, shouldCancel: { Task.isCancelled },
+                        options: options, progress: reportProgress
+                    )
+                } else {
+                    artifactURL = try BackupEngine.writeFullZip(
+                        location: source, destinationDir: destDir, timestamp: timestamp,
+                        password: password, shouldCancel: { Task.isCancelled },
+                        options: options, progress: reportProgress
+                    )
+                }
             }
             guard let artifactURL else { throw CancellationError() }
-            return BackupExecutionResult(artifactURL: artifactURL, itemCount: completedFileCount)
+            return BackupExecutionResult(
+                artifactURL: artifactURL,
+                itemCount: completedFileCount,
+                isIncremental: incrementalEnabled && lastBackupDate != nil && kind != .indexOnly
+            )
         }
         backupTask = task
         let result = await task.result
@@ -207,7 +223,8 @@ final class BackupManager {
             let record = BackupRecord(
                 artifactURL: result.artifactURL,
                 itemCount: result.itemCount,
-                archiveSize: Self.fileSize(at: result.artifactURL)
+                archiveSize: Self.fileSize(at: result.artifactURL),
+                isIncremental: result.isIncremental
             )
             config.history.append(record)
             pruneHistory(&config, destination: destDir)
@@ -286,7 +303,7 @@ final class BackupManager {
                     }
                 }
             )
-            return BackupExecutionResult(artifactURL: artifactURL, itemCount: completedFileCount)
+            return BackupExecutionResult(artifactURL: artifactURL, itemCount: completedFileCount, isIncremental: false)
         }
         backupTask = task
         let result = await task.result

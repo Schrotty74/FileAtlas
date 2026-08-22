@@ -45,6 +45,20 @@ struct FileAtlasApp: App {
             FileAtlasCommands(vm: vm, ui: ui, appearance: appearance, language: language)
         }
 
+        WindowGroup("Storage Analysis", id: "storage-analysis") {
+            StorageAnalysisView()
+                .environment(vm)
+                .environment(appearance)
+                .environment(language)
+                .environment(motion)
+                .environment(tooltips)
+                .environment(ui)
+                .environment(backup)
+                .environment(\.locale, language.locale)
+        }
+        .defaultSize(width: 760, height: 760)
+        .windowResizability(.contentMinSize)
+
         Settings {
             MainSettingsPanel()
                 .environment(vm)
@@ -72,6 +86,7 @@ struct FileAtlasCommands: Commands {
     let ui: UIState
     let appearance: AppearanceManager
     let language: LanguageManager
+    @Environment(\.openWindow) private var openWindow
 
     private func menuText(_ german: String, _ english: String) -> String {
         language.effectiveLanguage == .de ? german : english
@@ -116,7 +131,7 @@ struct FileAtlasCommands: Commands {
 
             Divider()
 
-            Button(menuText("Speicheranalyse", "Storage Analysis")) { ui.showStorageAnalysis = true }
+            Button(menuText("Speicheranalyse", "Storage Analysis")) { openWindow(id: "storage-analysis") }
                 .disabled(vm.entries.isEmpty)
             Button(menuText("Aufräumwarteschlange", "Cleanup Queue")) { ui.showCleanupQueue = true }
         }

@@ -36,16 +36,32 @@ nonisolated struct BackupRecord: Codable, Identifiable, Sendable, Hashable {
     let artifactPath: String
     let itemCount: Int
     let archiveSize: Int64
+    let isIncremental: Bool
 
-    init(date: Date = Date(), artifactURL: URL, itemCount: Int, archiveSize: Int64) {
+    init(date: Date = Date(), artifactURL: URL, itemCount: Int, archiveSize: Int64, isIncremental: Bool = false) {
         self.id = UUID()
         self.date = date
         self.artifactPath = artifactURL.path(percentEncoded: false)
         self.itemCount = itemCount
         self.archiveSize = archiveSize
+        self.isIncremental = isIncremental
     }
 
     var artifactURL: URL { URL(fileURLWithPath: artifactPath) }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, date, artifactPath, itemCount, archiveSize, isIncremental
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        date = try c.decode(Date.self, forKey: .date)
+        artifactPath = try c.decode(String.self, forKey: .artifactPath)
+        itemCount = try c.decode(Int.self, forKey: .itemCount)
+        archiveSize = try c.decode(Int64.self, forKey: .archiveSize)
+        isIncremental = try c.decodeIfPresent(Bool.self, forKey: .isIncremental) ?? false
+    }
 }
 
 /// Persistierte Backup-Konfiguration eines Ortes (Schlüssel = Pfad des Ortes).
@@ -58,6 +74,8 @@ nonisolated struct BackupConfig: Codable, Identifiable, Sendable, Hashable {
     var passwordEnabled: Bool = false
     var compressionEnabled: Bool = true
     var hashManifestEnabled: Bool = false
+    /// Nach einer ersten Vollsicherung werden nur seit der letzten Sicherung geaenderte Dateien gesichert.
+    var incrementalEnabled: Bool = false
     /// Optional abweichende Backup-Quelle (Datei oder Ordner).
     var sourceBookmark: Data? = nil
     /// Security-Scoped-Bookmark des Zielordners.
@@ -73,7 +91,7 @@ nonisolated struct BackupConfig: Codable, Identifiable, Sendable, Hashable {
 
     private enum CodingKeys: String, CodingKey {
         case locationPath, kind, schedule, passwordEnabled, compressionEnabled
-        case hashManifestEnabled, sourceBookmark, destinationBookmark, lastBackupDate
+        case hashManifestEnabled, incrementalEnabled, sourceBookmark, destinationBookmark, lastBackupDate
         case retentionCount, history
     }
 
@@ -85,6 +103,7 @@ nonisolated struct BackupConfig: Codable, Identifiable, Sendable, Hashable {
         passwordEnabled = try c.decodeIfPresent(Bool.self, forKey: .passwordEnabled) ?? false
         compressionEnabled = try c.decodeIfPresent(Bool.self, forKey: .compressionEnabled) ?? true
         hashManifestEnabled = try c.decodeIfPresent(Bool.self, forKey: .hashManifestEnabled) ?? false
+        incrementalEnabled = try c.decodeIfPresent(Bool.self, forKey: .incrementalEnabled) ?? false
         sourceBookmark = try c.decodeIfPresent(Data.self, forKey: .sourceBookmark)
         destinationBookmark = try c.decodeIfPresent(Data.self, forKey: .destinationBookmark)
         lastBackupDate = try c.decodeIfPresent(Date.self, forKey: .lastBackupDate)

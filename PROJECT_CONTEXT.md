@@ -69,10 +69,14 @@ public documentation.
   bundle recognition, folder expansion, filters, tags, smart collections,
   cleanup queue, rules, snapshots, folder comparison, storage analysis, and
   duplicate detection.
-- Backups support index-only, full ZIP, and selected items; optional encryption,
-  compression, hash manifests, cancellation, daily/weekly schedules, per-location
+- Backups support index-only, full ZIP, incremental ZIP, and selected items;
+  optional encryption, compression, hash manifests, archive inspection,
+  selected-entry restore, cancellation, daily/weekly schedules, per-location
   history, and retention. A schedule is evaluated while the app runs or starts;
   it is not a background daemon.
+- Storage analysis includes a proportional file-type map and health indicators.
+  Similar-image analysis uses Apple's local Vision feature prints on a bounded
+  candidate set; it never uploads images.
 - Rules can add matching items to the reviewable cleanup queue. Smart collections
   additionally support maximum size, tags, saved locations, and excluded file
   types. Saved locations display an unavailable state when they cannot be reached.

@@ -14,6 +14,7 @@ struct MainToolbar: ToolbarContent {
     @Binding var searchText: String
     @Binding var searchAllFolders: Bool
     @Environment(TooltipPreferences.self) private var tooltips
+    @Environment(\.openWindow) private var openWindow
 
     var body: some ToolbarContent {
         @Bindable var ui = ui
@@ -58,7 +59,7 @@ struct MainToolbar: ToolbarContent {
             }
 
             Button {
-                ui.showStorageAnalysis = true
+                openWindow(id: "storage-analysis")
             } label: {
                 Label("Storage Analysis", systemImage: "chart.bar.xaxis")
             }
