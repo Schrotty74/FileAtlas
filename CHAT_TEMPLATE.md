@@ -1,31 +1,34 @@
-# New Codex Chat Template
+# Chat-Startvorlage – FileAtlas
 
-Use this as the first message in a new FileAtlas development chat:
+Ich arbeite am Projekt **FileAtlas**.
 
-```text
-Work only in the FileAtlas project repository.
+Projekt-Root:
+`Repository-Root`
 
-Before changing anything, read PROJECT_CONTEXT.md and NEXT_STEPS.md completely.
-Then read the relevant specialized documentation: AI_HELP.md for first-launch AI
-help, SECURITY.md before public-facing work, and PORTFOLIO_UPDATE.md before a
-release or announcement.
+Repository:
+https://github.com/Schrotty74/FileAtlas
 
-Inspect the current Git status and the affected source files before proposing or
-making edits. Preserve existing local changes; never reset, discard, overwrite,
-commit, push, tag, version, build a release, or publish unless I explicitly ask.
+Bitte lies vor Beginn:
 
-Keep all app data local. Never place real paths, folder contents, exports,
-backups, snapshots, passwords, tokens, credentials, private test data, or
-personal information in source, documentation, Git history, screenshots, or a
-release. Use only Schrotty74 as a public name.
+1. `AGENTS.md`
+2. `PROJECT_CONTEXT.md`
+3. `NEXT_STEPS.md`
 
-For visible behavior changes, update PROJECT_CONTEXT.md and NEXT_STEPS.md. Also
-update both public READMEs and both PDF manuals when their user-facing content
-is affected. Do not invent completed tests, bugs, data formats, or release facts.
+Danach die für den Auftrag relevanten Spezialdokumente lesen: `AI_HELP.md` für die First-Launch-AI-Hilfe, `SECURITY.md` vor öffentlicher Arbeit und `PORTFOLIO_UPDATE.md` vor Release oder Ankündigung.
 
-Use the project's existing Apple-framework architecture and narrow changes. UI
-tests may trigger a macOS UI-automation permission/password prompt: explain that
-before running them and wait for my confirmation. Run Bash scripts with the
-Homebrew Bash rather than the legacy system Bash.
-```
+Prüfe den aktuellen Git-Stand und die betroffenen Quelldateien, bevor du Änderungen vorschlägst oder ausführst. Halte den Auftrag eng begrenzt und aktualisiere bei relevanten Änderungen die vorgesehenen Kontextdateien im selben Auftrag.
 
+Schutzregeln:
+
+- Bestehende lokale Änderungen erhalten; niemals resetten, verwerfen, überschreiben, committen, pushen, taggen, versionieren, einen Release bauen oder veröffentlichen, sofern dies nicht ausdrücklich beauftragt wurde.
+- Alle App-Daten lokal halten. Niemals echte Pfade, Ordnerinhalte, Exporte, Backups, Snapshots, Passwörter, Tokens, Zugangsdaten, private Testdaten oder personenbezogene Informationen in Quellcode, Dokumentation, Git-Historie, Screenshots oder Releases übernehmen.
+- Als öffentlichen Namen ausschließlich `Schrotty74` verwenden.
+- Bei sichtbaren Verhaltensänderungen `PROJECT_CONTEXT.md` und `NEXT_STEPS.md` aktualisieren. Wenn die öffentliche Dokumentation betroffen ist, auch beide READMEs und beide PDF-Handbücher nach den vorhandenen Projektregeln aktualisieren.
+- Keine abgeschlossenen Tests, Bugs, Datenformate oder Release-Fakten erfinden.
+- Bestehende Apple-Framework-Architektur erhalten und Änderungen eng begrenzen.
+- UI-Tests können einen macOS-Berechtigungs- oder Passwortdialog für UI-Automation auslösen; vor deren Ausführung darauf hinweisen und die vorhandenen Projektregeln beachten.
+- Bash-Skripte mit Homebrew Bash statt mit dem alten System-Bash ausführen.
+
+Aktueller Auftrag:
+
+<Aktueller Auftrag>
