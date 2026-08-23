@@ -1,15 +1,6 @@
 # FileAtlas Project Context
 
 **Status date:** 2026-08-13
-**Audience:** new development chats and maintainers. Read this file before changing code.
-
-## Read Order
-
-1. Read this file and [NEXT_STEPS.md](NEXT_STEPS.md).
-2. Read [AI_HELP.md](AI_HELP.md) before changing first-launch AI help or its assets.
-3. Read [SECURITY.md](SECURITY.md) before a public build or publication.
-4. Read [PORTFOLIO_UPDATE.md](PORTFOLIO_UPDATE.md) before public announcements or releases.
-5. Use [README.md](README.md), [README.de.md](README.de.md), and the PDFs in `output/pdf/` for public-facing documentation.
 
 Update this file and `NEXT_STEPS.md` when a significant behavior, persistence format,
 workflow, or known limitation changes.
