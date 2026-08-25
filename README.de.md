@@ -44,6 +44,7 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 - Sortierbare, neu anordenbare Spalten (Name, Typ, Status, Tags, Groesse, Geaendert)
 - Einstellbare Zeilenhoehe (Kompakt / Normal / Gross)
 - QuickLook-Vorschau (Leertaste) mit inline Dateivorschau im Detailbereich
+- Sicheres Stapel-Umbenennen mit Praefix, Suffix, optionaler fortlaufender Nummerierung, Vorschau, Kollisionspruefung und ausdruecklicher Bestaetigung
 - Kompakte Listenansicht, umschaltbar mit Tabellenansicht
 - Schnellsuche nach Name, Endung und Groesse (`> 10 MB`, `< 500 KB`)
 - Speicherbare Filtersaetze mit Einschluss- und Ausschlusslisten
@@ -63,7 +64,7 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 - Unterordner-Anzeige in der Seitenleiste (mehrstufig, ohne UI-Freeze)
 - Schnellzugriff (letzte 5 gescannte Ordner in der Seitenleiste, manuell verwaltet)
 - Export: Excel (`.xlsx`), PDF, CSV
-- Backup: Index-Backup (JSON), Vollbackup oder gezielt ausgewaehlte Dateien und Ordner (ZIP, optional AES-256, Passwort im Schluesselbund)
+- Backup: Index-Backup (JSON), Vollbackup oder gezielt ausgewaehlte Dateien und Ordner (ZIP, optional AES-256, Passwort im Schluesselbund); die Archivpruefung validiert ZIP-Struktur und optionale SHA-256-Manifestinhalte
 - Backup-Zeitplan: Aus / Taeglich / Woechentlich pro Speicherort
 - Backup-Verlauf je gespeichertem Ort mit Finder-Anzeige und Aufbewahrung der letzten 3, 5 oder 10 FileAtlas-Archive
 - Duplikat-Aufraeumhilfe: eine Kopie behalten und die anderen geprueften Duplikate in die pruefbare Aufraeumwarteschlange legen

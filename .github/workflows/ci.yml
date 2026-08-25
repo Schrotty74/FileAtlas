@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build (Debug, unsigned)
+      - name: Build and test (Debug, unsigned)
         run: |
           xcodebuild \
             -project FileAtlas.xcodeproj \
@@ -29,4 +29,4 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            build
+            test

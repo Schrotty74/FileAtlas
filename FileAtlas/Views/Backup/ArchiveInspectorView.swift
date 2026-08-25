@@ -38,8 +38,24 @@ struct ArchiveInspectorView: View {
                             systemImage: inspection.isValid ? "checkmark.seal.fill" : "exclamationmark.triangle.fill"
                         )
                         .foregroundStyle(inspection.isValid ? AppTheme.theme.accentColor : .orange)
-                        if inspection.hasHashManifest {
-                            Label(text("SHA-256-Manifest neben dem Archiv vorhanden", "SHA-256 manifest found beside archive"), systemImage: "checkmark.shield")
+                        switch inspection.hashManifestVerification {
+                        case .notPresent:
+                            EmptyView()
+                        case .verified(let fileCount):
+                            Label(
+                                text(
+                                    "SHA-256-Manifest mit \(fileCount) Dateien bestaetigt",
+                                    "SHA-256 manifest verified for \(fileCount) files"
+                                ),
+                                systemImage: "checkmark.shield.fill"
+                            )
+                            .foregroundStyle(AppTheme.theme.accentColor)
+                        case .failed(let reason):
+                            Label(
+                                text("SHA-256-Pruefung fehlgeschlagen: \(reason)", "SHA-256 verification failed: \(reason)"),
+                                systemImage: "exclamationmark.shield.fill"
+                            )
+                            .foregroundStyle(.orange)
                         }
                         Text(inspection.message)
                             .font(.caption)

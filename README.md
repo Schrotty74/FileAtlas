@@ -48,6 +48,7 @@ When FileAtlas has no saved locations or indexed entries yet, a start screen off
 - Sortable, reorderable columns (Name, Type, Status, Tags, Size, Modified)
 - Adjustable row height (Compact / Normal / Large)
 - QuickLook preview (Space bar) with inline file preview in detail panel
+- Safe batch rename with prefix, suffix, optional sequential numbering, preview, collision checks, and explicit confirmation
 - Compact list view mode, switchable with table view
 - Quick search by name, extension, size (`> 10 MB`, `< 500 KB`)
 - Saveable filter sets with include/exclude lists
@@ -67,7 +68,7 @@ When FileAtlas has no saved locations or indexed entries yet, a start screen off
 - Subfolder expansion in sidebar (multi-level, lazy-loaded without UI freeze)
 - Quick access (last 5 scanned folders in sidebar, manually managed)
 - Export: Excel (`.xlsx`), PDF, CSV
-- Backup: Index backup (JSON), full backup, or selected files and folders (ZIP, optional AES-256, password in Keychain)
+- Backup: Index backup (JSON), full backup, or selected files and folders (ZIP, optional AES-256, password in Keychain); the archive inspector verifies ZIP structure and optional SHA-256 manifest contents
 - Backup schedule: Off / Daily / Weekly per location
 - Backup history per saved location with Finder reveal and retention for the last 3, 5, or 10 FileAtlas archives
 - Duplicate cleanup helper: keep one copy and add the other verified duplicates to the reviewable cleanup queue

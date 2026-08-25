@@ -236,6 +236,38 @@ final class IndexViewModel {
         return removingNestedBackupEntries(from: candidates)
     }
 
+    func batchRenameEntries(fallback: FileEntry) -> [FileEntry] {
+        let selected = displayedEntries.filter { selection.contains($0.id) }
+        let candidates = selected.contains(where: { $0.id == fallback.id }) ? selected : [fallback]
+        return removingNestedBackupEntries(from: candidates)
+    }
+
+    var selectedBatchRenameEntries: [FileEntry] {
+        removingNestedBackupEntries(from: displayedEntries.filter { selection.contains($0.id) })
+    }
+
+    func applyBatchRename(_ plans: [BatchRenamePlan]) async -> BatchRenameResult {
+        guard BatchRenamePlanner.validationError(for: plans) == nil else {
+            return BatchRenameExecutor.apply(plans)
+        }
+
+        suppressAutoRescanForPreview()
+        let accessRoots = Set(plans.map { securityScopedAccessRoot(for: $0.source) })
+        let accessedRoots = accessRoots.filter { $0.startAccessingSecurityScopedResource() }
+        defer {
+            for root in accessedRoots {
+                root.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        let result = await Task.detached { BatchRenameExecutor.apply(plans) }.value
+        if result.renamedCount > 0 {
+            selection = []
+            startScan()
+        }
+        return result
+    }
+
     private func removingNestedBackupEntries(from entries: [FileEntry]) -> [FileEntry] {
         let selectedFolders = entries.filter(\.isDirectory).map(\.pathKey)
         return entries.filter { entry in

@@ -38,6 +38,8 @@ final class UIState {
     var archiveURL: URL? = nil
     var showArchiveInspector = false
     var showSimilarImages = false
+    var batchRenameEntries: [FileEntry] = []
+    var showBatchRename = false
 
     init() {
         self.fileListViewMode = .list
@@ -130,6 +132,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $ui.showSimilarImages) {
             SimilarImagesView()
+        }
+        .sheet(isPresented: $ui.showBatchRename) {
+            BatchRenameView(entries: ui.batchRenameEntries)
         }
         .overlay(alignment: .bottom) {
             VStack(spacing: 8) {

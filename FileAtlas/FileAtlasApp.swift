@@ -113,6 +113,11 @@ struct FileAtlasCommands: Commands {
                 .disabled(vm.selectedEntry == nil)
             Button(menuText("Schnellansicht", "Quick Look")) { vm.quickLookSelectedEntry() }
                 .disabled(vm.selectedEntry == nil)
+            Button(menuText("Auswahl umbenennen…", "Rename Selection…")) {
+                ui.batchRenameEntries = vm.selectedBatchRenameEntries
+                ui.showBatchRename = true
+            }
+            .disabled(vm.selectedBatchRenameEntries.isEmpty)
 
             Divider()
 

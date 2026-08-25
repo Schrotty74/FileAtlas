@@ -247,6 +247,13 @@ struct FileListView: View {
             Label("Copy", systemImage: "doc.on.doc")
         }
 
+        Button {
+            ui.batchRenameEntries = vm.batchRenameEntries(fallback: entry)
+            ui.showBatchRename = true
+        } label: {
+            Label(language.effectiveLanguage == .de ? "Auswahl umbenennen…" : "Rename Selection…", systemImage: "pencil")
+        }
+
         Divider()
 
         Button {

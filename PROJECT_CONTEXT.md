@@ -1,6 +1,6 @@
 # FileAtlas Project Context
 
-**Status date:** 2026-08-13
+**Status date:** 2026-08-25
 
 Update this file and `NEXT_STEPS.md` when a significant behavior, persistence format,
 workflow, or known limitation changes.
@@ -16,7 +16,8 @@ optional AI-help action opens a selected website only after a user click.
 ## Architecture
 
 - `FileAtlas/FileAtlasApp.swift`: app entry point, shared observable state,
-  commands, Settings scene, launch tasks, and window lifecycle.
+  commands, Settings scene, launch tasks, window lifecycle, and the separate,
+  resizable Storage Analysis window.
 - `FileAtlas/ContentView.swift`: root view; chooses the normal three-column
   workspace or first-launch help and hosts sheets and progress banners.
 - `FileAtlas/Engine/`: scanner, duplicate detector, snapshots, ZIP backup
@@ -61,16 +62,21 @@ public documentation.
   cleanup queue, rules, snapshots, folder comparison, storage analysis, and
   duplicate detection.
 - Backups support index-only, full ZIP, incremental ZIP, and selected items;
-  optional encryption, compression, hash manifests, archive inspection,
+  optional encryption, compression, SHA-256 manifests with archive-content
+  verification, archive inspection,
   selected-entry restore, cancellation, daily/weekly schedules, per-location
   history, and retention. A schedule is evaluated while the app runs or starts;
   it is not a background daemon.
-- Storage analysis includes a proportional file-type map and health indicators.
-  Similar-image analysis uses Apple's local Vision feature prints on a bounded
-  candidate set; it never uploads images.
+- Storage analysis is a separate movable and resizable macOS window. It includes
+  a responsive file-type grid, health indicators, and an entry point to similar
+  image analysis. Similar-image analysis uses Apple's local Vision feature
+  prints on a bounded candidate set; it never uploads images.
 - Rules can add matching items to the reviewable cleanup queue. Smart collections
   additionally support maximum size, tags, saved locations, and excluded file
   types. Saved locations display an unavailable state when they cannot be reached.
+- Batch rename provides a previewable prefix/suffix rule with optional sequential
+  numbering. It refuses invalid or colliding targets, requires confirmation, and
+  rescans after a successful rename.
 - English/German localization with the DACH German rule, independent light/dark/
   system appearance, six color themes, optional tooltips, and Reduce Motion.
 - The Glass theme is one full-window AppKit visual-effect background with shared
@@ -87,9 +93,11 @@ public documentation.
 - There are no Swift Package Manager, CocoaPods, Carthage, or other external
   package dependencies in this repository.
 - A regular unsigned local build can use the `FileAtlas` scheme with code
-  signing disabled and a disposable derived-data directory.
-- Unit tests are in the `FileAtlas` scheme. Existing source coverage includes
-  index-backup output, duplicate marking, first-launch prompt URLs/privacy, and
+  signing disabled and a disposable derived-data directory. Keep Dev build
+  outputs outside the repository; do not open them automatically after building.
+- Unit tests are in the `FileAtlas` scheme and run in GitHub CI. Existing source
+  coverage includes index-backup output, archive-manifest verification, batch
+  rename safety, duplicate marking, first-launch prompt URLs/privacy, and
   appearance/motion/tooltip preference persistence. Do not claim tests passed
   unless they were run in the current task.
 - `FileAtlasUITests` is separate. It uses macOS UI automation and can request
@@ -126,3 +134,4 @@ public documentation.
   user-approved UI automation.
 - The PDF manuals are tracked artifacts, but their original generator is not
   tracked here. Do not assume an external generator or regenerate blindly.
+- No confirmed unresolved product defect is documented as of this status date.
