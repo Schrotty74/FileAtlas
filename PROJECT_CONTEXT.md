@@ -118,6 +118,7 @@ public documentation.
   determine a reproducible generation method before a substantial manual rewrite.
 - Do not repeat a release title in the release-note body. The release script
   removes a leading duplicate title.
+- Write GitHub release notes and changelogs in English.
 - Do not create a version, tag, commit, push, release, or portfolio update unless
   the user explicitly requests it.
 - Use only `Schrotty74` as a public name. Do not document personal names, local

@@ -1,10 +1,10 @@
-## Neue Funktionen
+## New Features
 
-- ZIP-Backups mit optionalem SHA-256-Manifest werden jetzt gegen den tatsaechlichen Archivinhalt validiert.
-- Neue Stapel-Umbenennung mit Vorschau, Praefix, Suffix, optionaler Nummerierung und Kollisionsschutz.
-- Die GitHub-CI fuehrt neben dem Build auch die Unit-Tests aus.
+- ZIP backups with an optional SHA-256 manifest are now verified against the actual archive contents.
+- New batch rename with preview, prefix, suffix, optional sequential numbering, and collision protection.
+- GitHub CI now runs the unit tests in addition to building the app.
 
-## Hinweise zur Beta
+## Beta Notes
 
-- Umbenennungen werden erst nach ausdruecklicher Bestaetigung ausgefuehrt und koennen in FileAtlas nicht rueckgaengig gemacht werden.
-- Bitte testet Umbenennungen und Backup-Pruefungen zuerst mit Kopien oder nicht kritischen Daten.
+- Renames run only after explicit confirmation and cannot be undone in FileAtlas.
+- Please test renaming and backup verification with copies or non-critical data first.
