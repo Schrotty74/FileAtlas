@@ -114,7 +114,7 @@ echo "Signatur gesetzt."
 echo ""
 echo "[3/5] Erstelle ZIP..."
 ZIP_PATH="$BUILD_DIR/$APP_NAME.zip"
-COPYFILE_DISABLE=1 ditto -c -k --keepParent "$APP_PATH" "$ZIP_PATH"
+ditto -c -k --keepParent --norsrc --noextattr --noqtn --noacl "$APP_PATH" "$ZIP_PATH"
 echo "ZIP: $ZIP_PATH"
 
 # --- DMG ---

@@ -67,7 +67,7 @@ jobs:
 
       - name: Create ZIP
         run: |
-          COPYFILE_DISABLE=1 ditto -c -k --keepParent "$APP_PATH" FileAtlas.zip
+          ditto -c -k --keepParent --norsrc --noextattr --noqtn --noacl "$APP_PATH" FileAtlas.zip
 
       - name: Create DMG
         run: |
