@@ -4,7 +4,7 @@
 [![Latest Release](https://img.shields.io/github/v/release/Schrotty74/FileAtlas)](https://github.com/Schrotty74/FileAtlas/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Schrotty74/FileAtlas/total)](https://github.com/Schrotty74/FileAtlas/releases)
 
-![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue) ![Swift 6](https://img.shields.io/badge/Swift-6-orange) ![License: GPLv3](https://img.shields.io/badge/License-GPLv3-green) ![Security: Clean](https://img.shields.io/badge/Security-Clean-brightgreen) [![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/RbsvqRCPQ)
+![macOS 26+](https://img.shields.io/badge/macOS-26%2B-blue) ![Swift 6](https://img.shields.io/badge/Swift-6-orange) ![License: GPLv3](https://img.shields.io/badge/License-GPLv3-green) ![Security: Clean](https://img.shields.io/badge/Security-Clean-brightgreen) [![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/Zy93AaYFaj)
 
 <p align="center">
   <img src="FileAtlas/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" width="150" alt="FileAtlas App Icon">
@@ -121,7 +121,7 @@ macOS remembers your choice — this step is only required once.
 
 ## Community
 
-Questions, feedback and discussions are welcome on [Discord](https://discord.gg/RbsvqRCPQ).
+Questions, feedback and discussions are welcome on [Discord](https://discord.gg/Zy93AaYFaj).
 
 ## Repo activity
 
