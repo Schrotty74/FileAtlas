@@ -76,7 +76,7 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 - Cache leeren in den Einstellungen
 - Echte Systemsymbole fuer Dateien, Apps und Ordner, mit Umschalter fuer schnelle generische Icons in den Einstellungen
 - App-Bundle-Metadaten (Name, Version, Entwickler, Bundle-ID) im Detailbereich
-- Option fuer Auto-Scan beim Start in den Einstellungen
+- Auto-Scan auf App-Start in den Einstellungen
 - Update-Check-Benachrichtigung ueber veroeffentlichte GitHub Releases, einschliesslich Betas
 - Datensparsame KI-Hilfe beim Erststart mit lokal eingebundenen Logos fuer ChatGPT, Gemini und Claude
 - Keine externen Abhaengigkeiten - nur reine Apple-Frameworks
@@ -114,6 +114,10 @@ macOS merkt sich die Entscheidung — dieser Schritt ist nur einmalig notwendig.
 > xattr -cr FileAtlas.app
 > ```
 > Danach die App normal oeffnen.
+
+## Community
+
+Fragen, Feedback und Diskussionen sind auf [Discord](https://discord.gg/Zy93AaYFaj) willkommen.
 
 ## Lizenz
 
