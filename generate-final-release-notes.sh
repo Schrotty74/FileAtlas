@@ -43,14 +43,15 @@ fi
 
 mkdir -p "$(dirname "$OUTPUT_PATH")"
 {
-  echo "## Changes included from beta releases"
+  echo "## What's New"
   echo
   while IFS= read -r beta_tag; do
     [ -z "$beta_tag" ] && continue
-    beta_number="${beta_tag##*.}"
-    echo "### FileAtlas $RELEASE_VERSION Beta $beta_number"
-    echo
-    gh release view "$beta_tag" --repo Schrotty74/FileAtlas --json body --jq .body | sed 's/^## /#### /'
+    gh release view "$beta_tag" --repo Schrotty74/FileAtlas --json body --jq .body | awk '
+      /^## Beta Notes/ { skip = 1; next }
+      /^#/ { skip = 0; next }
+      !skip { print }
+    '
     echo
   done <<< "$BETA_TAGS"
 
@@ -62,4 +63,7 @@ mkdir -p "$(dirname "$OUTPUT_PATH")"
   fi
 
   echo "**Full Changelog**: https://github.com/Schrotty74/FileAtlas/compare/$PREVIOUS_FINAL_TAG...$VERSION"
-} > "$OUTPUT_PATH"
+} | awk '
+  NF { print; previous_blank = 0; next }
+  !previous_blank { print; previous_blank = 1 }
+' > "$OUTPUT_PATH"
