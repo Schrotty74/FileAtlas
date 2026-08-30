@@ -38,6 +38,8 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 - Deutsche und englische Oberflaeche, Hell/Dunkel/System-Darstellung, sechs Themes, Reduce Motion und konfigurierbare Tooltips.
 - Datenschutzbewusste Erststart-Hilfe und optionale Update-Pruefungen; FileAtlas hat keine externen Abhaengigkeiten.
 
+Siehe die vollständige, gruppierte [Funktionsübersicht](FEATURES.de.md).
+
 ## Voraussetzungen
 
 - macOS 26.5+

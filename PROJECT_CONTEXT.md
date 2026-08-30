@@ -60,6 +60,7 @@ These formats can contain file names and paths. They are user data: never use re
 ## Documentation and Release Rules
 
 - Public README files are bilingual. Update both when public behavior changes.
+- README files provide a concise feature selection and link to the grouped `FEATURES.md` / `FEATURES.de.md` reference pages. Keep those reference pages aligned with stable implemented behavior.
 - Keep both PDF manuals in `output/pdf/` aligned with visible behavior. A versioned PDF-source generator is currently not present in this repository; determine a reproducible generation method before a substantial manual rewrite.
 - Do not repeat a release title in the release-note body. The release script removes a leading duplicate title.
 - Write GitHub release notes and changelogs in English.

@@ -42,6 +42,8 @@ When FileAtlas has no saved locations or indexed entries yet, a start screen off
 - English and German interface, light/dark/system appearance, six themes, Reduce Motion, and configurable tooltips.
 - First-launch help and optional update checks are privacy-conscious; FileAtlas uses no external dependencies.
 
+See the complete, grouped [feature overview](FEATURES.md).
+
 ## Requirements
 
 - macOS 26.5+
