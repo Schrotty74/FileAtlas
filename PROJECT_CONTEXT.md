@@ -1,6 +1,6 @@
 # FileAtlas Project Context
 
-**Status date:** 2026-08-25
+**Status date:** 2026-08-30
 
 The general work, Git, publication, and repository-privacy rules are defined in `AGENTS.md`. This file contains the project-specific technical and product context.
 

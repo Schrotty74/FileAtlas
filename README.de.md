@@ -22,12 +22,13 @@ The English edition is available here: [FileAtlas Manual (PDF)](output/pdf/FileA
 
 Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, bietet die Startansicht eine Ordnerauswahl, das Handbuch und optionale Hilfe von ChatGPT, Google Gemini oder Claude. Beim Auswaehlen eines Dienstes kopiert FileAtlas eine allgemeine, datensparsame Frage mit dem oeffentlichen Handbuch-Link in die Zwischenablage und oeffnet danach den Dienst. Lokale Dateidaten oder andere Nutzerdaten werden niemals automatisch uebertragen. Details stehen in [KI-Hilfe und Datenschutzhinweise](AI_HELP.md).
 
-## Neu in 1.9
+## Neu in 1.10
 
-- Sechs Farbschemata, darunter Glas: eine milchig-transparente Oberflaeche ueber das ganze Fenster mit kontinuierlichem farbigem Glow und Lichtpunkten.
-- Zweckvolle Bewegung bei Scan, Navigation, Filtern, Backups, Insights und Erststart, mit Einstellung zum Reduzieren der Bewegung und Beachtung der macOS-Bedienungshilfen.
-- Optionale Tooltips, verbesserte anpassbare Tabellenspalten und Detailbereich sowie robustere Tag- und Duplikatbehandlung.
-- Apple-Silicon-bewusste Scans, adaptives Duplikat-Hashing und ein speicherbegrenzter System-Icon-Cache.
+- Backup-Verlauf und Aufbewahrung je Speicherort sowie erweiterte Smart Collections, Regeln, Aufraeumwarteschlange und Verfuegbarkeitsanzeige gespeicherter Orte.
+- Duplikatvergleich standardmaessig je Speicherort, optional ueber mehrere Orte hinweg.
+- ZIP-Backups mit optionalem SHA-256-Manifest werden gegen die tatsaechlichen Archiv-Inhalte geprueft.
+- Sicheres Stapel-Umbenennen mit Vorschau, Praefix, Suffix, optionaler fortlaufender Nummerierung, Kollisionspruefung und ausdruecklicher Bestaetigung.
+- Vollstaendige deutsche und englische Einstellungsbeschriftungen, aktualisierte zweisprachige Handbuecher und README-Dokumentation sowie Unit-Test-Pruefung in GitHub CI.
 
 ## Funktionen
 

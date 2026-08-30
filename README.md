@@ -26,12 +26,13 @@ Die deutsche Ausgabe findest du hier: [FileAtlas Handbuch (PDF)](output/pdf/File
 
 When FileAtlas has no saved locations or indexed entries yet, a start screen offers a local folder picker, the manual, and optional help from ChatGPT, Google Gemini, or Claude. Selecting a service copies a general, privacy-safe question with the public manual link to the clipboard and then opens that service; FileAtlas never sends local file data or other user data automatically. See [AI help and privacy notes](AI_HELP.md).
 
-## New in 1.9
+## New in 1.10
 
-- Six color themes, including Glass: a milky-translucent full-window surface with a continuous colorful glow and ambient light points.
-- Purposeful motion across scans, navigation, filters, backups, insights, and first launch, with a Reduce Motion setting that respects macOS accessibility.
-- Optional tooltips, improved resizable table columns and detail panel behavior, plus sturdier tag and duplicate handling.
-- Apple-silicon-aware scanning, adaptive duplicate hashing, and a memory-limited system icon cache.
+- Backup history and retention controls per location, plus expanded smart collections, rules, cleanup queue, and saved-location availability.
+- Duplicate comparison defaults to the same location, with an optional cross-location setting.
+- ZIP backups with an optional SHA-256 manifest are verified against the actual archive contents.
+- Safe batch rename with preview, prefix, suffix, optional sequential numbering, collision checks, and explicit confirmation.
+- Complete German and English settings labels, refreshed bilingual manuals and README documentation, and GitHub CI unit-test coverage.
 
 ## Features
 

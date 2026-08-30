@@ -1,6 +1,6 @@
 # FileAtlas Next Steps
 
-**Last reviewed:** 2026-08-25
+**Last reviewed:** 2026-08-30
 
 This is the current handoff list, not a product wishlist. Update it after
 significant implementation or workflow changes.
