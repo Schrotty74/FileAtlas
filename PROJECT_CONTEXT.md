@@ -50,7 +50,7 @@ These formats can contain file names and paths. They are user data: never use re
 
 - Open `FileAtlas.xcodeproj` in Xcode. The production target is `FileAtlas`; deployment target is macOS 26.5 and Swift version is 6.0.
 - There are no Swift Package Manager, CocoaPods, Carthage, or other external package dependencies in this repository.
-- A regular unsigned local build can use the `FileAtlas` scheme with code signing disabled and a disposable derived-data directory. Keep Dev build outputs outside the repository; do not open them automatically after building.
+- Build artifacts follow the channel structure used by CodexVault: Dev builds are created in `Build/dev/`, Beta releases in `Build/beta/`, and Final releases in `Build/final/`. Temporary Xcode derived data belongs in ignored `.build/`. `build-development.sh` creates the Dev build; `build-release.sh` selects the Beta or Final directory from the release version.
 - Unit tests are in the `FileAtlas` scheme and run in GitHub CI. Existing source coverage includes index-backup output, archive-manifest verification, batch rename safety, duplicate marking, first-launch prompt URLs/privacy, and appearance/motion/tooltip preference persistence. A test result is only current when the tests were actually run for the relevant state.
 - `FileAtlasUITests` is separate. It uses macOS UI automation and can request user permission or a password; this must be considered before running it.
 - `build-release.sh` builds, checks for private paths, signs ad hoc, creates DMG/ZIP, and creates a GitHub release. It is a publication action and is governed by `AGENTS.md`.

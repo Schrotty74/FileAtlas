@@ -45,7 +45,11 @@ if [ -n "$CUSTOM_NOTES_PATH" ] && [ ! -f "$CUSTOM_NOTES_PATH" ]; then
 fi
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BUILD_DIR="$PROJECT_DIR/.build-release"
+BUILD_CHANNEL="final"
+if [ "$IS_PRERELEASE" = true ]; then
+  BUILD_CHANNEL="beta"
+fi
+BUILD_DIR="$PROJECT_DIR/Build/$BUILD_CHANNEL"
 APP_NAME="FileAtlas"
 
 echo "=== FileAtlas Release Build $VERSION ==="
