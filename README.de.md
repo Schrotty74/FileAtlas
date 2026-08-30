@@ -56,7 +56,8 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 - Duplikaterkennung (Groessengruppierung -> SHA-256-Hash, goldenes Abzeichen) standardmaessig je gespeichertem Ort; Vergleich ueber alle Orte optional
 - Snapshots nach jedem Scan (max. 10, JSON) mit Diff-Vergleich und Loeschen
 - Automatische „Was hat sich geaendert?“-Zusammenfassung nach jedem weiteren Scan
-- Speicheranalyse fuer die groessten indexierten Eintraege, Dateitypen und Duplikate
+- Speicheranalyse mit Dateityp-Karte, Gesundheitsindikatoren fuer nicht erreichbare Orte, fehlende Backup-Ziele und faellige Sicherungen sowie groessten indexierten Eintraegen und Duplikat-Speicher
+- Lokale Analyse aehnlicher Bilder mit Vision auf dem Geraet (bis zu 250 Bilder)
 - Sichere Aufraeumwarteschlange: Elemente zuerst pruefen und nach Bestaetigung in den macOS-Papierkorb verschieben
 - Regeln fuer Dateityp, Mindestgroesse und Dateialter mit Benachrichtigungen nach dem Scan
 - Intelligente Sammlungen: gespeicherte dynamische Ansichten nach Dateityp, Groesse, letzten Aenderungen und Duplikaten
@@ -65,9 +66,9 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 - Unterordner-Anzeige in der Seitenleiste (mehrstufig, ohne UI-Freeze)
 - Schnellzugriff (letzte 5 gescannte Ordner in der Seitenleiste, manuell verwaltet)
 - Export: Excel (`.xlsx`), PDF, CSV
-- Backup: Index-Backup (JSON), Vollbackup oder gezielt ausgewaehlte Dateien und Ordner (ZIP, optional AES-256, Passwort im Schluesselbund); die Archivpruefung validiert ZIP-Struktur und optionale SHA-256-Manifestinhalte
-- Backup-Zeitplan: Aus / Taeglich / Woechentlich pro Speicherort
-- Backup-Verlauf je gespeichertem Ort mit Finder-Anzeige und Aufbewahrung der letzten 3, 5 oder 10 FileAtlas-Archive
+- Backup: Index-Backup (JSON), Vollbackup, inkrementelle ZIP-Backups nach der ersten Vollsicherung oder gezielt ausgewaehlte Dateien und Ordner (ZIP, optional AES-256, Passwort im Schluesselbund); die Archivpruefung listet Inhalte auf, validiert ZIP-Struktur und optionale SHA-256-Manifestinhalte und stellt ausgewaehlte Eintraege wieder her
+- Backup-Zeitplan: Aus / Taeglich / Woechentlich pro Speicherort; faellige Sicherungen laufen waehrend FileAtlas geoeffnet ist oder beim Start, nicht als Hintergrunddienst
+- Backup-Verlauf je gespeichertem Ort mit Finder-Anzeige und Aufbewahrung der letzten 3, 5 oder 10 FileAtlas-Archive oder alle behalten
 - Duplikat-Aufraeumhilfe: eine Kopie behalten und die anderen geprueften Duplikate in die pruefbare Aufraeumwarteschlange legen
 - Regeln koennen passende Dateien optional in die Aufraeumwarteschlange aufnehmen; das Verschieben in den Papierkorb braucht weiterhin eine Bestaetigung
 - Smart Collections koennen zusaetzlich maximale Groesse, Tags, Orte und ausgeschlossene Dateitypen verwenden

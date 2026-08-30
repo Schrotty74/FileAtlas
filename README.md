@@ -60,7 +60,8 @@ When FileAtlas has no saved locations or indexed entries yet, a start screen off
 - Duplicate detection (size grouping -> SHA-256 hash, gold badge) per saved location by default; optional comparison across all locations
 - Snapshots after each scan (max. 10, JSON) with diff comparison and delete
 - Automatic "what changed?" summary after each follow-up scan
-- Storage analysis for largest indexed items, file types and duplicates
+- Storage analysis with a file-type map, health indicators for unavailable locations, missing backup destinations and due backups, plus largest indexed items and duplicate space
+- Local similar-image analysis with on-device Vision (up to 250 images)
 - Safe cleanup queue: review items first, then move them to the macOS Trash with confirmation
 - Rules for file type, minimum size and file age, with scan-time match notifications
 - Smart Collections: saved dynamic views for file type, size, recent changes and duplicates
@@ -69,9 +70,9 @@ When FileAtlas has no saved locations or indexed entries yet, a start screen off
 - Subfolder expansion in sidebar (multi-level, lazy-loaded without UI freeze)
 - Quick access (last 5 scanned folders in sidebar, manually managed)
 - Export: Excel (`.xlsx`), PDF, CSV
-- Backup: Index backup (JSON), full backup, or selected files and folders (ZIP, optional AES-256, password in Keychain); the archive inspector verifies ZIP structure and optional SHA-256 manifest contents
-- Backup schedule: Off / Daily / Weekly per location
-- Backup history per saved location with Finder reveal and retention for the last 3, 5, or 10 FileAtlas archives
+- Backup: Index backup (JSON), full backup, incremental ZIP backups after the first full backup, or selected files and folders (ZIP, optional AES-256, password in Keychain); the archive inspector lists contents, verifies ZIP structure and optional SHA-256 manifest contents, and restores selected entries
+- Backup schedule: Off / Daily / Weekly per location; due backups run while FileAtlas is open or launches, not as a background service
+- Backup history per saved location with Finder reveal and retention for the last 3, 5, or 10 FileAtlas archives, or keep all
 - Duplicate cleanup helper: keep one copy and add the other verified duplicates to the reviewable cleanup queue
 - Rules can optionally add matching files to the cleanup queue; moving anything to Trash still needs confirmation
 - Smart Collections can also use maximum size, tags, locations, and excluded file types
