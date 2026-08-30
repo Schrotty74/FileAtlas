@@ -6,17 +6,15 @@
   <img src="FileAtlas/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" width="150" alt="FileAtlas App Icon">
 </p>
 
+[English](README.md) · **Deutsch**
+
+📘 **[Benutzerhandbuch (PDF)](output/pdf/FileAtlas-Handbuch.pdf)** – Scannen, Organisation, Backups, Exporte und Datenschutz ausführlich erklärt.
+
+## Überblick
+
 FileAtlas ist eine native macOS-App zum Indizieren und Vergleichen von Dateien, entwickelt ausschliesslich mit Apple-Frameworks. Die App hilft beim Scannen von Ordnern, Pruefen von Metadaten, Finden von Duplikaten, Vergleichen von Snapshots, Exportieren von Berichten und Verwalten von Backups ohne externe Abhaengigkeiten.
 
 > **Sicherheit:** Es wurden keine privaten Daten, API-Keys oder Zertifikate veroeffentlicht. FileAtlas speichert Scan-Daten lokal. Wenn Update-Checks aktiviert sind, kontaktiert die App ausschliesslich GitHub Releases, um nach einer neueren Version zu suchen. Siehe [SECURITY.md](SECURITY.md) fuer den vollstaendigen Audit.
-
-
-[🇬🇧 English Description](README.md)
-
-## Handbuch
-
-Das vollstaendige deutsche Handbuch: [FileAtlas Handbuch (PDF)](output/pdf/FileAtlas-Handbuch.pdf).
-The English edition is available here: [FileAtlas Manual (PDF)](output/pdf/FileAtlas-Manual-EN.pdf).
 
 ## Hilfe beim Erststart
 
@@ -32,56 +30,13 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 
 ## Funktionen
 
-- Lokale Dateiindizierung mit rekursivem Ordnerscan und Live-Fortschritt (AsyncStream)
-- Apple-Silicon-bewusste Leistung: gebuendelte Live-Scan-Updates, begrenztes adaptives Duplikat-Hashing und ein speicherbegrenzter System-Icon-Cache
-- Mehrere Ordner gleichzeitig scannen
-- Security-Scoped Bookmarks (Zugriff bleibt nach App-Neustart erhalten)
-- Liquid-Glass-Seitenleiste (Desktop scheint durch)
-- Umschalter fuer Hell / Dunkel / System (unabhaengig von der macOS-Einstellung)
-- Sechs Farbschemata: Midnight Teal, Retro, Graphite Lime, Herbst, Winter und Glas; Glas verwendet eine milchig-transparente Oberflaeche ueber das gesamte Fenster
-- Zweckvolle Oberflaechenbewegungen: Live-Scan-Ergebnisse mit Ladeplatzhaltern, animierte Navigation und Filterchips, themenabhaengige Ambiente-Effekte, Rueckmeldung nach einem Backup sowie Uebergaenge in Analyse und Vergleich; mit Einstellung zum Reduzieren der Bewegung und Beachtung der macOS-Bedienungshilfen
-- Optionale Tooltips fuer Toolbar-, Navigations- und Aktionssymbole, konfigurierbar in Einstellungen -> Darstellung
-- DE/EN-Lokalisierung mit DACH-Regel (de_AT, de_DE, de_CH immer Deutsch)
-- Sortierbare, neu anordenbare Spalten (Name, Typ, Status, Tags, Groesse, Geaendert)
-- Einstellbare Zeilenhoehe (Kompakt / Normal / Gross)
-- QuickLook-Vorschau (Leertaste) mit inline Dateivorschau im Detailbereich
-- Sicheres Stapel-Umbenennen mit Praefix, Suffix, optionaler fortlaufender Nummerierung, Vorschau, Kollisionspruefung und ausdruecklicher Bestaetigung
-- Kompakte Listenansicht, umschaltbar mit Tabellenansicht
-- Schnellsuche nach Name, Endung und Groesse (`> 10 MB`, `< 500 KB`)
-- Speicherbare Filtersaetze mit Einschluss- und Ausschlusslisten
-- Ignorierte Ordner (beim Scan uebersprungen, als einzelner Eintrag mit Gesamtgroesse angezeigt)
-- Bundle-Erkennung (`.app`, `.framework`, `.xcodeproj` als einzelne Eintraege, Unterelemente werden uebersprungen)
-- Extension-Whitelist-Filter (nur bestimmte Dateitypen indexieren)
-- Kein Auto-Rescan wenn Ordner bereits indexiert ist
-- Duplikaterkennung (Groessengruppierung -> SHA-256-Hash, goldenes Abzeichen) standardmaessig je gespeichertem Ort; Vergleich ueber alle Orte optional
-- Snapshots nach jedem Scan (max. 10, JSON) mit Diff-Vergleich und Loeschen
-- Automatische „Was hat sich geaendert?“-Zusammenfassung nach jedem weiteren Scan
-- Speicheranalyse mit Dateityp-Karte, Gesundheitsindikatoren fuer nicht erreichbare Orte, fehlende Backup-Ziele und faellige Sicherungen sowie groessten indexierten Eintraegen und Duplikat-Speicher
-- Lokale Analyse aehnlicher Bilder mit Vision auf dem Geraet (bis zu 250 Bilder)
-- Sichere Aufraeumwarteschlange: Elemente zuerst pruefen und nach Bestaetigung in den macOS-Papierkorb verschieben
-- Regeln fuer Dateityp, Mindestgroesse und Dateialter mit Benachrichtigungen nach dem Scan
-- Intelligente Sammlungen: gespeicherte dynamische Ansichten nach Dateityp, Groesse, letzten Aenderungen und Duplikaten
-- Ordnervergleich (zwei Ordner direkt)
-- Tags (vordefiniert + benutzerdefiniert, farbcodierte Pills, endungsbasiert und global ueber alle Ordner)
-- Unterordner-Anzeige in der Seitenleiste (mehrstufig, ohne UI-Freeze)
-- Schnellzugriff (letzte 5 gescannte Ordner in der Seitenleiste, manuell verwaltet)
-- Export: Excel (`.xlsx`), PDF, CSV
-- Backup: Index-Backup (JSON), Vollbackup, inkrementelle ZIP-Backups nach der ersten Vollsicherung oder gezielt ausgewaehlte Dateien und Ordner (ZIP, optional AES-256, Passwort im Schluesselbund); die Archivpruefung listet Inhalte auf, validiert ZIP-Struktur und optionale SHA-256-Manifestinhalte und stellt ausgewaehlte Eintraege wieder her
-- Backup-Zeitplan: Aus / Taeglich / Woechentlich pro Speicherort; faellige Sicherungen laufen waehrend FileAtlas geoeffnet ist oder beim Start, nicht als Hintergrunddienst
-- Backup-Verlauf je gespeichertem Ort mit Finder-Anzeige und Aufbewahrung der letzten 3, 5 oder 10 FileAtlas-Archive oder alle behalten
-- Duplikat-Aufraeumhilfe: eine Kopie behalten und die anderen geprueften Duplikate in die pruefbare Aufraeumwarteschlange legen
-- Regeln koennen passende Dateien optional in die Aufraeumwarteschlange aufnehmen; das Verschieben in den Papierkorb braucht weiterhin eine Bestaetigung
-- Smart Collections koennen zusaetzlich maximale Groesse, Tags, Orte und ausgeschlossene Dateitypen verwenden
-- Gespeicherte Orte zeigen einen Nicht-verfuegbar-Status, wenn ein Laufwerk oder Ort aktuell nicht erreichbar ist
-- Einstellungsfenster mit Seitenleistennavigation (im Stil der macOS-Systemeinstellungen)
-- Info & Kontakt-Bereich in den Einstellungen
-- Cache leeren in den Einstellungen
-- Echte Systemsymbole fuer Dateien, Apps und Ordner, mit Umschalter fuer schnelle generische Icons in den Einstellungen
-- App-Bundle-Metadaten (Name, Version, Entwickler, Bundle-ID) im Detailbereich
-- Auto-Scan auf App-Start in den Einstellungen
-- Update-Check-Benachrichtigung ueber veroeffentlichte GitHub Releases, einschliesslich Betas
-- Datensparsame KI-Hilfe beim Erststart mit lokal eingebundenen Logos fuer ChatGPT, Gemini und Claude
-- Keine externen Abhaengigkeiten - nur reine Apple-Frameworks
+- Private lokale Indizierung mehrerer Ordner mit dauerhaftem Zugriff, Live-Fortschritt, Suche, Filtern, Tags und QuickLook-Vorschau.
+- Duplikaterkennung, Snapshots, Ordnervergleich, Speicheranalyse und lokale Analyse aehnlicher Bilder.
+- Sichere Organisation mit Stapel-Umbenennen, pruefbarer Aufraeumwarteschlange, Regeln, Smart Collections und Schnellzugriff auf zuletzt verwendete Orte.
+- Flexible Backups: Index, Vollbackup, inkrementelle oder gezielt ausgewaehlte ZIP-Backups mit optionaler AES-256-Verschluesselung, SHA-256-Pruefung, Archivinspektion, selektiver Wiederherstellung, Zeitplan und Aufbewahrung.
+- Export nach Excel, PDF und CSV.
+- Deutsche und englische Oberflaeche, Hell/Dunkel/System-Darstellung, sechs Themes, Reduce Motion und konfigurierbare Tooltips.
+- Datenschutzbewusste Erststart-Hilfe und optionale Update-Pruefungen; FileAtlas hat keine externen Abhaengigkeiten.
 
 ## Voraussetzungen
 

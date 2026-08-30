@@ -10,17 +10,15 @@
   <img src="FileAtlas/Assets.xcassets/AppIcon.appiconset/icon_512x512.png" width="150" alt="FileAtlas App Icon">
 </p>
 
+**English** · [Deutsch](README.de.md)
+
+📘 **[User Manual (PDF)](output/pdf/FileAtlas-Manual-EN.pdf)** – scanning, organization, backups, exports, and privacy explained in detail.
+
+## Overview
+
 FileAtlas is a native, privacy-focused macOS file indexer, duplicate finder and folder comparison app built with pure Apple frameworks. It helps scan folders, inspect metadata, detect duplicates, compare snapshots, analyze storage, export reports, and manage backups without external dependencies.
 
 > **Security:** No private data, API keys, or certificates have been published in this repository. FileAtlas stores scan data locally. If update checks are enabled, the app only contacts GitHub Releases to look for a newer version. See [SECURITY.md](SECURITY.md) for the full audit.
-
-
-[🇩🇪 Deutsche Beschreibung](README.de.md)
-
-## Manual
-
-Read the complete English usage guide: [FileAtlas Manual (PDF)](output/pdf/FileAtlas-Manual-EN.pdf).
-Die deutsche Ausgabe findest du hier: [FileAtlas Handbuch (PDF)](output/pdf/FileAtlas-Handbuch.pdf).
 
 ## First-Launch Help
 
@@ -36,56 +34,13 @@ When FileAtlas has no saved locations or indexed entries yet, a start screen off
 
 ## Features
 
-- Local file indexing with recursive folder scan and live progress (AsyncStream)
-- Apple-silicon-aware performance: batched live scan updates, bounded adaptive duplicate hashing and a memory-limited system icon cache
-- Scan multiple folders simultaneously
-- Security-Scoped Bookmarks (access persists after app restart)
-- Liquid Glass sidebar (desktop shines through)
-- Light / Dark / System appearance switcher (independent of macOS setting)
-- Six color themes: Midnight Teal, Retro, Graphite Lime, Autumn, Winter and Glass; Glass uses a milky-translucent surface across the entire window
-- Purposeful interface motion: live scan results with loading placeholders, animated navigation and filter chips, theme-aware ambient effects, backup completion feedback, analysis and comparison transitions; includes a Reduce Motion setting that also follows macOS accessibility
-- Optional tooltips for toolbar, navigation and action icons, configurable in Settings -> Appearance
-- DE/EN localization with DACH rule (de_AT, de_DE, de_CH always German)
-- Sortable, reorderable columns (Name, Type, Status, Tags, Size, Modified)
-- Adjustable row height (Compact / Normal / Large)
-- QuickLook preview (Space bar) with inline file preview in detail panel
-- Safe batch rename with prefix, suffix, optional sequential numbering, preview, collision checks, and explicit confirmation
-- Compact list view mode, switchable with table view
-- Quick search by name, extension, size (`> 10 MB`, `< 500 KB`)
-- Saveable filter sets with include/exclude lists
-- Ignored folders (skipped during scan, shown as single entry with total size)
-- Bundle recognition (`.app`, `.framework`, `.xcodeproj` treated as single entries, descendants skipped)
-- Extension whitelist filter (only index specific file types)
-- No auto-rescan if folder is already indexed
-- Duplicate detection (size grouping -> SHA-256 hash, gold badge) per saved location by default; optional comparison across all locations
-- Snapshots after each scan (max. 10, JSON) with diff comparison and delete
-- Automatic "what changed?" summary after each follow-up scan
-- Storage analysis with a file-type map, health indicators for unavailable locations, missing backup destinations and due backups, plus largest indexed items and duplicate space
-- Local similar-image analysis with on-device Vision (up to 250 images)
-- Safe cleanup queue: review items first, then move them to the macOS Trash with confirmation
-- Rules for file type, minimum size and file age, with scan-time match notifications
-- Smart Collections: saved dynamic views for file type, size, recent changes and duplicates
-- Folder comparison (two folders directly)
-- Tags (predefined + custom, color-coded pills, extension-based and applied globally across all folders)
-- Subfolder expansion in sidebar (multi-level, lazy-loaded without UI freeze)
-- Quick access (last 5 scanned folders in sidebar, manually managed)
-- Export: Excel (`.xlsx`), PDF, CSV
-- Backup: Index backup (JSON), full backup, incremental ZIP backups after the first full backup, or selected files and folders (ZIP, optional AES-256, password in Keychain); the archive inspector lists contents, verifies ZIP structure and optional SHA-256 manifest contents, and restores selected entries
-- Backup schedule: Off / Daily / Weekly per location; due backups run while FileAtlas is open or launches, not as a background service
-- Backup history per saved location with Finder reveal and retention for the last 3, 5, or 10 FileAtlas archives, or keep all
-- Duplicate cleanup helper: keep one copy and add the other verified duplicates to the reviewable cleanup queue
-- Rules can optionally add matching files to the cleanup queue; moving anything to Trash still needs confirmation
-- Smart Collections can also use maximum size, tags, locations, and excluded file types
-- Saved locations show an unavailable state when a drive or location cannot currently be reached
-- Settings panel with sidebar navigation (macOS System Settings style)
-- Info & Contact section in Settings
-- Clear cache option in Settings
-- Real system icons for files, apps and folders, with a toggle for fast generic icons in Settings
-- App bundle metadata (name, version, developer, bundle ID) shown in detail panel
-- Auto-scan on launch option in Settings
-- Update check notification via published GitHub Releases, including betas
-- Privacy-safe first-launch AI help with local ChatGPT, Gemini and Claude logos
-- No external dependencies - pure Apple frameworks only
+- Private local indexing of multiple folders, with persistent access, live progress, search, filters, tags, and QuickLook preview.
+- Duplicate detection, snapshots, folder comparison, storage analysis, and local similar-image analysis.
+- Safe organization tools: batch rename, reviewable cleanup queue, rules, smart collections, and quick access to recent locations.
+- Flexible backups: index, full, incremental, or selected-item ZIP backups with optional AES-256 encryption, SHA-256 verification, archive inspection, selective restore, schedules, and retention.
+- Exports to Excel, PDF, and CSV.
+- English and German interface, light/dark/system appearance, six themes, Reduce Motion, and configurable tooltips.
+- First-launch help and optional update checks are privacy-conscious; FileAtlas uses no external dependencies.
 
 ## Requirements
 
