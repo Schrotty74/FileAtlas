@@ -156,7 +156,9 @@ CLEAN_NOTES_PATH="$BUILD_DIR/release-notes-clean.md"
 DEDUPED_NOTES_PATH="$BUILD_DIR/release-notes-deduped.md"
 
 echo "Generiere Release Notes..."
-if [ -n "$CUSTOM_NOTES_PATH" ]; then
+if [ "$IS_PRERELEASE" = false ]; then
+  "$PROJECT_DIR/generate-final-release-notes.sh" "$VERSION" "$NOTES_PATH" "$CUSTOM_NOTES_PATH"
+elif [ -n "$CUSTOM_NOTES_PATH" ]; then
   awk '
     NR == 1 && /^#*[[:space:]]*FileAtlas[[:space:]]+/ {
       skippedTitle = 1
