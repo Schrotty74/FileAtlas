@@ -83,8 +83,10 @@ nonisolated struct FilterPreset: Identifiable, Codable, Hashable, Sendable {
 
         if !includedExtensions.isEmpty {
             let included = Set(includedExtensions.map(FilterPreset.normalize))
-            // Datei muss eine der eingeschlossenen Erweiterungen haben.
-            if !entry.isDirectory && !included.contains(ext) { return false }
+            // Der Formatfilter basiert immer auf der letzten Pfadendung. Das gilt
+            // auch für macOS-Pakete wie `.app`, die im Dateisystem Verzeichnisse
+            // sind, aber vom Scanner als einzelner Indexeintrag erfasst werden.
+            if !included.contains(ext) { return false }
         }
 
         if extensionWhitelistEnabled {

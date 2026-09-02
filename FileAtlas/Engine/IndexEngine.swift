@@ -108,7 +108,13 @@ actor IndexEngine {
                 } else if isSingleEntry {
                     // Hart abbrechen: nicht in das Paket hineingehen – unabhängig vom
                     // (unzuverlässigen) LaunchServices-Package-Bit, auf jeder Ebene.
-                    enumerator.skipDescendants()
+                    // `skipDescendants()` ist ausschließlich für Verzeichnisse
+                    // gültig. Wird es nach einer regulären Archivdatei aufgerufen,
+                    // kann der Enumerator die Nachfahren des nächsten Ordners
+                    // überspringen (z. B. `.zip` vor `Mail Clients/Thunderbird`).
+                    if isDir {
+                        enumerator.skipDescendants()
+                    }
                     entry = Self.packageEntry(for: fileURL, values: values)
                 } else {
                     entry = Self.fileEntry(for: fileURL, values: values, isDirectory: isDir)
