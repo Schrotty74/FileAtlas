@@ -50,6 +50,7 @@ if [ "$IS_PRERELEASE" = true ]; then
   BUILD_CHANNEL="beta"
 fi
 BUILD_DIR="$PROJECT_DIR/Build/$BUILD_CHANNEL"
+PRODUCTS_DIR="$BUILD_DIR/products"
 APP_NAME="FileAtlas"
 
 echo "=== FileAtlas Release Build $VERSION ==="
@@ -67,6 +68,7 @@ xcodebuild \
   -scheme FileAtlas \
   -configuration Release \
   -derivedDataPath "$BUILD_DIR/derived" \
+  SYMROOT="$PRODUCTS_DIR" \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGN_IDENTITY="" \
@@ -76,7 +78,7 @@ xcodebuild \
   MARKETING_VERSION="$APP_VERSION" \
   | grep -E "^(Build|error:|warning: |CompileSwift|Ld )" || true
 
-APP_PATH=$(find "$BUILD_DIR/derived/Build/Products/Release" -name "*.app" -maxdepth 1 -type d | head -1)
+APP_PATH=$(find "$PRODUCTS_DIR/Release" -name "*.app" -maxdepth 1 -type d | head -1)
 if [ -z "$APP_PATH" ]; then
   echo "FEHLER: .app nicht gefunden. Build fehlgeschlagen?"
   exit 1
