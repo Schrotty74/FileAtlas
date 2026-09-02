@@ -24,7 +24,7 @@ FileAtlas is a native, privacy-focused macOS file indexer, duplicate finder and 
 
 When FileAtlas has no saved locations or indexed entries yet, a start screen offers a local folder picker, the manual, and optional help from ChatGPT, Google Gemini, or Claude. Selecting a service copies a general, privacy-safe question with the public manual link to the clipboard and then opens that service; FileAtlas never sends local file data or other user data automatically. See [AI help and privacy notes](AI_HELP.md).
 
-## New in 1.11 Beta
+## What's New
 
 - APP bundles and DMG, PKG, ZIP, and ISO files are discovered by their actual final filename extension and indexed as single entries.
 - Cached-index restoration can display the last saved index immediately on launch, without an automatic rescan.

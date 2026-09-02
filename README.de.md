@@ -20,7 +20,7 @@ FileAtlas ist eine native macOS-App zum Indizieren und Vergleichen von Dateien, 
 
 Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, bietet die Startansicht eine Ordnerauswahl, das Handbuch und optionale Hilfe von ChatGPT, Google Gemini oder Claude. Beim Auswaehlen eines Dienstes kopiert FileAtlas eine allgemeine, datensparsame Frage mit dem oeffentlichen Handbuch-Link in die Zwischenablage und oeffnet danach den Dienst. Lokale Dateidaten oder andere Nutzerdaten werden niemals automatisch uebertragen. Details stehen in [KI-Hilfe und Datenschutzhinweise](AI_HELP.md).
 
-## Neu in 1.11 Beta
+## Neu
 
 - APP-Bundles sowie DMG-, PKG-, ZIP- und ISO-Dateien werden anhand ihrer tatsächlichen Endung gefunden und als einzelne Einträge indexiert.
 - Die Cache-Wiederherstellung kann den zuletzt gespeicherten Index beim Start sofort anzeigen, ohne automatisch erneut zu scannen.
