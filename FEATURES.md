@@ -53,6 +53,8 @@ This page lists the stable features in detail. For installation and everyday use
 
 - Uses Apple frameworks only and has no third-party dependencies.
 - Stores scan data and preferences locally on the Mac.
-- Checks GitHub Releases for updates only when the optional update check is enabled.
+- Optional startup update checks can be enabled for Final-only or Beta-and-Final GitHub Releases; a visible in-app notice opens an available release only after a click.
+- When a filter set is active, location rows show matching files out of the complete indexed total and identify the applied filter.
+- Restore last cached folders immediately shows the most recently saved local index on launch without an automatic rescan. Filter Sets can optionally restore the last active set after relaunch.
 - Shows first-launch help only when no saved locations, recents, or indexed entries exist. Its AI-help buttons copy a fixed, data-minimal prompt with a public manual link and open the selected service only after a click; local file data is never sent automatically.
 - Does not publish or require private data, API keys, certificates, accounts, analytics, or cloud sync.

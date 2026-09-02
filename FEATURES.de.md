@@ -53,6 +53,8 @@ Diese Seite beschreibt die stabilen Funktionen ausführlich. Installation und t�
 
 - Verwendet ausschließlich Apple-Frameworks und keine Drittanbieter-Abhängigkeiten.
 - Speichert Scan-Daten und Einstellungen lokal auf dem Mac.
-- Prüft GitHub Releases nur auf Updates, wenn die optionale Update-Prüfung aktiviert ist.
+- Die optionale Startpruefung kann fuer nur Final oder Beta und Final aktiviert werden; ein sichtbarer Hinweis oeffnet ein gefundenes Release erst nach einem Klick.
+- Bei aktivem Filterset zeigen Ortszeilen die passenden Dateien aus der gesamten Indexanzahl und nennen den angewendeten Filter.
+- „Zuletzt zwischengespeicherte Ordner wiederherstellen“ zeigt beim Start sofort den zuletzt gespeicherten lokalen Index ohne automatischen erneuten Scan. Filtersets können optional das zuletzt aktive Set nach einem Neustart wiederherstellen.
 - Zeigt Erststart-Hilfe nur ohne gespeicherte Orte, zuletzt verwendete Orte und indizierte Einträge. Die KI-Hilfe kopiert eine feste, datensparsame Frage mit einem öffentlichen Handbuch-Link und öffnet den gewählten Dienst erst nach einem Klick; lokale Dateidaten werden nie automatisch übertragen.
 - Veröffentlicht und benötigt keine privaten Daten, API-Keys, Zertifikate, Konten, Analysedienste oder Cloud-Synchronisation.

@@ -138,6 +138,7 @@ struct ContentView: View {
         }
         .overlay(alignment: .bottom) {
             VStack(spacing: 8) {
+                UpdateAvailableBanner()
                 AutoRescanBanner()
                 ScanChangeSummaryBanner { ui.showDiff = true }
                 AlertRuleBanner { ui.showAlertRuleResults = true }
@@ -148,6 +149,38 @@ struct ContentView: View {
 
     private var motionEnabled: Bool {
         !motion.reduceMotion && !systemReduceMotion
+    }
+}
+
+private struct UpdateAvailableBanner: View {
+    @Environment(IndexViewModel.self) private var vm
+    @Environment(LanguageManager.self) private var language
+
+    var body: some View {
+        if let update = vm.availableUpdate {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.down.circle.fill")
+                    .foregroundStyle(AppTheme.theme.accentColor)
+                Text(message(for: update.versionTag))
+                    .font(.callout)
+                Button(label("Release öffnen", "Open release")) {
+                    vm.openAvailableUpdate()
+                }
+                .controlSize(.small)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 8)
+            .background(.regularMaterial, in: Capsule())
+            .overlay(Capsule().stroke(AppTheme.stroke, lineWidth: 0.5))
+            .padding(.bottom, 12)
+        }
+    }
+
+    private func label(_ german: String, _ english: String) -> String {
+        language.effectiveLanguage == .de ? german : english
+    }
+
+    private func message(for version: String) -> String {
+        String(format: label("Neue Version %@ verfügbar", "New version %@ is available"), version)
     }
 }
 

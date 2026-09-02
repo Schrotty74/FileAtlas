@@ -17,6 +17,24 @@ struct AvailableUpdate: Identifiable, Equatable {
     let releaseURL: URL
 }
 
+struct LocationStats: Sendable {
+    let visibleCount: Int
+    let totalCount: Int
+    let totalSize: Int64
+    let isFiltered: Bool
+}
+
+private struct CachedLocationStats {
+    let values: LocationStats
+    let entryCount: Int
+    let presetID: FilterPreset.ID?
+}
+
+enum UpdateReleaseChannel: String, CaseIterable, Sendable {
+    case finalOnly
+    case betaAndFinal
+}
+
 private struct GitHubReleaseResponse: Decodable {
     let tagName: String
     let htmlURL: String?
@@ -46,12 +64,12 @@ final class IndexViewModel {
     private(set) var selectedScanRoot: URL? = nil {
         didSet {
             guard !isUpdatingSelectionEntries else { return }
-            activateScopedPresetForSelectedRootIfNeeded()
             recomputeDisplayedEntries()
         }
     }
     private var indexedEntriesByRootPath: [String: [FileEntry]] = [:]
     private var isUpdatingSelectionEntries = false
+    private var cachedLocationStats: [String: CachedLocationStats] = [:]
 
     // Scan-Fortschritt
     private(set) var isScanning = false
@@ -99,6 +117,16 @@ final class IndexViewModel {
     var compareDuplicatesAcrossLocations: Bool {
         didSet { UserDefaults.standard.set(compareDuplicatesAcrossLocations, forKey: Self.compareDuplicatesAcrossLocationsKey) }
     }
+    var automaticUpdateChecksEnabled: Bool {
+        didSet { UserDefaults.standard.set(automaticUpdateChecksEnabled, forKey: Self.automaticUpdateChecksEnabledKey) }
+    }
+    var updateReleaseChannel: UpdateReleaseChannel {
+        didSet {
+            UserDefaults.standard.set(updateReleaseChannel.rawValue, forKey: Self.updateReleaseChannelKey)
+            availableUpdate = nil
+            updateCheckStatusMessage = nil
+        }
+    }
 
     private(set) var recentScanRoots: [URL] = []
 
@@ -140,7 +168,27 @@ final class IndexViewModel {
         didSet { recomputeDisplayedEntries() }
     }
     var activePresetID: FilterPreset.ID? = nil {
-        didSet { recomputeDisplayedEntries() }
+        didSet {
+            if restoreActiveFilterOnLaunch {
+                if let activePresetID {
+                    UserDefaults.standard.set(activePresetID.uuidString, forKey: Self.activePresetIDKey)
+                } else {
+                    UserDefaults.standard.removeObject(forKey: Self.activePresetIDKey)
+                }
+            }
+            recomputeDisplayedEntries()
+        }
+    }
+
+    var restoreActiveFilterOnLaunch: Bool {
+        didSet {
+            UserDefaults.standard.set(restoreActiveFilterOnLaunch, forKey: Self.restoreActiveFilterOnLaunchKey)
+            if restoreActiveFilterOnLaunch, let activePresetID {
+                UserDefaults.standard.set(activePresetID.uuidString, forKey: Self.activePresetIDKey)
+            } else if !restoreActiveFilterOnLaunch {
+                UserDefaults.standard.removeObject(forKey: Self.activePresetIDKey)
+            }
+        }
     }
 
     var activePreset: FilterPreset? {
@@ -184,6 +232,11 @@ final class IndexViewModel {
     private static let updateLastCheckKey = "FileAtlas.updateLastCheck"
     private static let updateLatestTagKey = "FileAtlas.updateLatestTag"
     private static let updateLatestURLKey = "FileAtlas.updateLatestURL"
+    private static let automaticUpdateChecksEnabledKey = "FileAtlas.automaticUpdateChecksEnabled"
+    private static let updateReleaseChannelKey = "FileAtlas.updateReleaseChannel"
+    private static let restoreActiveFilterOnLaunchKey = "FileAtlas.restoreActiveFilterOnLaunch"
+    private static let activePresetIDKey = "FileAtlas.activePresetID"
+    private static let updateLatestChannelKey = "FileAtlas.updateLatestChannel"
     private static let updateCheckInterval: TimeInterval = 24 * 60 * 60
     private static let releasesAPIURL = URL(string: "https://api.github.com/repos/Schrotty74/FileAtlas/releases?per_page=20")!
     private static let latestReleaseWebURL = URL(string: "https://github.com/Schrotty74/FileAtlas/releases/latest")!
@@ -319,6 +372,10 @@ final class IndexViewModel {
         self.autoScanOnLaunchMode = defaults.string(forKey: Self.autoScanOnLaunchModeKey)
             .flatMap(AutoScanOnLaunchMode.init(rawValue:)) ?? .off
         self.compareDuplicatesAcrossLocations = defaults.bool(forKey: Self.compareDuplicatesAcrossLocationsKey)
+        self.automaticUpdateChecksEnabled = defaults.object(forKey: Self.automaticUpdateChecksEnabledKey) as? Bool ?? true
+        self.updateReleaseChannel = defaults.string(forKey: Self.updateReleaseChannelKey)
+            .flatMap(UpdateReleaseChannel.init(rawValue:)) ?? .betaAndFinal
+        self.restoreActiveFilterOnLaunch = defaults.object(forKey: Self.restoreActiveFilterOnLaunchKey) as? Bool ?? false
 
         if let stored = defaults.stringArray(forKey: Self.skippedFoldersKey) {
             // Einmalige Migration: fehlende Default-Einträge ergänzen.
@@ -352,6 +409,12 @@ final class IndexViewModel {
         }
 
         loadPresets()
+        if restoreActiveFilterOnLaunch,
+           let rawID = defaults.string(forKey: Self.activePresetIDKey),
+           let savedID = FilterPreset.ID(uuidString: rawID),
+           presets.contains(where: { $0.id == savedID }) {
+            activePresetID = savedID
+        }
         restoreSavedLocations()
         loadRecentScanRoots()
         loadCustomTags()
@@ -427,6 +490,7 @@ final class IndexViewModel {
             let releases = try JSONDecoder().decode([GitHubReleaseResponse].self, from: data)
             guard let release = releases
                 .filter({ !$0.isDraft })
+                .filter({ self.updateReleaseChannel == .betaAndFinal || !Self.isBetaRelease($0.tagName) })
                 .max(by: { Self.versionComparison($0.tagName, $1.tagName) == .orderedAscending })
             else {
                 if force {
@@ -453,6 +517,7 @@ final class IndexViewModel {
     }
 
     private func shouldRunAutomaticUpdateCheck() -> Bool {
+        guard automaticUpdateChecksEnabled else { return false }
         let lastCheck = UserDefaults.standard.object(forKey: Self.updateLastCheckKey) as? Date
         guard let lastCheck else { return true }
         return Date().timeIntervalSince(lastCheck) >= Self.updateCheckInterval
@@ -461,6 +526,7 @@ final class IndexViewModel {
     private func loadCachedUpdateResult() {
         let defaults = UserDefaults.standard
         guard let tag = defaults.string(forKey: Self.updateLatestTagKey) else { return }
+        guard defaults.string(forKey: Self.updateLatestChannelKey) == updateReleaseChannel.rawValue else { return }
         let releaseURL = defaults.string(forKey: Self.updateLatestURLKey).flatMap(URL.init(string:)) ?? Self.latestReleaseWebURL
         if Self.isVersion(tag, newerThan: Self.currentAppVersion()) {
             availableUpdate = AvailableUpdate(versionTag: tag, releaseURL: releaseURL)
@@ -473,6 +539,7 @@ final class IndexViewModel {
         defaults.set(Date(), forKey: Self.updateLastCheckKey)
         defaults.set(tag, forKey: Self.updateLatestTagKey)
         defaults.set(releaseURL.absoluteString, forKey: Self.updateLatestURLKey)
+        defaults.set(updateReleaseChannel.rawValue, forKey: Self.updateLatestChannelKey)
 
         if Self.isVersion(tag, newerThan: Self.currentAppVersion()) {
             availableUpdate = AvailableUpdate(versionTag: tag, releaseURL: releaseURL)
@@ -536,6 +603,10 @@ final class IndexViewModel {
         let lowercased = version.lowercased()
         guard let range = lowercased.range(of: "-beta.") else { return nil }
         return Int(lowercased[range.upperBound...])
+    }
+
+    private nonisolated static func isBetaRelease(_ version: String) -> Bool {
+        betaNumber(in: version) != nil
     }
 
     // MARK: - Abgeleitete Liste (gefiltert + sortiert)
@@ -737,20 +808,47 @@ final class IndexViewModel {
         removeBookmark(for: url)
     }
 
-    func stats(for root: URL) -> (count: Int, size: Int64)? {
-        if selectedScanRoot.map({ sameFilePath($0, root) }) == true {
-            return (displayedEntries.count, displayedEntries.reduce(0) { $0 + $1.size })
-        }
-
-        if selectedScanRoot == nil {
-            let rootPath = Self.displayPath(for: root)
-            let visibleMatches = displayedEntries.filter { Self.path($0.pathKey, isInsidePath: rootPath) }
-            return (visibleMatches.count, visibleMatches.reduce(0) { $0 + $1.size })
-        }
+    func locationStats(for root: URL) -> LocationStats? {
+        // Das fortlaufende Ermitteln von Treffer- und Gesamtzahlen würde den
+        // wachsenden Index wiederholt auf dem Main Actor durchlaufen. Während
+        // des Scans wird deshalb bewusst keine Ortsstatistik berechnet.
+        guard !isScanning else { return nil }
 
         let key = Self.normalizedPath(for: root)
-        guard let matches = indexedEntriesByRootPath[key], !matches.isEmpty else { return nil }
-        return (matches.count, matches.reduce(0) { $0 + $1.size })
+        let currentEntryCount = entries.count
+        let currentPresetID = activePresetID
+
+        if let cached = cachedLocationStats[key], cached.presetID == currentPresetID {
+            if cached.entryCount == currentEntryCount {
+                return cached.values
+            }
+        }
+
+        let indexed = indexedEntries(for: root)
+        guard !indexed.isEmpty else { return nil }
+
+        let visible: [FileEntry]
+        let isFiltered: Bool
+        if let preset = activePreset, activePreset(preset, appliesTo: root) {
+            visible = indexed.filter { preset.allows($0) }
+            isFiltered = true
+        } else {
+            visible = indexed
+            isFiltered = false
+        }
+
+        let values = LocationStats(
+            visibleCount: visible.count,
+            totalCount: indexed.count,
+            totalSize: indexed.reduce(0) { $0 + $1.size },
+            isFiltered: isFiltered
+        )
+        cachedLocationStats[key] = CachedLocationStats(
+            values: values,
+            entryCount: currentEntryCount,
+            presetID: currentPresetID
+        )
+        return values
     }
 
     func tags(for entry: FileEntry) -> Set<FileTag> {
@@ -860,7 +958,6 @@ final class IndexViewModel {
         isUpdatingSelectionEntries = false
         selection = []
         currentDiff = nil
-        activateScopedPresetForSelectedRootIfNeeded()
         recomputeDisplayedEntries()
     }
 
@@ -989,31 +1086,14 @@ final class IndexViewModel {
     }
 
     private func activePresetAppliesToCurrentFolder(_ preset: FilterPreset) -> Bool {
-        guard !preset.appliesToAllFolders else { return true }
-        guard let selectedScanRoot else { return false }
-        return scopedPreset(preset, appliesTo: selectedScanRoot)
+        guard let selectedScanRoot else { return preset.appliesToAllFolders }
+        return activePreset(preset, appliesTo: selectedScanRoot)
     }
 
-    private func activateScopedPresetForSelectedRootIfNeeded() {
-        guard let selectedScanRoot else { return }
-
-        if let activePreset {
-            if activePreset.appliesToAllFolders || scopedPreset(activePreset, appliesTo: selectedScanRoot) {
-                return
-            }
-        }
-
-        if let scopedPreset = presets.first(where: {
-            !$0.appliesToAllFolders && scopedPreset($0, appliesTo: selectedScanRoot)
-        }) {
-            activePresetID = scopedPreset.id
-        } else if activePreset?.appliesToAllFolders == false {
-            activePresetID = nil
-        }
-    }
-
-    private func scopedPreset(_ preset: FilterPreset, appliesTo root: URL) -> Bool {
-        preset.scopedFolderPaths.contains(Self.normalizedPath(for: root))
+    /// Der aktive Zustand bleibt beim Ortswechsel erhalten. Die konfigurierte
+    /// Ortsbegrenzung entscheidet aber weiterhin, wo das Filterset wirkt.
+    private func activePreset(_ preset: FilterPreset, appliesTo root: URL) -> Bool {
+        preset.appliesToAllFolders || preset.scopedFolderPaths.contains(Self.normalizedPath(for: root))
     }
 
     private func loadRecentScanRoots() {
@@ -1110,6 +1190,15 @@ final class IndexViewModel {
         let roots = autoScanLaunchRoots()
         guard autoScanOnLaunchMode != .off, !roots.isEmpty else { return }
 
+        // "Zuletzt zwischengespeicherte Ordner wiederherstellen" bedeutet,
+        // dass der zuletzt gespeicherte Index sofort angezeigt wird. Ein
+        // erneuter Dateisystem-Scan ist in diesem Modus ausdrücklich nicht
+        // erforderlich und würde den Start unnötig blockieren.
+        if autoScanOnLaunchMode == .restoreCached {
+            restoreCachedIndex(for: roots)
+            return
+        }
+
         autoScanLaunchTask?.cancel()
         autoScanLaunchTask = Task { [weak self] in
             guard let self else { return }
@@ -1139,6 +1228,32 @@ final class IndexViewModel {
             self.autoScanLaunchMessage = nil
             self.autoScanLaunchTask = nil
         }
+    }
+
+    private func restoreCachedIndex(for roots: [URL]) {
+        let snapshots = snapshotStore.loadAll()
+        var restoredByRoot: [String: [FileEntry]] = [:]
+        for root in roots {
+            let rootPath = Self.normalizedPath(for: root)
+            guard let snapshot = snapshots.first(where: { snapshot in
+                guard snapshot.rootPaths.count == 1,
+                      let storedPath = snapshot.rootPaths.first else { return false }
+                return Self.normalizedPath(for: URL(fileURLWithPath: storedPath)) == rootPath
+            }) else { continue }
+            let rootEntries = snapshot.entries.filter { Self.isPath($0.path, inside: root) }
+            if !rootEntries.isEmpty {
+                restoredByRoot[rootPath] = rootEntries
+            }
+        }
+
+        guard !restoredByRoot.isEmpty else { return }
+        isUpdatingSelectionEntries = true
+        indexedEntriesByRootPath = restoredByRoot
+        entries = entriesAcrossIndexedRoots()
+        selectedScanRoot = roots.first { restoredByRoot[Self.normalizedPath(for: $0)] != nil }
+        isUpdatingSelectionEntries = false
+        selection = []
+        recomputeDisplayedEntries()
     }
 
     func persistCachedRootPathsForAutoScan() {

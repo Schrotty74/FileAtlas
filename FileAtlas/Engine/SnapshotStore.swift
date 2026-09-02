@@ -98,7 +98,11 @@ nonisolated struct SnapshotStore {
         // Neu + geändert.
         for (key, entry) in currentByPath {
             if let old = baselineByPath[key] {
-                if old.size != entry.size || old.modified != entry.modified {
+                // JSON-Snapshots speichern ISO-8601-Daten nur sekundengenau.
+                // Der Dateisystem-Scan kann dagegen Sekundenbruchteile liefern.
+                // Ein direkter Date-Vergleich würde deshalb bei jedem Scan
+                // unveränderte Dateien fälschlich als geändert ausweisen.
+                if old.size != entry.size || !Self.sameSecond(old.modified, entry.modified) {
                     changed.append(SnapshotChange(status: .changed, entry: entry, previous: old))
                 }
             } else {
@@ -117,5 +121,9 @@ nonisolated struct SnapshotStore {
             removed: removed.sorted(by: byName),
             changed: changed.sorted(by: byName)
         )
+    }
+
+    private static func sameSecond(_ lhs: Date, _ rhs: Date) -> Bool {
+        Int64(lhs.timeIntervalSince1970) == Int64(rhs.timeIntervalSince1970)
     }
 }

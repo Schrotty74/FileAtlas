@@ -136,6 +136,16 @@ hdiutil create \
   "$DMG_PATH" > /dev/null
 echo "DMG: $DMG_PATH"
 
+# --- Prüfsummen ---
+echo ""
+echo "[4b/5] Erstelle SHA-256-Prüfsummen..."
+CHECKSUM_PATH="$BUILD_DIR/SHA256SUMS.txt"
+(
+  cd "$BUILD_DIR"
+  shasum -a 256 "$(basename "$DMG_PATH")" "$(basename "$ZIP_PATH")"
+) > "$CHECKSUM_PATH"
+echo "SHA-256: $CHECKSUM_PATH"
+
 # --- GitHub Release ---
 echo ""
 echo "[5/5] Erstelle GitHub Release $VERSION..."
@@ -203,6 +213,7 @@ fi
 gh release create "$VERSION" \
   "$DMG_PATH#FileAtlas.dmg" \
   "$ZIP_PATH#FileAtlas.zip" \
+  "$CHECKSUM_PATH#SHA256SUMS.txt" \
   --title "$RELEASE_TITLE" \
   --notes-file "$NOTES_PATH" \
   --repo Schrotty74/FileAtlas \

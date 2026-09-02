@@ -36,7 +36,8 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 - Flexible Backups: Index, Vollbackup, inkrementelle oder gezielt ausgewaehlte ZIP-Backups mit optionaler AES-256-Verschluesselung, SHA-256-Pruefung, Archivinspektion, selektiver Wiederherstellung, Zeitplan und Aufbewahrung.
 - Export nach Excel, PDF und CSV.
 - Deutsche und englische Oberflaeche, Hell/Dunkel/System-Darstellung, sechs Themes, Reduce Motion und konfigurierbare Tooltips.
-- Datenschutzbewusste Erststart-Hilfe und optionale Update-Pruefungen; FileAtlas hat keine externen Abhaengigkeiten.
+- Datenschutzbewusste Erststart-Hilfe und optionale Update-Pruefungen: Die Startpruefung kann fuer nur Final oder Beta und Final aktiviert werden; ein gefundenes Release wird erst nach einem Klick geoeffnet. FileAtlas hat keine externen Abhaengigkeiten.
+- Der zuletzt gespeicherte Index kann beim Start sofort wiederhergestellt werden; das aktive Filterset bleibt auf Wunsch auch nach einem Neustart aktiv.
 
 Siehe die vollständige, gruppierte [Funktionsübersicht](FEATURES.de.md).
 

@@ -151,11 +151,26 @@ struct LocationTreeRow: View {
                         Label("Unavailable - reconnect or add this location again", systemImage: "exclamationmark.triangle.fill")
                             .font(.caption2)
                             .foregroundStyle(.orange)
-                    } else if let stats = vm.stats(for: url) {
-                        Text("\(stats.count) Dateien · \(ByteCountFormatter.string(fromByteCount: stats.size, countStyle: .file))")
+                    } else if vm.isScanning {
+                        Text("Wird gescannt…")
                             .font(.caption2)
                             .foregroundStyle(AppTheme.theme.textSecondary)
-                            .contentTransition(motionEnabled ? .numericText() : .identity)
+                    } else if let stats = vm.locationStats(for: url) {
+                        if let preset = vm.activePreset, stats.isFiltered {
+                            Text("\(stats.visibleCount) von \(stats.totalCount) Dateien")
+                                .font(.caption2)
+                                .foregroundStyle(AppTheme.theme.textSecondary)
+                                .contentTransition(motionEnabled ? .numericText() : .identity)
+                            Text("Gefiltert: \(preset.name)")
+                                .font(.caption2)
+                                .foregroundStyle(AppTheme.theme.textSecondary)
+                                .lineLimit(1)
+                        } else {
+                            Text("\(stats.totalCount) Dateien · \(ByteCountFormatter.string(fromByteCount: stats.totalSize, countStyle: .file))")
+                                .font(.caption2)
+                                .foregroundStyle(AppTheme.theme.textSecondary)
+                                .contentTransition(motionEnabled ? .numericText() : .identity)
+                        }
                     }
                     if isSavedRoot && kind == .savedLocation, let last = backup.lastBackup(for: url) {
                         Text("Backup: \(last.formatted(date: .abbreviated, time: .shortened))")

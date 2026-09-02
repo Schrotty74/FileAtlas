@@ -276,7 +276,9 @@ struct MainSettingsPanel: View {
     }
 
     private var filterSetsSection: some View {
-        Form {
+        @Bindable var vm = vm
+
+        return Form {
             Section(text("Filtersets", "Filter Sets")) {
                 Picker(text("Aktives Filterset", "Active filter set"), selection: activePresetBinding) {
                     Text(text("Keine", "None")).tag(FilterPreset.ID?.none)
@@ -284,6 +286,12 @@ struct MainSettingsPanel: View {
                         Text(preset.name).tag(FilterPreset.ID?.some(preset.id))
                     }
                 }
+
+                Toggle(text("Aktiven Filter beim Start wiederherstellen", "Restore active filter on launch"), isOn: $vm.restoreActiveFilterOnLaunch)
+                    .tint(AppTheme.theme.accentColor)
+                Text(text("Wenn aktiviert, bleibt das zuletzt ausgewählte Filterset auch nach dem Beenden und Neustart aktiv.", "When enabled, the last selected filter set remains active after quitting and restarting."))
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.theme.textSecondary)
 
                 if vm.presets.isEmpty {
                     Text(text("Keine Filtersets gespeichert", "No filter sets saved"))
@@ -559,16 +567,28 @@ struct MainSettingsPanel: View {
                 Text(appVersionText)
                     .foregroundStyle(AppTheme.theme.textPrimary)
 
+                Toggle(text("Beim Start nach Updates suchen", "Check for updates on launch"), isOn: Bindable(vm).automaticUpdateChecksEnabled)
+
+                Picker(text("Release-Kanal", "Release channel"), selection: Bindable(vm).updateReleaseChannel) {
+                    Text(text("Nur Final", "Final releases only")).tag(UpdateReleaseChannel.finalOnly)
+                    Text(text("Beta und Final", "Beta and final releases")).tag(UpdateReleaseChannel.betaAndFinal)
+                }
+                .disabled(!vm.automaticUpdateChecksEnabled)
+
+                Text(text("Die Prüfung kontaktiert ausschließlich GitHub Releases und lädt keine App automatisch herunter.", "The check contacts GitHub Releases only and never downloads the app automatically."))
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.theme.textSecondary)
+
                 if let availableUpdate = vm.availableUpdate {
                     Button {
                         vm.openAvailableUpdate()
                     } label: {
                         Label(
                             String(
-                                format: NSLocalizedString("New version available: %@", comment: "Update notification with the latest version tag."),
+                                format: text("Release %@ auf GitHub öffnen", "Open release %@ on GitHub"),
                                 availableUpdate.versionTag
                             ),
-                            systemImage: "arrow.down.circle.fill"
+                            systemImage: "arrow.up.forward.app.fill"
                         )
                     }
                     .buttonStyle(.borderedProminent)
