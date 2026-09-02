@@ -69,7 +69,7 @@ These formats can contain file names and paths. They are user data: never use re
 
 ## Known Constraints and Current State
 
-- The app's base Xcode marketing version is `1.0`; the release script supplies the requested release version during a release build. Confirm version behavior before changing versioning or publishing.
+- The app's base Xcode marketing version is `1.0`; the release build supplies the requested marketing version and writes `CURRENT_PROJECT_VERSION` as `CFBundleVersion`. Confirm both bundle version fields before publishing.
 - The UI test target exists, but a current repeatable UI-test result is not recorded in repository documentation. Treat it as unverified until run with user-approved UI automation.
 - The PDF manuals are tracked artifacts, but their original generator is not tracked here. Do not assume an external generator or regenerate blindly.
 - No confirmed unresolved product defect is documented as of this status date.
