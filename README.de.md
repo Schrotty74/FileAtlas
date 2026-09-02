@@ -25,7 +25,7 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 - APP-Bundles sowie DMG-, PKG-, ZIP- und ISO-Dateien werden anhand ihrer tatsächlichen Endung gefunden und als einzelne Einträge indexiert.
 - Die Cache-Wiederherstellung kann den zuletzt gespeicherten Index beim Start sofort anzeigen, ohne automatisch erneut zu scannen.
 - Filtersets bleiben innerhalb ihres konfigurierten Bereichs über Ortswechsel aktiv und können optional nach einem Neustart wiederhergestellt werden.
-- Update-Prüfungen beim Start lassen sich auf nur Final oder Beta und Final einstellen.
+- Optionale Update-Prüfungen beim Start können aktiviert werden und zeigen verfügbare Releases erst nach einer Nutzeraktion.
 - Snapshot-Vergleiche melden unveränderte Dateien nicht mehr fälschlich als geändert, wenn sich nur Sekundenbruchteile im Zeitstempel unterscheiden.
 
 ## Funktionen
@@ -36,7 +36,7 @@ Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, 
 - Flexible Backups: Index, Vollbackup, inkrementelle oder gezielt ausgewaehlte ZIP-Backups mit optionaler AES-256-Verschluesselung, SHA-256-Pruefung, Archivinspektion, selektiver Wiederherstellung, Zeitplan und Aufbewahrung.
 - Export nach Excel, PDF und CSV.
 - Deutsche und englische Oberflaeche, Hell/Dunkel/System-Darstellung, sechs Themes, Reduce Motion und konfigurierbare Tooltips.
-- Datenschutzbewusste Erststart-Hilfe und optionale Update-Pruefungen: Die Startpruefung kann fuer nur Final oder Beta und Final aktiviert werden; ein gefundenes Release wird erst nach einem Klick geoeffnet. FileAtlas hat keine externen Abhaengigkeiten.
+- Datenschutzbewusste Erststart-Hilfe und optionale Update-Pruefungen: Ein gefundenes Release wird erst nach einem Klick geöffnet. FileAtlas hat keine externen Abhaengigkeiten.
 - Der zuletzt gespeicherte Index kann beim Start sofort wiederhergestellt werden; das aktive Filterset bleibt auf Wunsch auch nach einem Neustart aktiv.
 
 Siehe die vollständige, gruppierte [Funktionsübersicht](FEATURES.de.md).

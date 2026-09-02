@@ -29,7 +29,7 @@ When FileAtlas has no saved locations or indexed entries yet, a start screen off
 - APP bundles and DMG, PKG, ZIP, and ISO files are discovered by their actual final filename extension and indexed as single entries.
 - Cached-index restoration can display the last saved index immediately on launch, without an automatic rescan.
 - Filter Sets can stay active across locations within their configured scope and can optionally be restored after restarting the app.
-- Startup update checks can be enabled for Final-only or Beta-and-Final GitHub Releases.
+- Optional startup update checks can be enabled and show available releases only after a user action.
 - Snapshot comparisons no longer report unchanged files as changed because of subsecond timestamp differences.
 
 ## Features
@@ -40,7 +40,7 @@ When FileAtlas has no saved locations or indexed entries yet, a start screen off
 - Flexible backups: index, full, incremental, or selected-item ZIP backups with optional AES-256 encryption, SHA-256 verification, archive inspection, selective restore, schedules, and retention.
 - Exports to Excel, PDF, and CSV.
 - English and German interface, light/dark/system appearance, six themes, Reduce Motion, and configurable tooltips.
-- First-launch help and optional update checks are privacy-conscious; startup checks can be enabled for Final-only or Beta-and-Final GitHub Releases, and an available release opens only after a click. FileAtlas uses no external dependencies.
+- First-launch help and optional update checks are privacy-conscious; an available release opens only after a click. FileAtlas uses no external dependencies.
 - The last cached index can be restored immediately on launch, and the active Filter Set can optionally be restored after relaunch.
 
 See the complete, grouped [feature overview](FEATURES.md).
