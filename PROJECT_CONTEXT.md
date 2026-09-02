@@ -27,9 +27,9 @@ FileAtlas is a native macOS application for local file indexing, comparison, org
 
 ## Persistent Data and Formats
 
-- Selected scan locations use security-scoped bookmarks. Preferences such as appearance, language, tags, presets, and view choices use `UserDefaults`.
+- Selected scan locations use security-scoped bookmarks. Preferences such as appearance, language, tags, presets, and view choices use `UserDefaults`. Dev, Beta, and Final use separate bundle identifiers, so their preferences and bookmarks never overlap.
 - Snapshots are JSON and retain at most ten entries.
-- Presets, alert rules, smart collections, and backup configurations are local JSON files in the app's Application Support area.
+- Presets, alert rules, smart collections, and backup configurations are local JSON files in the app's Application Support area. Dev uses `FileAtlas-dev`, Beta uses `FileAtlas-beta`, and Final uses `FileAtlas`; snapshots, index caches, and encrypted-backup Keychain entries are isolated by the same channel.
 - Index backups are JSON metadata exports. Full backups are ZIP archives of one or more selected files/folders; compression and a SHA-256 manifest are optional. Encrypted backup passwords belong in Keychain, never in JSON.
 - Exports are CSV, PDF, and XLSX. CSV uses UTF-8 with BOM and semicolon separation; XLSX is generated without an external library.
 

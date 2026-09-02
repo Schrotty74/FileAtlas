@@ -36,8 +36,10 @@ fi
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ARTIFACTS_ROOT="${FILEATLAS_ARTIFACTS_ROOT:-$PROJECT_DIR/Build}"
 BUILD_CHANNEL="final"
+PRODUCT_BUNDLE_IDENTIFIER="app.fileatlas.FileAtlas"
 if [ "$IS_PRERELEASE" = true ]; then
   BUILD_CHANNEL="beta"
+  PRODUCT_BUNDLE_IDENTIFIER="app.fileatlas.FileAtlas.beta"
 fi
 BUILD_DIR="$ARTIFACTS_ROOT/$BUILD_CHANNEL/$VERSION"
 PRODUCTS_DIR="$BUILD_DIR/products"
@@ -68,6 +70,7 @@ xcodebuild \
   STRIP_SWIFT_SYMBOLS=YES \
   DEPLOYMENT_POSTPROCESSING=YES \
   MARKETING_VERSION="$APP_VERSION" \
+  PRODUCT_BUNDLE_IDENTIFIER="$PRODUCT_BUNDLE_IDENTIFIER" \
   | grep -E "^(Build|error:|warning: |CompileSwift|Ld )" || true
 
 APP_PATH=$(find "$PRODUCTS_DIR/Release" -name "*.app" -maxdepth 1 -type d | head -1)
@@ -83,6 +86,13 @@ if [ "$BUILT_VERSION" != "$APP_VERSION" ]; then
   exit 1
 fi
 echo "Bundle-Version geprüft: $BUILT_VERSION"
+
+BUILT_BUNDLE_IDENTIFIER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Contents/Info.plist")
+if [ "$BUILT_BUNDLE_IDENTIFIER" != "$PRODUCT_BUNDLE_IDENTIFIER" ]; then
+  echo "FEHLER: Bundle-ID ist $BUILT_BUNDLE_IDENTIFIER, erwartet $PRODUCT_BUNDLE_IDENTIFIER"
+  exit 1
+fi
+echo "Bundle-ID geprüft: $BUILT_BUNDLE_IDENTIFIER"
 
 # --- Security Check ---
 echo ""

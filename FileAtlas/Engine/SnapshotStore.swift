@@ -11,12 +11,57 @@ nonisolated struct SnapshotStore {
 
     private static let maxSnapshots = 10
 
+    /// Isoliert lokale Daten zwischen der Entwicklungs-, Beta- und Final-App.
+    /// Der Wert folgt der Bundle-ID, damit auch unabhängig installierte Builds
+    /// nie denselben Index- oder Einstellungsbestand verwenden.
+    static var storageChannel: StorageChannel {
+        storageChannel(for: Bundle.main.bundleIdentifier)
+    }
+
+    static func storageChannel(for bundleIdentifier: String?) -> StorageChannel {
+        switch bundleIdentifier {
+        case "app.fileatlas.FileAtlas.dev":
+            return .development
+        case "app.fileatlas.FileAtlas.beta":
+            return .beta
+        case "app.fileatlas.FileAtlas":
+            return .final
+        default:
+            return .test
+        }
+    }
+
+    enum StorageChannel: String {
+        case development
+        case beta
+        case final
+        case test
+
+        var applicationSupportFolderName: String {
+            switch self {
+            case .development: "FileAtlas-dev"
+            case .beta: "FileAtlas-beta"
+            case .final: "FileAtlas"
+            case .test: "FileAtlas-tests"
+            }
+        }
+
+        var keychainService: String {
+            switch self {
+            case .development: "app.fileatlas.dev.backup"
+            case .beta: "app.fileatlas.beta.backup"
+            case .final: "app.fileatlas.backup"
+            case .test: "app.fileatlas.tests.backup"
+            }
+        }
+    }
+
     // MARK: - Speicherorte
 
-    /// `~/Library/Application Support/FileAtlas/`
+    /// Der Kanal-spezifische Ordner in `~/Library/Application Support/`.
     static var appSupportDirectory: URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        let dir = base.appendingPathComponent("FileAtlas", isDirectory: true)
+        let dir = base.appendingPathComponent(storageChannel.applicationSupportFolderName, isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }

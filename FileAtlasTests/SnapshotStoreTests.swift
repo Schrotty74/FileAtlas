@@ -9,6 +9,20 @@ import Testing
 
 struct SnapshotStoreTests {
     @Test
+    func storageChannelsKeepDevBetaAndFinalSeparate() {
+        #expect(SnapshotStore.storageChannel(for: "app.fileatlas.FileAtlas.dev") == .development)
+        #expect(SnapshotStore.storageChannel(for: "app.fileatlas.FileAtlas.beta") == .beta)
+        #expect(SnapshotStore.storageChannel(for: "app.fileatlas.FileAtlas") == .final)
+        #expect(SnapshotStore.storageChannel(for: "app.fileatlas.FileAtlasTests") == .test)
+
+        #expect(SnapshotStore.StorageChannel.development.applicationSupportFolderName == "FileAtlas-dev")
+        #expect(SnapshotStore.StorageChannel.beta.applicationSupportFolderName == "FileAtlas-beta")
+        #expect(SnapshotStore.StorageChannel.final.applicationSupportFolderName == "FileAtlas")
+        #expect(SnapshotStore.StorageChannel.development.keychainService != SnapshotStore.StorageChannel.beta.keychainService)
+        #expect(SnapshotStore.StorageChannel.beta.keychainService != SnapshotStore.StorageChannel.final.keychainService)
+    }
+
+    @Test
     func diffIgnoresSubsecondModificationDateDifferences() {
         let path = URL(fileURLWithPath: "/Catalog/Unchanged.zip")
         let baselineDate = Date(timeIntervalSince1970: 1_700_000_000)

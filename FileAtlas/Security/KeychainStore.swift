@@ -11,7 +11,9 @@ import Security
 
 nonisolated enum KeychainStore {
 
-    private static let service = "app.fileatlas.backup"
+    /// Backup-Passwörter gehören zum jeweiligen App-Kanal und werden deshalb
+    /// nicht zwischen Dev, Beta und Final geteilt.
+    private static var service: String { SnapshotStore.storageChannel.keychainService }
 
     /// Speichert (oder ersetzt) das Passwort für ein Konto (z. B. den Ortspfad).
     static func setPassword(_ password: String, for account: String) {
