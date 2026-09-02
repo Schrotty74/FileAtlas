@@ -64,7 +64,7 @@ These formats can contain file names and paths. They are user data: never use re
 - Keep both PDF manuals in `output/pdf/` aligned with visible behavior. A versioned PDF-source generator is currently not present in this repository; determine a reproducible generation method before a substantial manual rewrite.
 - Do not repeat a release title in the release-note body. The release script removes a leading duplicate title.
 - Write GitHub release notes and changelogs in English.
-- A Final release note is generated from every published Beta release with the same version. Do not omit an earlier Beta when preparing a Final; optional Final notes are supplemental only.
+- Beta release notes are generated directly by GitHub from the changelog; do not create repository-local `release-notes-*.md` files. A Final release note is generated from every published Beta release with the same version. Do not omit an earlier Beta when preparing a Final.
 - Public documentation must follow the repository-wide privacy and naming rules from `AGENTS.md`.
 
 ## Known Constraints and Current State

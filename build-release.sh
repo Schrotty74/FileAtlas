@@ -8,11 +8,10 @@ set -e
 #
 # Voraussetzung: gh CLI installiert (https://cli.github.com)
 # Aufruf: ./build-release.sh v1.0.1
-# Beta:   ./build-release.sh v1.0.1-beta.1 release-notes.md
+# Beta:   ./build-release.sh v1.0.1-beta.1
 # ---------------------------------------------------------------------------
 
 VERSION=${1:-}
-CUSTOM_NOTES_PATH=${2:-}
 if [ -z "$VERSION" ]; then
   echo "Verwendung: ./build-release.sh v1.0.0"
   exit 1
@@ -32,16 +31,6 @@ if [[ "$VERSION" =~ -beta\.([0-9]+)$ ]]; then
   BETA_NUMBER="${BASH_REMATCH[1]}"
   RELEASE_TITLE="FileAtlas $RELEASE_VERSION Beta $BETA_NUMBER"
   RELEASE_CREATE_ARGS+=(--prerelease)
-fi
-
-if [ "$IS_PRERELEASE" = true ] && [ -z "$CUSTOM_NOTES_PATH" ]; then
-  echo "FEHLER: Beta-Releases brauchen eine eigene Notes-Datei."
-  echo "Aufruf: ./build-release.sh $VERSION release-notes.md"
-  exit 1
-fi
-if [ -n "$CUSTOM_NOTES_PATH" ] && [ ! -f "$CUSTOM_NOTES_PATH" ]; then
-  echo "FEHLER: Notes-Datei nicht gefunden: $CUSTOM_NOTES_PATH"
-  exit 1
 fi
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -166,53 +155,16 @@ if ! command -v gh &> /dev/null; then
   exit 0
 fi
 
-NOTES_PATH="$BUILD_DIR/release-notes.md"
-CLEAN_NOTES_PATH="$BUILD_DIR/release-notes-clean.md"
-DEDUPED_NOTES_PATH="$BUILD_DIR/release-notes-deduped.md"
-
-echo "Generiere Release Notes..."
+NOTES_ARGS=()
 if [ "$IS_PRERELEASE" = false ]; then
-  "$PROJECT_DIR/generate-final-release-notes.sh" "$VERSION" "$NOTES_PATH" "$CUSTOM_NOTES_PATH"
-elif [ -n "$CUSTOM_NOTES_PATH" ]; then
-  awk '
-    NR == 1 && /^#*[[:space:]]*FileAtlas[[:space:]]+/ {
-      skippedTitle = 1
-      next
-    }
-    NR == 2 && skippedTitle && /^$/ {
-      next
-    }
-    { print }
-  ' "$CUSTOM_NOTES_PATH" > "$CLEAN_NOTES_PATH"
-  NOTES_PATH="$CLEAN_NOTES_PATH"
+  NOTES_PATH="$BUILD_DIR/release-notes.md"
+  echo "Generiere Final Release Notes aus den veröffentlichten Betas..."
+  "$PROJECT_DIR/generate-final-release-notes.sh" "$VERSION" "$NOTES_PATH"
+  NOTES_ARGS=(--notes-file "$NOTES_PATH")
 else
-  gh api \
-    -X POST \
-    "repos/Schrotty74/FileAtlas/releases/generate-notes" \
-    -f tag_name="$VERSION" \
-    -f target_commitish=main \
-    --jq .body > "$NOTES_PATH"
-
-  awk '
-    NR == 1 && /^#*[[:space:]]*FileAtlas[[:space:]]+/ {
-      skippedTitle = 1
-      next
-    }
-    NR == 2 && skippedTitle && /^$/ {
-      next
-    }
-    { print }
-  ' "$NOTES_PATH" > "$CLEAN_NOTES_PATH"
-
-  awk '
-    /^\*\*Full Changelog\*\*:/ {
-      if (seenFullChangelog++) {
-        next
-      }
-    }
-    { print }
-  ' "$CLEAN_NOTES_PATH" > "$DEDUPED_NOTES_PATH"
-  NOTES_PATH="$DEDUPED_NOTES_PATH"
+  # GitHub erstellt die Beta-Notes direkt aus den Änderungen seit dem letzten Release.
+  # Dadurch sind keine lokalen release-notes-*.md-Dateien nötig.
+  NOTES_ARGS=(--generate-notes)
 fi
 
 gh release create "$VERSION" \
@@ -220,7 +172,7 @@ gh release create "$VERSION" \
   "$ZIP_PATH#FileAtlas.zip" \
   "$CHECKSUM_PATH#SHA256SUMS.txt" \
   --title "$RELEASE_TITLE" \
-  --notes-file "$NOTES_PATH" \
+  "${NOTES_ARGS[@]}" \
   --repo Schrotty74/FileAtlas \
   "${RELEASE_CREATE_ARGS[@]}"
 
