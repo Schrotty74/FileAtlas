@@ -28,4 +28,6 @@ if [ -z "$APP_PATH" ]; then
 fi
 
 ditto "$APP_PATH" "$BUILD_DIR/$APP_NAME.app"
+codesign --force --deep --sign - "$BUILD_DIR/$APP_NAME.app"
+codesign --verify --deep --strict "$BUILD_DIR/$APP_NAME.app"
 echo "$BUILD_DIR/$APP_NAME.app"
