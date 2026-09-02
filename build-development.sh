@@ -2,7 +2,8 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BUILD_DIR="$PROJECT_DIR/Build/dev"
+ARTIFACTS_ROOT="${FILEATLAS_ARTIFACTS_ROOT:-$PROJECT_DIR/Build}"
+BUILD_DIR="$ARTIFACTS_ROOT/dev"
 DERIVED_DATA_DIR="$PROJECT_DIR/.build/dev"
 APP_NAME="FileAtlas"
 

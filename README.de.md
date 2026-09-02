@@ -20,13 +20,13 @@ FileAtlas ist eine native macOS-App zum Indizieren und Vergleichen von Dateien, 
 
 Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, bietet die Startansicht eine Ordnerauswahl, das Handbuch und optionale Hilfe von ChatGPT, Google Gemini oder Claude. Beim Auswaehlen eines Dienstes kopiert FileAtlas eine allgemeine, datensparsame Frage mit dem oeffentlichen Handbuch-Link in die Zwischenablage und oeffnet danach den Dienst. Lokale Dateidaten oder andere Nutzerdaten werden niemals automatisch uebertragen. Details stehen in [KI-Hilfe und Datenschutzhinweise](AI_HELP.md).
 
-## Neu in 1.10
+## Neu in 1.11 Beta
 
-- Backup-Verlauf und Aufbewahrung je Speicherort sowie erweiterte Smart Collections, Regeln, Aufraeumwarteschlange und Verfuegbarkeitsanzeige gespeicherter Orte.
-- Duplikatvergleich standardmaessig je Speicherort, optional ueber mehrere Orte hinweg.
-- ZIP-Backups mit optionalem SHA-256-Manifest werden gegen die tatsaechlichen Archiv-Inhalte geprueft.
-- Sicheres Stapel-Umbenennen mit Vorschau, Praefix, Suffix, optionaler fortlaufender Nummerierung, Kollisionspruefung und ausdruecklicher Bestaetigung.
-- Vollstaendige deutsche und englische Einstellungsbeschriftungen, aktualisierte zweisprachige Handbuecher und README-Dokumentation sowie Unit-Test-Pruefung in GitHub CI.
+- APP-Bundles sowie DMG-, PKG-, ZIP- und ISO-Dateien werden anhand ihrer tatsächlichen Endung gefunden und als einzelne Einträge indexiert.
+- Die Cache-Wiederherstellung kann den zuletzt gespeicherten Index beim Start sofort anzeigen, ohne automatisch erneut zu scannen.
+- Filtersets bleiben innerhalb ihres konfigurierten Bereichs über Ortswechsel aktiv und können optional nach einem Neustart wiederhergestellt werden.
+- Update-Prüfungen beim Start lassen sich auf nur Final oder Beta und Final einstellen.
+- Snapshot-Vergleiche melden unveränderte Dateien nicht mehr fälschlich als geändert, wenn sich nur Sekundenbruchteile im Zeitstempel unterscheiden.
 
 ## Funktionen
 

@@ -1,6 +1,6 @@
 # FileAtlas Project Context
 
-**Status date:** 2026-08-30
+**Status date:** 2026-09-02
 
 The general work, Git, publication, and repository-privacy rules are defined in `AGENTS.md`. This file contains the project-specific technical and product context.
 
@@ -50,7 +50,7 @@ These formats can contain file names and paths. They are user data: never use re
 
 - Open `FileAtlas.xcodeproj` in Xcode. The production target is `FileAtlas`; deployment target is macOS 26.5 and Swift version is 6.0.
 - There are no Swift Package Manager, CocoaPods, Carthage, or other external package dependencies in this repository.
-- User-facing local build artifacts use a stable project-relative layout: the current Dev app is `Build/dev/FileAtlas.app`; Beta and Final artifacts are retained separately in `Build/beta/<version>/` and `Build/final/<version>/`. Do not use a temporary release worktree as the user-facing artifact location. Temporary Xcode derived data belongs in ignored `.build/`. `build-development.sh` creates the Dev build; `build-release.sh` selects the Beta or Final directory from the release version.
+- User-facing local build artifacts use a stable project-relative layout: the current Dev app is `Build/dev/FileAtlas.app`; Beta and Final artifacts are retained separately in `Build/beta/<version>/` and `Build/final/<version>/`. `build-release.sh` derives the versioned directory from the release version and can use `FILEATLAS_ARTIFACTS_ROOT` when a release worktree must place artifacts in another stable project directory. Do not use a temporary release worktree as the user-facing artifact location. Temporary Xcode derived data belongs in ignored `.build/`. `build-development.sh` creates the Dev build.
 - Unit tests are in the `FileAtlas` scheme and run in GitHub CI. Existing source coverage includes index-backup output, archive-manifest verification, batch rename safety, duplicate marking, first-launch prompt URLs/privacy, and appearance/motion/tooltip preference persistence. A test result is only current when the tests were actually run for the relevant state.
 - `FileAtlasUITests` is separate. It uses macOS UI automation and can request user permission or a password; this must be considered before running it.
 - `build-release.sh` builds, checks for private paths, signs ad hoc, creates DMG/ZIP, and creates a GitHub release. It is a publication action and is governed by `AGENTS.md`.
@@ -69,7 +69,7 @@ These formats can contain file names and paths. They are user data: never use re
 
 ## Known Constraints and Current State
 
-- The app's base Xcode marketing version is `1.0`; the release build supplies the requested marketing version and writes `CURRENT_PROJECT_VERSION` as `CFBundleVersion`. Confirm both bundle version fields before publishing.
+- The app's base Xcode marketing version is `1.0`; the release build supplies the requested marketing version. `CFBundleVersion` comes from the project's `CURRENT_PROJECT_VERSION` (currently `1`). Confirm both bundle version fields before publishing.
 - The UI test target exists, but a current repeatable UI-test result is not recorded in repository documentation. Treat it as unverified until run with user-approved UI automation.
 - The PDF manuals are tracked artifacts, but their original generator is not tracked here. Do not assume an external generator or regenerate blindly.
 - No confirmed unresolved product defect is documented as of this status date.

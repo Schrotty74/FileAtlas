@@ -45,11 +45,12 @@ if [ -n "$CUSTOM_NOTES_PATH" ] && [ ! -f "$CUSTOM_NOTES_PATH" ]; then
 fi
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ARTIFACTS_ROOT="${FILEATLAS_ARTIFACTS_ROOT:-$PROJECT_DIR/Build}"
 BUILD_CHANNEL="final"
 if [ "$IS_PRERELEASE" = true ]; then
   BUILD_CHANNEL="beta"
 fi
-BUILD_DIR="$PROJECT_DIR/Build/$BUILD_CHANNEL"
+BUILD_DIR="$ARTIFACTS_ROOT/$BUILD_CHANNEL/$VERSION"
 PRODUCTS_DIR="$BUILD_DIR/products"
 APP_NAME="FileAtlas"
 
@@ -57,6 +58,8 @@ echo "=== FileAtlas Release Build $VERSION ==="
 echo "App-Version: $APP_VERSION"
 echo ""
 
+# Der Zielordner ist versionsspezifisch; ältere Beta- oder Final-Artefakte
+# bleiben dadurch erhalten.
 # Aufräumen
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"

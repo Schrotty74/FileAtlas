@@ -24,13 +24,13 @@ FileAtlas is a native, privacy-focused macOS file indexer, duplicate finder and 
 
 When FileAtlas has no saved locations or indexed entries yet, a start screen offers a local folder picker, the manual, and optional help from ChatGPT, Google Gemini, or Claude. Selecting a service copies a general, privacy-safe question with the public manual link to the clipboard and then opens that service; FileAtlas never sends local file data or other user data automatically. See [AI help and privacy notes](AI_HELP.md).
 
-## New in 1.10
+## New in 1.11 Beta
 
-- Backup history and retention controls per location, plus expanded smart collections, rules, cleanup queue, and saved-location availability.
-- Duplicate comparison defaults to the same location, with an optional cross-location setting.
-- ZIP backups with an optional SHA-256 manifest are verified against the actual archive contents.
-- Safe batch rename with preview, prefix, suffix, optional sequential numbering, collision checks, and explicit confirmation.
-- Complete German and English settings labels, refreshed bilingual manuals and README documentation, and GitHub CI unit-test coverage.
+- APP bundles and DMG, PKG, ZIP, and ISO files are discovered by their actual final filename extension and indexed as single entries.
+- Cached-index restoration can display the last saved index immediately on launch, without an automatic rescan.
+- Filter Sets can stay active across locations within their configured scope and can optionally be restored after restarting the app.
+- Startup update checks can be enabled for Final-only or Beta-and-Final GitHub Releases.
+- Snapshot comparisons no longer report unchanged files as changed because of subsecond timestamp differences.
 
 ## Features
 
