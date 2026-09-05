@@ -32,8 +32,4 @@ swift scripts/check-manuals.swift
 
 Commit the baseline with the reviewed PDFs. Never refresh it just to silence a failure. Recording writes the visual reference but still returns failure for light backgrounds, invalid page sizes, blank-looking pages and mismatched language page counts. These failures are not exempted by recording. CI and release scripts never update the baseline automatically.
 
-## Current findings
-
-The existing PDFs have light update pages at pages 22 and 23 in both languages. These four pages fail the dark-background rule even with the initial visual reference recorded. Correct their layout and review the resulting pages before refreshing the baseline. The check intentionally blocks releases until they pass.
-
 The self-test creates temporary synthetic PDFs and checks acceptance of a dark page and rejection of white pages, blank pages, wrong sizes, changed content, new fonts, missing language versions and unreviewed added pages. It does not modify the manuals or application data.

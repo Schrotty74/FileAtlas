@@ -5,6 +5,8 @@
 This is the current handoff list, not a product wishlist. Update it after
 significant implementation or workflow changes.
 
-## Manual layout
+## No Confirmed Product Bugs Recorded Here
 
-- Both manuals have white update pages at pages 22 and 23. The new manual checker detects these four existing layout violations and blocks publication. Correct them to match the dark manual design, visually review both languages, and update `scripts/manual-baseline.json`. No PDF content or layout was changed while adding the checker.
+No unresolved functional defect is documented in the repository at this review.
+Do not convert an unverified observation into a known bug; reproduce it first
+and record the smallest useful evidence.
