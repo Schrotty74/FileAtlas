@@ -59,6 +59,8 @@ These formats can contain file names and paths. They are user data: never use re
 
 ## Documentation and Release Rules
 
+- Run `swift scripts/check-manuals.swift` before publishing. CI and both release paths check both manuals against the reviewed baseline, including dark backgrounds, A4 page size, visible content and page/font changes. `scripts/MANUAL_CHECKS.md` documents the required visual comparison and explicit baseline update. Automated checks supplement visual review; they do not authorize design changes.
+
 - Public README files are bilingual. Update both when public behavior changes.
 - README files provide a concise feature selection and link to the grouped `FEATURES.md` / `FEATURES.de.md` reference pages. Keep those reference pages aligned with stable implemented behavior.
 - Keep both PDF manuals in `output/pdf/` aligned with visible behavior. A versioned PDF-source generator is currently not present in this repository; determine a reproducible generation method before a substantial manual rewrite.
@@ -75,3 +77,4 @@ These formats can contain file names and paths. They are user data: never use re
 - The UI test target exists, but a current repeatable UI-test result is not recorded in repository documentation. Treat it as unverified until run with user-approved UI automation.
 - The PDF manuals are tracked artifacts, but their original generator is not tracked here. Do not assume an external generator or regenerate blindly.
 - No confirmed unresolved product defect is documented as of this status date.
+- The documentation check currently reports white backgrounds on pages 22 and 23 of both manuals. Publication is blocked until these existing layout violations are corrected and visually reviewed; see `NEXT_STEPS.md`.

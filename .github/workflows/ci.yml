@@ -30,3 +30,12 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             test
+
+  manuals:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test manual checker
+        run: swift scripts/check-manuals.swift --self-test
+      - name: Check both manuals against reviewed baseline
+        run: swift scripts/check-manuals.swift

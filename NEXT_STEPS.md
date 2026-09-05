@@ -1,12 +1,10 @@
 # FileAtlas Next Steps
 
-**Last reviewed:** 2026-08-30
+**Last reviewed:** 2026-09-05
 
 This is the current handoff list, not a product wishlist. Update it after
 significant implementation or workflow changes.
 
-## No Confirmed Product Bugs Recorded Here
+## Manual layout
 
-No unresolved functional defect is documented in the repository at this review.
-Do not convert an unverified observation into a known bug; reproduce it first
-and record the smallest useful evidence.
+- Both manuals have white update pages at pages 22 and 23. The new manual checker detects these four existing layout violations and blocks publication. Correct them to match the dark manual design, visually review both languages, and update `scripts/manual-baseline.json`. No PDF content or layout was changed while adding the checker.

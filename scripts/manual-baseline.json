@@ -1,0 +1,413 @@
+{
+  "documents" : {
+    "FileAtlas-Handbuch.pdf" : [
+      {
+        "digest" : "0c3dd268dfb71304024c386077601fe458fe130b3048633d8d95f578cb5685cb",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "4bb4bb18643187837a002ba7d3d1b7776817b9eb130c9305eecb46a432270778",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "170ca9a9e11fd796a3e611b1896279c06b0e0490b2297d536e9864360ba9ebaf",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "3a61f83e68ebf8ff4579ce43caa597919ad113aa1401aa993f013e60a5823acb",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "5314fe62d1c5435d4fec90313086121f4fda57240d372d492bb009ea4581d9fd",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "1efe00b7ed29de2e40d91d3c9ebef8f5083b03d5787549e7bfb18cb5461ec16f",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "6aa8b0037525df797e71691f81c44f4736b6cb26dcf2ff2ac96d6bcf770a11e4",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "cd444b595e5076d4449922d4109625dd937ffc27dc2d45e5547afd4d821ff8f0",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "941186572a264e571f78524d7d8fb43bd2389ee6b7db3e54d7a9e959e09db965",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "d1e239a813b4a3b77dad0f4983b0c492fe8b5f8e48f9060c6809608ebd6d1ae6",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "b931704e5f9c83aabc692f86d07d893952b575740d8592dfe2ed9fd4aa0ee3c3",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "4c3525071a18a95aa434bc26ea46d116ddfeb729f2bab28e81b1deea56f70e2e",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "2e5f423ceef56546d373d5e1b41faf98d8d0a494f16b275ce80749bc3a0d0c1b",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "71a3254b5fbcd3eebc41ae92c826c0a22c7d3d4f555f371d42ac6459426517f0",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "68b6202274cda0405a2cbc18248ec436d4a0b2ca9854fb552726e6427e50a239",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "5d8daee15578a7e222e3961654c90304b9ec883b8fc29f34cf5de5f3120fb26d",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "f0f1511f5607d5dd6eb517c0c129d92e459e4cfd2b42bafd20973c130035072c",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "7cd8a5a497bc67349b0399c71f90544b731a915a0c1d88d4a2218ca786411144",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "70b7aa64277b2f7147a66b0a35f893ba3928e1b5b7070a09f63a9cf6cdf7fd42",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "ff7730dcd440bf0e05cd3c6c136b658d6c5e5eeb7d72b8508626bd91a9848443",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "fea17c0c3fbd4898c6982ddce4b34f4fcb5fe9cca6ca39a3336fb4a25a73be46",
+        "fonts" : [
+
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "5cfe60b30f0477089244b88058a0f550c121cdb6cfef4e70707504d0b7224392",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.8898,
+        "width" : 595.2756
+      },
+      {
+        "digest" : "4797281e0c90ee4835a591bb3ac0dc48fe367a3f117edd1428719ed5e01ae035",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.8898,
+        "width" : 595.2756
+      },
+      {
+        "digest" : "2ce9c3b318d5e4f7642439dd16a474af5b96e341d5c2e7330412b79756a4873c",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.8898,
+        "width" : 595.2756
+      },
+      {
+        "digest" : "edc884ad75ac408a3fe5b7d43fc973eac1149ae765ae39238bbf8f3b4b44e843",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.8898,
+        "width" : 595.2756
+      }
+    ],
+    "FileAtlas-Manual-EN.pdf" : [
+      {
+        "digest" : "987ea8f42f19fb765fe167a8ae8afd96351738c48e9767c1728caad399dcff37",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "1f18ae10f1b7b4807ec32cb8ca8d66ab662c15ae693c61be741acbe04af3559f",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "19358bd69112370e3b799908fb58e351a1bfcb25830cf7b1499f0f32af57b926",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "a71cca4233540d6559a13cd95e2ed55804ce9b48ab124a2aadc803a88c8c174f",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "af6f6230f64d6ef0156a64ab209b299725515d7a462d2031076534957d45ddc5",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "667c38a22afd9eb454201cf3972682c65b0803c8f00cf10be2ff3189f8c77ec7",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "d7d0aa9414a7f60fd3a33aa7e994f7ee906d75dc7a2fade8e9a0e69d7cb5838d",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "90b19de80bb59f97cce829877a5d8d58bd3364eed1f90a56dfdec71f52f109aa",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "272b056e02a8a3fd6dd809c0f404ae6fd0242fd23269d8bfe9371209d9015445",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "ab0386df80b9fde2607433614a2da32a4c14c5166eeffee89c66441c56ea4df8",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "72aeddc24150fb0414cd5307cf93185fbabee284d41ada5f99981e7a1e9be90a",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "bc4f0f3ce3216f72158cce4de69e8211106b169cf1555f518550aa03e8cd6fb9",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "029ac0d621fac2c4a2df55f693688271521b151edc2d441038dca73c9bd808b8",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "6d5a8168fd7199a7b7886a2cfef884bba02e0a9e7283914fe0936863186f434f",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "990f12e9f0b55f501ce60fc46eab80504e693b13416940ce114bf9e4c002c72b",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "3a9f7af96cd5113bfa0b2cbdb54deab748b2a49564044656dc346bc369924f89",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "5e5074e873ab7cfb2b9a57d9d04a8f278355713f3cb4a82d1221cbf7e8224c9b",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "db2a87b8e5df8c295bee5a0c43e34c2d9636cffe385903b9201e2a53cba5cf5a",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "c2bad0be4d1189c9a8e07222e27a96629b46d1fd957ccc55e898074cd11fc7ce",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "7d39ffb0c2fed8b5f65e45d08a37f6ac3e20970c52ce0d8a0867014354f83e3c",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "8f1499507410bb4dd86ee846294b480eca2b28781df8e766b7276d4570afa38e",
+        "fonts" : [
+
+        ],
+        "height" : 841.89,
+        "width" : 595.2760000000001
+      },
+      {
+        "digest" : "7db8874f0705cc4c090ef98f2c360dd8d24b5898fc41ef805cba394f6c1bac05",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.8898,
+        "width" : 595.2756
+      },
+      {
+        "digest" : "ef53a4bc4ad34b118bf9c11b7c675a4c711002a5b65babcaec1529130b0b089a",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.8898,
+        "width" : 595.2756
+      },
+      {
+        "digest" : "63c4ceb5ae90a550d73b2f0ee6da6faa1f5e0cf1ee2e84221dc4f5201d0d3ac8",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.8898,
+        "width" : 595.2756
+      },
+      {
+        "digest" : "e69218c823da8ad1554087c1024edade9ecc8b4795d1ba82c26035b78087dc86",
+        "fonts" : [
+          "Helvetica"
+        ],
+        "height" : 841.8898,
+        "width" : 595.2756
+      }
+    ]
+  },
+  "schema" : 1,
+  "sources" : {
+    "FileAtlas-Handbuch.pdf" : "a345dc1acf23a67b6e544454643a7cbfadc5a6662cc011bcb4c8f2b71ae63029",
+    "FileAtlas-Manual-EN.pdf" : "aed8a2e31448a5d53bf41e07c3ece2466a6f04688739281fd3953408ae16a2e2"
+  }
+}

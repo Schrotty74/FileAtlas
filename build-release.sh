@@ -34,6 +34,8 @@ if [[ "$VERSION" =~ -beta\.([0-9]+)$ ]]; then
 fi
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Fail before building or publishing if the manuals differ from their reviewed layout.
+(cd "$PROJECT_DIR" && swift scripts/check-manuals.swift)
 ARTIFACTS_ROOT="${FILEATLAS_ARTIFACTS_ROOT:-$PROJECT_DIR/Build}"
 BUILD_CHANNEL="final"
 PRODUCT_BUNDLE_IDENTIFIER="app.fileatlas.FileAtlas"

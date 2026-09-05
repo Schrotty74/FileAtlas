@@ -21,7 +21,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build (Release, stripped)
+      - name: Check reviewed manuals
+        # Documentation checks run before artifacts can be published.
+        # Kept as a separate step so a failure cannot be masked by build pipelines.
+        run: swift scripts/check-manuals.swift
+
+      - name: Build app (Release, stripped)
         run: |
           xcodebuild \
             -project FileAtlas.xcodeproj \
