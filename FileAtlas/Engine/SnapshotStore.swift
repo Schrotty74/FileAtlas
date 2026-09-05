@@ -119,6 +119,28 @@ nonisolated struct SnapshotStore {
         return snapshots.sorted { $0.date > $1.date }
     }
 
+    /// Liefert den neuesten Einzelordner-Snapshot für einen gespeicherten Ort.
+    /// Diese Auswahl wird beim Start mit wiederhergestelltem Cache verwendet.
+    static func latestSnapshot(for root: URL, from snapshots: [Snapshot]) -> Snapshot? {
+        let rootPath = normalizedRootPath(root)
+        return snapshots
+            .filter { snapshot in
+                guard snapshot.rootPaths.count == 1,
+                      let storedPath = snapshot.rootPaths.first
+                else { return false }
+                return normalizedRootPath(URL(fileURLWithPath: storedPath)) == rootPath
+            }
+            .max { $0.date < $1.date }
+    }
+
+    private static func normalizedRootPath(_ url: URL) -> String {
+        var path = url.standardizedFileURL.resolvingSymlinksInPath().path(percentEncoded: false)
+        while path.count > 1 && path.hasSuffix("/") {
+            path.removeLast()
+        }
+        return path
+    }
+
     private func pruneOldSnapshots() {
         let all = loadAll()
         guard all.count > Self.maxSnapshots else { return }

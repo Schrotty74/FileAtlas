@@ -1093,7 +1093,7 @@ final class IndexViewModel {
     /// Der aktive Zustand bleibt beim Ortswechsel erhalten. Die konfigurierte
     /// Ortsbegrenzung entscheidet aber weiterhin, wo das Filterset wirkt.
     private func activePreset(_ preset: FilterPreset, appliesTo root: URL) -> Bool {
-        preset.appliesToAllFolders || preset.scopedFolderPaths.contains(Self.normalizedPath(for: root))
+        preset.applies(to: root)
     }
 
     private func loadRecentScanRoots() {
@@ -1235,11 +1235,7 @@ final class IndexViewModel {
         var restoredByRoot: [String: [FileEntry]] = [:]
         for root in roots {
             let rootPath = Self.normalizedPath(for: root)
-            guard let snapshot = snapshots.first(where: { snapshot in
-                guard snapshot.rootPaths.count == 1,
-                      let storedPath = snapshot.rootPaths.first else { return false }
-                return Self.normalizedPath(for: URL(fileURLWithPath: storedPath)) == rootPath
-            }) else { continue }
+            guard let snapshot = SnapshotStore.latestSnapshot(for: root, from: snapshots) else { continue }
             let rootEntries = snapshot.entries.filter { Self.isPath($0.path, inside: root) }
             if !rootEntries.isEmpty {
                 restoredByRoot[rootPath] = rootEntries
@@ -1984,7 +1980,7 @@ private extension Array where Element == FileTag {
     }
 }
 
-private final class FolderChangeMonitor {
+final class FolderChangeMonitor {
     private let roots: [URL]
     private let onChange: @MainActor () -> Void
     private var stream: FSEventStreamRef?

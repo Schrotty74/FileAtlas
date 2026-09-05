@@ -105,6 +105,28 @@ nonisolated struct FilterPreset: Identifiable, Codable, Hashable, Sendable {
 
         return true
     }
+
+    /// Prüft, ob dieses Filterset für den ausgewählten Scan-Ort gilt.
+    /// Ein aktives, begrenztes Filterset bleibt beim Ortswechsel ausgewählt,
+    /// wirkt außerhalb seines Bereichs aber absichtlich nicht.
+    func applies(to root: URL) -> Bool {
+        guard !appliesToAllFolders else { return true }
+        let normalizedRoot = Self.normalizedFolderPath(root.path(percentEncoded: false))
+        return scopedFolderPaths.contains {
+            Self.normalizedFolderPath($0) == normalizedRoot
+        }
+    }
+
+    private static func normalizedFolderPath(_ path: String) -> String {
+        var normalized = URL(fileURLWithPath: path)
+            .standardizedFileURL
+            .resolvingSymlinksInPath()
+            .path(percentEncoded: false)
+        while normalized.count > 1 && normalized.hasSuffix("/") {
+            normalized.removeLast()
+        }
+        return normalized
+    }
 }
 
 // MARK: - Standard-Presets
