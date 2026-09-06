@@ -1,29 +1,21 @@
-# Security
+# Security Policy
 
-## Security Audit
+[Deutsch](SECURITY.de.md)
 
-FileAtlas has been audited for exposed private data. The audit covers all commits, source files, configuration files, and git history.
+## Security Review
 
-| Check | Result |
-|---|---|
-| Hardcoded passwords / secrets | ✅ None found |
-| API keys (AWS, GitHub, Google, OpenAI, etc.) | ✅ None found |
-| Private keys / certificates | ✅ None found |
-| Real email addresses in source code | ✅ None — only anonymous relay addresses |
-| Apple Developer Team ID | ✅ Empty — not committed |
-| Hardcoded file system paths | ✅ None found |
-| Sensitive files in git history | ✅ Never committed |
+FileAtlas is designed as a local-first macOS file indexer. Scan data, snapshots, filter presets and backups remain local. The app uses Apple frameworks and no external package dependencies. Its optional update check contacts GitHub Releases only to determine whether a newer version exists.
 
-**Result: No private data has been published. The repository is clean.**
-
-## App Safety
-
-FileAtlas is built exclusively with Apple frameworks and requires no external dependencies. All scan data, snapshots, backups, and filter presets are stored locally on your Mac.
-
-The optional update check uses the network client entitlement only to contact GitHub Releases and determine whether a newer FileAtlas version is available. It does not upload indexed file data, snapshots, backups, passwords, or filter presets.
-
-Passwords for encrypted backups are stored in the macOS Keychain — never in plain text.
+Passwords for encrypted backups are stored in the macOS Keychain and are not stored as plain text.
 
 ## Reporting a Vulnerability
 
-If you discover a security issue, please open an issue in this repository.
+Please do not publish sensitive vulnerability details in a public GitHub issue. Contact the repository owner privately. Include the FileAtlas and macOS versions, reproduction steps and relevant logs or screenshots after removing private filenames, paths and backup contents.
+
+## Scope
+
+Relevant reports include folder scanning and indexing, file metadata handling, duplicate detection, snapshots and comparisons, batch rename and cleanup operations, ZIP backups and restore, AES-256 encrypted backups, SHA-256 verification, exports, QuickLook integration, Keychain handling and the optional GitHub release check.
+
+Reports involving unintended file modification or deletion, path handling, archive extraction, backup integrity or exposure of indexed local data are especially important.
+
+Thank you for helping keep FileAtlas and its users secure.
