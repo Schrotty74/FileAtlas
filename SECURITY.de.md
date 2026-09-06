@@ -2,11 +2,18 @@
 
 [English](SECURITY.md)
 
-## Sicherheitsprüfung
+## Unterstützte Versionen
 
-FileAtlas ist als lokal ausgerichteter macOS-Dateiindexer konzipiert. Scan-Daten, Snapshots, Filtervorgaben und Backups bleiben lokal. Die App verwendet Apple-Frameworks und keine externen Paketabhängigkeiten. Die optionale Update-Prüfung kontaktiert ausschließlich GitHub Releases, um festzustellen, ob eine neuere Version vorhanden ist.
+| Version | Unterstützt |
+| --- | --- |
+| 1.10.x | Ja |
+| 1.9.x und älter | Nein |
 
-Passwörter für verschlüsselte Backups werden im macOS-Schlüsselbund gespeichert und nicht im Klartext abgelegt.
+Die aktuelle stabile Version ist 1.10.1.
+
+## Sicherheitsmodell
+
+FileAtlas ist als lokal ausgerichteter macOS-Dateiindexer konzipiert. Scan-Daten, Snapshots, Filtervorgaben und Backups bleiben lokal. Die App verwendet Apple-Frameworks und keine externen Paketabhängigkeiten. Die optionale Update-Prüfung kontaktiert ausschließlich GitHub Releases. Passwörter für verschlüsselte Backups werden im macOS-Schlüsselbund gespeichert und nicht im Klartext abgelegt.
 
 ## Sicherheitslücke melden
 
