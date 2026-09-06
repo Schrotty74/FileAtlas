@@ -2,11 +2,18 @@
 
 [Deutsch](SECURITY.de.md)
 
-## Security Review
+## Supported Versions
 
-FileAtlas is designed as a local-first macOS file indexer. Scan data, snapshots, filter presets and backups remain local. The app uses Apple frameworks and no external package dependencies. Its optional update check contacts GitHub Releases only to determine whether a newer version exists.
+| Version | Supported |
+| --- | --- |
+| 1.10.x | Yes |
+| 1.9.x and earlier | No |
 
-Passwords for encrypted backups are stored in the macOS Keychain and are not stored as plain text.
+The current stable release is 1.10.1.
+
+## Security Model
+
+FileAtlas is designed as a local-first macOS file indexer. Scan data, snapshots, filter presets and backups remain local. The app uses Apple frameworks and no external package dependencies. Its optional update check contacts GitHub Releases only to determine whether a newer version exists. Passwords for encrypted backups are stored in the macOS Keychain and are not stored as plain text.
 
 ## Reporting a Vulnerability
 
