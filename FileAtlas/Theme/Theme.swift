@@ -183,3 +183,47 @@ extension AppTheme {
 extension ShapeStyle where Self == Color {
     static var accentTeal: Color { AppTheme.theme.accentColor }
 }
+
+// MARK: - macOS 27 Liquid Glass
+
+private struct FileAtlasPrimaryActionStyle: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(macOS 27.0, *), !reduceTransparency {
+            content.buttonStyle(.glassProminent)
+        } else {
+            content.buttonStyle(.borderedProminent)
+        }
+    }
+}
+
+private struct FileAtlasStatusGlassStyle: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(macOS 27.0, *), !reduceTransparency {
+            content.glassEffect(.regular, in: Capsule())
+        } else {
+            content
+                .background(.regularMaterial, in: Capsule())
+                .overlay(Capsule().stroke(AppTheme.stroke, lineWidth: 0.5))
+        }
+    }
+}
+
+extension View {
+    /// Uses the system's interactive prominent Liquid Glass button only where a
+    /// single primary action benefits from extra affordance.
+    func fileAtlasPrimaryActionStyle() -> some View {
+        modifier(FileAtlasPrimaryActionStyle())
+    }
+
+    /// Gives transient status UI a single system-managed Glass surface without
+    /// adding a second background layer to the app's persistent Glass theme.
+    func fileAtlasStatusGlassStyle() -> some View {
+        modifier(FileAtlasStatusGlassStyle())
+    }
+}

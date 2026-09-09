@@ -169,8 +169,7 @@ private struct UpdateAvailableBanner: View {
                 .controlSize(.small)
             }
             .padding(.horizontal, 14).padding(.vertical, 8)
-            .background(.regularMaterial, in: Capsule())
-            .overlay(Capsule().stroke(AppTheme.stroke, lineWidth: 0.5))
+            .fileAtlasStatusGlassStyle()
             .padding(.bottom, 12)
         }
     }
@@ -391,7 +390,7 @@ private struct FirstLaunchHelpView: View {
                 } label: {
                     Label(content.addFolderTitle, systemImage: "folder.badge.plus")
                 }
-                .buttonStyle(.borderedProminent)
+                .fileAtlasPrimaryActionStyle()
 
                 Button {
                     FirstLaunchHelpAction.openManual(for: language.effectiveLanguage)
