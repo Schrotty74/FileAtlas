@@ -63,14 +63,14 @@ Alternatively, download the latest DMG or ZIP from the [Releases](../../releases
 
 FileAtlas is not signed with an Apple Developer certificate. On first launch macOS may block the app.
 
-On current macOS versions, if Gatekeeper blocks an official FileAtlas download:
+**To open the app:**
 
-1. Try to open `FileAtlas.app` normally once so macOS registers the blocked launch.
-2. Open **System Settings → Privacy & Security** and scroll down to **Security**.
-3. Click **Open Anyway** for FileAtlas.
-4. Confirm the warning by clicking **Open** and authenticate if macOS asks you to.
+1. Open `FileAtlas.app` normally once — macOS will block the launch.
+2. Open **System Settings → Privacy & Security**.
+3. Scroll to **Security** and choose **Open Anyway** for FileAtlas.
+4. Confirm the warning with **Open** and authenticate if macOS asks you to.
 
-The **Open Anyway** option is only shown for a limited time after the blocked launch attempt. Only override Gatekeeper for a FileAtlas build obtained from the official GitHub release. This creates an exception for that specific app and does not disable Gatekeeper system-wide.
+The **Open Anyway** option is shown only for a limited time after the blocked launch attempt. Use it only for a FileAtlas build obtained from the official GitHub release. This creates an exception for that specific app and does not disable Gatekeeper system-wide.
 
 ## Community
 

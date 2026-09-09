@@ -59,14 +59,14 @@ Alternativ das aktuelle DMG oder ZIP von der [Releases](../../releases)-Seite he
 
 FileAtlas ist nicht mit einem Apple-Entwicklerzertifikat signiert. Beim ersten Start kann macOS die App blockieren.
 
-Wenn Gatekeeper einen offiziellen FileAtlas-Download auf einer aktuellen macOS-Version blockiert:
+**So oeffnest du die App:**
 
-1. `FileAtlas.app` einmal normal zu öffnen versuchen, damit macOS den blockierten Start registriert.
-2. **Systemeinstellungen → Datenschutz & Sicherheit** öffnen und zum Bereich **Sicherheit** scrollen.
-3. Bei FileAtlas auf **Trotzdem öffnen** klicken.
-4. Die Warnung mit **Öffnen** bestätigen und bei Bedarf authentifizieren.
+1. `FileAtlas.app` einmal normal oeffnen — macOS blockiert den Start.
+2. **Systemeinstellungen → Datenschutz & Sicherheit** oeffnen.
+3. Zum Bereich **Sicherheit** scrollen und bei FileAtlas **Dennoch oeffnen** waehlen.
+4. Die Warnung mit **Oeffnen** bestaetigen und bei Bedarf authentifizieren.
 
-Die Option **Trotzdem öffnen** wird nach einem blockierten Startversuch nur für begrenzte Zeit angezeigt. Gatekeeper nur für eine FileAtlas-Version übersteuern, die aus dem offiziellen GitHub-Release stammt. Dadurch wird nur für diese konkrete App eine Ausnahme angelegt; Gatekeeper wird nicht systemweit deaktiviert.
+Die Option **Dennoch oeffnen** erscheint nur fuer begrenzte Zeit nach dem blockierten Startversuch. Verwende sie nur fuer eine FileAtlas-Version aus dem offiziellen GitHub-Release. Dadurch wird nur fuer diese konkrete App eine Ausnahme angelegt; Gatekeeper wird nicht systemweit deaktiviert.
 
 ## Community
 
