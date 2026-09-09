@@ -27,6 +27,7 @@ struct MainToolbar: ToolbarContent {
                 DiscordMark(size: 30)
                 GitHubMark(size: 30)
             }
+            .padding(.leading, 8)
         }
 
         ToolbarItem(placement: .principal) {

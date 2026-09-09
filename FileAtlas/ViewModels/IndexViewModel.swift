@@ -237,6 +237,8 @@ final class IndexViewModel {
     private static let restoreActiveFilterOnLaunchKey = "FileAtlas.restoreActiveFilterOnLaunch"
     private static let activePresetIDKey = "FileAtlas.activePresetID"
     private static let updateLatestChannelKey = "FileAtlas.updateLatestChannel"
+    private static let dismissedUpdateTagKey = "FileAtlas.dismissedUpdateTag"
+    private static let dismissedUpdateChannelKey = "FileAtlas.dismissedUpdateChannel"
     private static let updateCheckInterval: TimeInterval = 24 * 60 * 60
     private static let releasesAPIURL = URL(string: "https://api.github.com/repos/Schrotty74/FileAtlas/releases?per_page=20")!
     private static let latestReleaseWebURL = URL(string: "https://github.com/Schrotty74/FileAtlas/releases/latest")!
@@ -343,6 +345,7 @@ final class IndexViewModel {
 
     private(set) var alertRules: [AlertRule] = []
     private(set) var latestAlertRuleMatches: [AlertRuleMatch] = []
+    private var isAlertRuleBannerDismissed = false
 
     // MARK: - Aufräumwarteschlange
 
@@ -516,6 +519,15 @@ final class IndexViewModel {
         NSWorkspace.shared.open(availableUpdate?.releaseURL ?? Self.latestReleaseWebURL)
     }
 
+    /// Hides the current release notice until a newer release is found.
+    func dismissAvailableUpdate() {
+        guard let update = availableUpdate else { return }
+        let defaults = UserDefaults.standard
+        defaults.set(update.versionTag, forKey: Self.dismissedUpdateTagKey)
+        defaults.set(updateReleaseChannel.rawValue, forKey: Self.dismissedUpdateChannelKey)
+        availableUpdate = nil
+    }
+
     private func shouldRunAutomaticUpdateCheck() -> Bool {
         guard automaticUpdateChecksEnabled else { return false }
         let lastCheck = UserDefaults.standard.object(forKey: Self.updateLastCheckKey) as? Date
@@ -528,7 +540,7 @@ final class IndexViewModel {
         guard let tag = defaults.string(forKey: Self.updateLatestTagKey) else { return }
         guard defaults.string(forKey: Self.updateLatestChannelKey) == updateReleaseChannel.rawValue else { return }
         let releaseURL = defaults.string(forKey: Self.updateLatestURLKey).flatMap(URL.init(string:)) ?? Self.latestReleaseWebURL
-        if Self.isVersion(tag, newerThan: Self.currentAppVersion()) {
+        if Self.isVersion(tag, newerThan: Self.currentAppVersion()), !isUpdateDismissed(tag) {
             availableUpdate = AvailableUpdate(versionTag: tag, releaseURL: releaseURL)
         }
     }
@@ -541,14 +553,21 @@ final class IndexViewModel {
         defaults.set(releaseURL.absoluteString, forKey: Self.updateLatestURLKey)
         defaults.set(updateReleaseChannel.rawValue, forKey: Self.updateLatestChannelKey)
 
-        if Self.isVersion(tag, newerThan: Self.currentAppVersion()) {
-            availableUpdate = AvailableUpdate(versionTag: tag, releaseURL: releaseURL)
+        let updateAvailable = Self.isVersion(tag, newerThan: Self.currentAppVersion())
+        if updateAvailable {
+            availableUpdate = isUpdateDismissed(tag) ? nil : AvailableUpdate(versionTag: tag, releaseURL: releaseURL)
             updateCheckStatusMessage = nil
             return true
         } else {
             availableUpdate = nil
             return false
         }
+    }
+
+    private func isUpdateDismissed(_ tag: String) -> Bool {
+        let defaults = UserDefaults.standard
+        return defaults.string(forKey: Self.dismissedUpdateTagKey) == tag
+            && defaults.string(forKey: Self.dismissedUpdateChannelKey) == updateReleaseChannel.rawValue
     }
 
     private nonisolated static func currentAppVersion() -> String {
@@ -1534,6 +1553,14 @@ final class IndexViewModel {
         latestAlertRuleMatches.reduce(0) { $0 + $1.entries.count }
     }
 
+    var showsAlertRuleBanner: Bool {
+        alertRuleMatchCount > 0 && !isAlertRuleBannerDismissed
+    }
+
+    func dismissAlertRuleBanner() {
+        isAlertRuleBannerDismissed = true
+    }
+
     private func loadAlertRules() {
         guard let data = try? Data(contentsOf: alertRulesURL),
               let loaded = try? JSONDecoder().decode([AlertRule].self, from: data)
@@ -1595,6 +1622,10 @@ final class IndexViewModel {
                 AlertRuleMatch(rule: rule, entries: entries.filter { rule.matches($0, now: now) })
             }
             .filter { !$0.entries.isEmpty }
+
+        if !latestAlertRuleMatches.isEmpty {
+            isAlertRuleBannerDismissed = false
+        }
 
         for result in latestAlertRuleMatches where result.rule.action == .addToCleanupQueue {
             for entry in result.entries {

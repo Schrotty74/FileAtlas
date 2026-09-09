@@ -167,6 +167,16 @@ private struct UpdateAvailableBanner: View {
                     vm.openAvailableUpdate()
                 }
                 .controlSize(.small)
+                Button {
+                    vm.dismissAvailableUpdate()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .imageScale(.medium)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(AppTheme.theme.textSecondary)
+                .accessibilityLabel(label("Update-Hinweis schließen", "Dismiss update notice"))
+                .fileAtlasTooltip(text: Text(verbatim: label("Update-Hinweis schließen", "Dismiss update notice")))
             }
             .padding(.horizontal, 14).padding(.vertical, 8)
             .fileAtlasStatusGlassStyle()
@@ -496,7 +506,7 @@ private struct AlertRuleBanner: View {
     let showDetails: () -> Void
 
     var body: some View {
-        if vm.alertRuleMatchCount > 0 {
+        if vm.showsAlertRuleBanner {
             HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(AppTheme.gold)
@@ -504,6 +514,16 @@ private struct AlertRuleBanner: View {
                     .font(.callout)
                 Button("Show") { showDetails() }
                     .controlSize(.small)
+                Button {
+                    vm.dismissAlertRuleBanner()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .imageScale(.medium)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(AppTheme.theme.textSecondary)
+                .accessibilityLabel("Dismiss rule notice")
+                .fileAtlasTooltip(text: Text(verbatim: "Dismiss"))
             }
             .padding(.horizontal, 14).padding(.vertical, 8)
             .background(.regularMaterial, in: Capsule())
