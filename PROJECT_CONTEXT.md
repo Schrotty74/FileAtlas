@@ -1,6 +1,6 @@
 # FileAtlas Project Context
 
-**Status date:** 2026-09-05
+**Status date:** 2026-09-09
 
 The general work, Git, publication, and repository-privacy rules are defined in `AGENTS.md`. This file contains the project-specific technical and product context.
 
@@ -44,7 +44,7 @@ These formats can contain file names and paths. They are user data: never use re
 - Batch rename provides a previewable prefix/suffix rule with optional sequential numbering. It refuses invalid or colliding targets, requires confirmation, and rescans after a successful rename.
 - English/German localization with the DACH German rule, independent light/dark/system appearance, six color themes, optional tooltips, and Reduce Motion.
 - The Glass theme is one full-window AppKit visual-effect background with shared translucent foreground surfaces. Do not add a separate material or glow layer to the sidebar while this theme is active. On macOS 27, the primary first-launch action uses the system's interactive prominent Liquid Glass style and the transient update banner uses one system-managed Glass surface. Both fall back to the existing bordered/material treatments on macOS 26 or when Reduce Transparency is enabled.
-- First-launch help is visible only without saved locations, recents, or indexed entries. AI-service buttons copy a fixed, data-minimal prompt and open the chosen website; they never transmit local data automatically. Update checks can be enabled for app launch and configured for Final-only or Beta-and-Final GitHub Releases; an available update is announced in the app and opens its GitHub Release only after a click.
+- First-launch help is visible only without saved locations, recents, or indexed entries. AI-service buttons copy a fixed, data-minimal prompt and open the chosen website; they never transmit local data automatically. Update checks can be enabled for app launch and configured for Final-only or Beta-and-Final GitHub Releases; an available update is announced in the app, can be dismissed until a newer release is found, and opens its GitHub Release only after a click. Rule-match notices can also be dismissed without removing their results.
 
 ## Build, Test, and Release
 
@@ -71,7 +71,7 @@ These formats can contain file names and paths. They are user data: never use re
 
 ## Known Constraints and Current State
 
-- Release `v1.11.0-beta.2` includes channel-separated local storage and 26 automated tests. Its first launch uses a separate Beta data area; later updates within the same channel retain that channel's data. Both PDF manuals include this setup guidance.
+- Release `v1.11.0-beta.3` includes channel-separated local storage and 26 automated tests. Its first launch uses a separate Beta data area; later updates within the same channel retain that channel's data. Both PDF manuals include this setup guidance.
 
 - The app's base Xcode marketing version is `1.0`; the release build supplies the requested marketing version. `CFBundleVersion` comes from the project's `CURRENT_PROJECT_VERSION` (currently `1`). Confirm both bundle version fields before publishing.
 - The UI test target exists, but a current repeatable UI-test result is not recorded in repository documentation. Treat it as unverified until run with user-approved UI automation.
