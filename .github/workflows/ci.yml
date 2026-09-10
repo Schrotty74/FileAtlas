@@ -26,6 +26,7 @@ jobs:
             -scheme FileAtlas \
             -configuration Debug \
             -derivedDataPath build \
+            CONFIGURATION_BUILD_DIR="$RUNNER_TEMP/FileAtlas-test-products" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \

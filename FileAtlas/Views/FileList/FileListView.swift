@@ -785,7 +785,9 @@ private struct SpaceKeyMonitor: NSViewRepresentable {
         }
 
         private static func isTextInputActive() -> Bool {
-            NSApp.keyWindow?.firstResponder is NSTextView
+            MainActor.assumeIsolated {
+                NSApp.keyWindow?.firstResponder is NSTextView
+            }
         }
     }
 }

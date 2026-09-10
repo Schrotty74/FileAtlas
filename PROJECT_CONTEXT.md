@@ -10,6 +10,12 @@ Update this file and `NEXT_STEPS.md` when a significant behavior, persistence fo
 
 FileAtlas is a native macOS application for local file indexing, comparison, organization, backup, and export. It uses Swift 6 and Apple frameworks only. The app is sandboxed and intentionally keeps catalog data on the Mac. Its only automatic network activity is the optional GitHub Releases update check; an optional AI-help action opens a selected website only after a user click.
 
+## Repository and branches
+
+- The project root is `Repository-Root`; the public repository is `https://github.com/Schrotty74/FileAtlas`.
+- `main` is the current and only maintained Git branch. It contains the project, rule, context, and public documentation files.
+- Dev, Beta, and Final are build and local-data channels, not Git branches. Their separate bundle identifiers and artifact directories keep their local caches and settings apart while all source changes continue on `main`.
+
 ## Architecture
 
 - `FileAtlas/FileAtlasApp.swift`: app entry point, shared observable state, commands, Settings scene, launch tasks, window lifecycle, and the separate, resizable Storage Analysis window.
@@ -50,8 +56,8 @@ These formats can contain file names and paths. They are user data: never use re
 
 - Open `FileAtlas.xcodeproj` in Xcode. The production target is `FileAtlas`; deployment target is macOS 26.5 and Swift version is 6.0.
 - There are no Swift Package Manager, CocoaPods, Carthage, or other external package dependencies in this repository.
-- User-facing local build artifacts use a stable project-relative layout: the current Dev app is `Build/dev/FileAtlas.app`; Beta and Final artifacts are retained separately in `Build/beta/<version>/` and `Build/final/<version>/`. `build-release.sh` derives the versioned directory from the release version and can use `FILEATLAS_ARTIFACTS_ROOT` when a release worktree must place artifacts in another stable project directory. Do not use a temporary release worktree as the user-facing artifact location. Temporary Xcode derived data belongs in ignored `.build/`. `build-development.sh` creates the Dev build.
-- Unit tests are in the `FileAtlas` scheme and run in GitHub CI. Existing source coverage includes index-backup output, archive-manifest verification, batch rename safety, duplicate marking, first-launch prompt URLs/privacy, appearance/motion/tooltip preference persistence, scoped filter behavior, cache-snapshot selection, macOS folder-change events, and complete indexing of a large synthetic catalog. A test result is only current when the tests were actually run for the relevant state.
+- User-facing local build artifacts use a stable project-relative layout: the current Dev app is `Build/dev/FileAtlas.app`; the Debug configuration sends direct Xcode builds there as well. Beta and Final artifacts are retained separately in `Build/beta/<version>/` and `Build/final/<version>/`. `build-release.sh` derives the versioned directory from the release version and can use `FILEATLAS_ARTIFACTS_ROOT` when a release worktree must place artifacts in another stable project directory. Do not use a temporary release worktree as the user-facing artifact location. Temporary Xcode derived data belongs in ignored `.build/`. `build-development.sh` creates and ad-hoc signs the Dev build.
+- Unit tests are in the `FileAtlas` scheme and run through `test-unit.sh` or GitHub CI with isolated temporary products, so they never replace the signed Dev app. Existing source coverage includes index-backup output, archive-manifest verification, batch rename safety, duplicate marking, first-launch prompt URLs/privacy, appearance/motion/tooltip preference persistence, scoped filter behavior, cache-snapshot selection, macOS folder-change events, and complete indexing of a large synthetic catalog. A test result is only current when the tests were actually run for the relevant state.
 - `FileAtlasUITests` is separate. It uses macOS UI automation and can request user permission or a password; this must be considered before running it.
 - `build-release.sh` builds, checks for private paths, signs ad hoc, creates DMG/ZIP, and creates a GitHub release. It is a publication action and is governed by `AGENTS.md`.
 - GitHub CI performs an unsigned Debug build on push/PR. The release workflow is manual; the local release script is the documented primary release path.
@@ -66,7 +72,7 @@ These formats can contain file names and paths. They are user data: never use re
 - Keep both PDF manuals in `output/pdf/` aligned with visible behavior. A versioned PDF-source generator is currently not present in this repository; determine a reproducible generation method before a substantial manual rewrite.
 - Do not repeat a release title in the release-note body. The release script removes a leading duplicate title.
 - Write GitHub release notes and changelogs in English.
-- Beta release notes are generated directly by GitHub from the changelog; do not create repository-local `release-notes-*.md` files. A Final release note is generated from every published Beta release with the same version. Do not omit an earlier Beta when preparing a Final.
+- Publish Beta release notes on GitHub in the established format of the existing Beta releases; do not create repository-local `release-notes-*.md` files. A Final release note is generated from every published Beta release with the same version. Do not omit an earlier Beta when preparing a Final.
 - Public documentation must follow the repository-wide privacy and naming rules from `AGENTS.md`.
 
 ## Known Constraints and Current State
