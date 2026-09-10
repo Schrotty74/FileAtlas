@@ -7,7 +7,9 @@ final class TagPopoverUITests: XCTestCase {
         app.launchArguments = ["-uiTestTagPopover"]
         app.launch()
 
-        let tagButton = app.buttons["tag-button"].firstMatch
+        // The test fixture lists the sample folder before the sample video.
+        // Select the video row's tag button so that "Video" is suggested.
+        let tagButton = app.buttons.matching(identifier: "tag-button").element(boundBy: 1)
         XCTAssertTrue(tagButton.waitForExistence(timeout: 5))
         tagButton.click()
 
@@ -16,6 +18,10 @@ final class TagPopoverUITests: XCTestCase {
         videoTag.click()
 
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 3))
-        XCTAssertTrue(app.staticTexts["Video"].waitForExistence(timeout: 3))
+        let tagWasApplied = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "label == %@", "Video"),
+            object: tagButton
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [tagWasApplied], timeout: 3), .completed)
     }
 }
