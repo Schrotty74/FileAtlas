@@ -46,7 +46,7 @@ Diese Seite beschreibt die stabilen Funktionen ausführlich. Installation und t�
 - Bietet unabhängige Darstellungsmodi Hell, Dunkel und System sowie die Themes Midnight Teal, Retro, Graphite Lime, Herbst, Winter und Glas.
 - Das Glas-Theme verwendet einen vollflächigen transparenten AppKit-Hintergrund; die Seitenleiste fügt keine separate Materialebene hinzu.
 - Bietet optionale Tooltips, eine Reduce-Motion-Einstellung mit Beachtung der macOS-Bedienungshilfen und optionales Scannen beim App-Start.
-- Startet auf Englisch und bietet Deutsch mit der DACH-Sprachregel für `de_AT`, `de_DE` und `de_CH`.
+- Verwendet standardmäßig die Systemsprache und bietet Deutsch und Englisch. Die DACH-Sprachregel wählt Deutsch für `de_AT`, `de_DE` und `de_CH`.
 - Enthält ein Einstellungsfenster mit Seitenleistennavigation, Darstellungsoptionen, Cache-Leerung, Umschalter für generische Icons sowie einem Info-&-Kontakt-Bereich.
 
 ## Datenschutz und Sicherheit

@@ -20,18 +20,11 @@ FileAtlas ist eine native macOS-App zum Indizieren und Vergleichen von Dateien, 
 
 Solange FileAtlas noch keine gespeicherten Orte oder indizierten Eintraege hat, bietet die Startansicht eine Ordnerauswahl, das Handbuch und optionale Hilfe von ChatGPT, Google Gemini oder Claude. Beim Auswaehlen eines Dienstes kopiert FileAtlas eine allgemeine, datensparsame Frage mit dem oeffentlichen Handbuch-Link in die Zwischenablage und oeffnet danach den Dienst. Lokale Dateidaten oder andere Nutzerdaten werden niemals automatisch uebertragen. Details stehen in [KI-Hilfe und Datenschutzhinweise](AI_HELP.md).
 
-## Neu
-
-- APP-Bundles sowie DMG-, PKG-, ZIP- und ISO-Dateien werden anhand ihrer tatsächlichen Endung gefunden und als einzelne Einträge indexiert.
-- Die Cache-Wiederherstellung kann den zuletzt gespeicherten Index beim Start sofort anzeigen, ohne automatisch erneut zu scannen.
-- Filtersets bleiben innerhalb ihres konfigurierten Bereichs über Ortswechsel aktiv und können optional nach einem Neustart wiederhergestellt werden.
-- Optionale Update-Prüfungen beim Start können aktiviert werden und zeigen verfügbare Releases erst nach einer Nutzeraktion.
-- Snapshot-Vergleiche melden unveränderte Dateien nicht mehr fälschlich als geändert, wenn sich nur Sekundenbruchteile im Zeitstempel unterscheiden.
-
 ## Funktionen
 
 - Private lokale Indizierung mehrerer Ordner mit dauerhaftem Zugriff, Live-Fortschritt, Suche, Filtern, Tags und QuickLook-Vorschau.
-- Duplikaterkennung, Snapshots, Ordnervergleich, Speicheranalyse und lokale Analyse aehnlicher Bilder.
+- Duplikaterkennung, Ordnervergleich, Speicheranalyse und lokale Analyse aehnlicher Bilder.
+- Snapshot-Vergleiche zeigen hinzugefügte, geänderte und entfernte Einträge zuverlässig an. Automatische Scans behalten pro gespeichertem Ordner die zwei neuesten Snapshots; manuell gespeicherte Snapshots bleiben getrennt verfügbar.
 - Sichere Organisation mit Stapel-Umbenennen, pruefbarer Aufraeumwarteschlange, Regeln, Smart Collections und Schnellzugriff auf zuletzt verwendete Orte.
 - Flexible Backups: Index, Vollbackup, inkrementelle oder gezielt ausgewaehlte ZIP-Backups mit optionaler AES-256-Verschluesselung, SHA-256-Pruefung, Archivinspektion, selektiver Wiederherstellung, Zeitplan und Aufbewahrung.
 - Export nach Excel, PDF und CSV.

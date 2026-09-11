@@ -24,18 +24,11 @@ FileAtlas is a native, privacy-focused macOS file indexer, duplicate finder and 
 
 When FileAtlas has no saved locations or indexed entries yet, a start screen offers a local folder picker, the manual, and optional help from ChatGPT, Google Gemini, or Claude. Selecting a service copies a general, privacy-safe question with the public manual link to the clipboard and then opens that service; FileAtlas never sends local file data or other user data automatically. See [AI help and privacy notes](AI_HELP.md).
 
-## What's New
-
-- APP bundles and DMG, PKG, ZIP, and ISO files are discovered by their actual final filename extension and indexed as single entries.
-- Cached-index restoration can display the last saved index immediately on launch, without an automatic rescan.
-- Filter Sets can stay active across locations within their configured scope and can optionally be restored after restarting the app.
-- Optional startup update checks can be enabled and show available releases only after a user action.
-- Snapshot comparisons no longer report unchanged files as changed because of subsecond timestamp differences.
-
 ## Features
 
 - Private local indexing of multiple folders, with persistent access, live progress, search, filters, tags, and QuickLook preview.
-- Duplicate detection, snapshots, folder comparison, storage analysis, and local similar-image analysis.
+- Duplicate detection, folder comparison, storage analysis, and local similar-image analysis.
+- Snapshot comparisons show added, changed, and removed entries reliably. Automatic scans retain the two newest snapshots per saved folder; manually saved snapshots remain available separately.
 - Safe organization tools: batch rename, reviewable cleanup queue, rules, smart collections, and quick access to recent locations.
 - Flexible backups: index, full, incremental, or selected-item ZIP backups with optional AES-256 encryption, SHA-256 verification, archive inspection, selective restore, schedules, and retention.
 - Exports to Excel, PDF, and CSV.

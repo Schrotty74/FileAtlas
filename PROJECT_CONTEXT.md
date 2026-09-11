@@ -1,6 +1,6 @@
 # FileAtlas Project Context
 
-**Status date:** 2026-09-09
+**Status date:** 2026-09-11
 
 The general work, Git, publication, and repository-privacy rules are defined in `AGENTS.md`. This file contains the project-specific technical and product context.
 
@@ -77,7 +77,7 @@ These formats can contain file names and paths. They are user data: never use re
 
 ## Known Constraints and Current State
 
-- Release `v1.11.0` includes channel-separated local storage, 27 automated tests, a stable snapshot-comparison view, and automatic snapshot retention of the two newest states per saved folder. Its first launch uses a separate Final data area; later updates within the same channel retain that channel's data. Both PDF manuals include this setup guidance.
+- Release `v1.11.0` is published on GitHub. It includes channel-separated local storage, 27 automated tests, a stable snapshot-comparison view, and automatic snapshot retention of the two newest states per saved folder. Its first launch uses a separate Final data area; later updates within the same channel retain that channel's data. Both PDF manuals include this setup guidance.
 
 - The app's base Xcode marketing version is `1.0`; the release build supplies the requested marketing version. `CFBundleVersion` comes from the project's `CURRENT_PROJECT_VERSION` (currently `1`). Confirm both bundle version fields before publishing.
 - The UI test target exists, but a current repeatable UI-test result is not recorded in repository documentation. Treat it as unverified until run with user-approved UI automation.

@@ -46,7 +46,7 @@ This page lists the stable features in detail. For installation and everyday use
 - Offers independent Light, Dark, and System appearance modes, plus Midnight Teal, Retro, Graphite Lime, Autumn, Winter, and Glass themes.
 - The Glass theme uses a full-window translucent AppKit background; the sidebar does not add a separate material layer.
 - Provides optional tooltips, a Reduce Motion preference that respects macOS accessibility settings, and an optional scan on app launch.
-- Starts in English and offers German with the DACH language rule for `de_AT`, `de_DE`, and `de_CH`.
+- Uses the system language by default and offers English and German. The DACH language rule selects German for `de_AT`, `de_DE`, and `de_CH`.
 - Includes a Settings window with sidebar navigation, appearance controls, cache clearing, generic-icon fallback, and an Info & Contact section.
 
 ## Privacy and safety
