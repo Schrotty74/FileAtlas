@@ -60,6 +60,28 @@ struct SnapshotStoreTests {
         #expect(diff.changed.count == 1)
     }
 
+    @Test
+    func automaticSnapshotsKeepOnlyTheTwoNewestForEachLocation() {
+        let catalog = "/Catalog"
+        let otherCatalog = "/OtherCatalog"
+        let earliest = Date(timeIntervalSince1970: 1_700_000_000)
+        let middle = Date(timeIntervalSince1970: 1_700_000_100)
+        let newest = Date(timeIntervalSince1970: 1_700_000_200)
+
+        let oldestAutomatic = Snapshot(date: earliest, rootPaths: [catalog], entries: [], source: .automatic)
+        let middleAutomatic = Snapshot(date: middle, rootPaths: [catalog], entries: [], source: .automatic)
+        let newestAutomatic = Snapshot(date: newest, rootPaths: [catalog], entries: [], source: .automatic)
+        let otherAutomatic = Snapshot(date: newest, rootPaths: [otherCatalog], entries: [], source: .automatic)
+        let manualSnapshot = Snapshot(date: newest, rootPaths: [catalog], entries: [], source: .manual)
+
+        let snapshots = [oldestAutomatic, middleAutomatic, newestAutomatic, otherAutomatic, manualSnapshot]
+        let retained = SnapshotStore.automaticSnapshots(matching: [catalog], from: snapshots)
+        let toPrune = SnapshotStore.automaticSnapshotsToPrune(matching: [catalog], from: snapshots)
+
+        #expect(retained.map(\.id) == [newestAutomatic.id, middleAutomatic.id, oldestAutomatic.id])
+        #expect(toPrune.map(\.id) == [oldestAutomatic.id])
+    }
+
     private func entry(path: URL, modified: Date) -> FileEntry {
         FileEntry(
             name: path.lastPathComponent,

@@ -12,8 +12,6 @@ struct SnapshotDiffView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(MotionPreferences.self) private var motion
     @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
-    @State private var hasAppeared = false
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
@@ -62,7 +60,6 @@ struct SnapshotDiffView: View {
         }
         .frame(width: 620, height: 560)
         .animation(isMotionEnabled ? FileAtlasMotion.standard : nil, value: diffSignature)
-        .task { hasAppeared = true }
     }
 
     @ViewBuilder
@@ -94,9 +91,6 @@ struct SnapshotDiffView: View {
                                 .foregroundStyle(AppTheme.theme.textSecondary)
                         }
                     }
-                    .opacity(hasAppeared || !isMotionEnabled ? 1 : 0)
-                    .offset(y: hasAppeared || !isMotionEnabled ? 0 : 10)
-                    .animation(isMotionEnabled ? FileAtlasMotion.staged.delay(0.018 * Double(changes.firstIndex(where: { $0.id == change.id }) ?? 0)) : nil, value: hasAppeared)
                 }
             } header: {
                 HStack {

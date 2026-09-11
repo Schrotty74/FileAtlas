@@ -9,11 +9,17 @@ set -e
 # Voraussetzung: gh CLI installiert (https://cli.github.com)
 # Aufruf: ./build-release.sh v1.0.1
 # Beta:   ./build-release.sh v1.0.1-beta.1
+# Optional fuer ein Final: FILEATLAS_ADDITIONAL_RELEASE_NOTES=/pfad/notizen.md ./build-release.sh v1.0.1
 # ---------------------------------------------------------------------------
 
 VERSION=${1:-}
+ADDITIONAL_RELEASE_NOTES_PATH=${FILEATLAS_ADDITIONAL_RELEASE_NOTES:-}
 if [ -z "$VERSION" ]; then
   echo "Verwendung: ./build-release.sh v1.0.0"
+  exit 1
+fi
+if [ -n "$ADDITIONAL_RELEASE_NOTES_PATH" ] && [ ! -f "$ADDITIONAL_RELEASE_NOTES_PATH" ]; then
+  echo "FEHLER: Zusaetzliche Release Notes nicht gefunden: $ADDITIONAL_RELEASE_NOTES_PATH"
   exit 1
 fi
 if ! [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$ ]]; then
@@ -171,7 +177,11 @@ NOTES_ARGS=()
 if [ "$IS_PRERELEASE" = false ]; then
   NOTES_PATH="$BUILD_DIR/release-notes.md"
   echo "Generiere Final Release Notes aus den veröffentlichten Betas..."
-  "$PROJECT_DIR/generate-final-release-notes.sh" "$VERSION" "$NOTES_PATH"
+  if [ -n "$ADDITIONAL_RELEASE_NOTES_PATH" ]; then
+    "$PROJECT_DIR/generate-final-release-notes.sh" "$VERSION" "$NOTES_PATH" "$ADDITIONAL_RELEASE_NOTES_PATH"
+  else
+    "$PROJECT_DIR/generate-final-release-notes.sh" "$VERSION" "$NOTES_PATH"
+  fi
   NOTES_ARGS=(--notes-file "$NOTES_PATH")
 else
   # GitHub erstellt die Beta-Notes direkt aus den Änderungen seit dem letzten Release.

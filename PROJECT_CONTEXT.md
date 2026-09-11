@@ -34,7 +34,7 @@ FileAtlas is a native macOS application for local file indexing, comparison, org
 ## Persistent Data and Formats
 
 - Selected scan locations use security-scoped bookmarks. Preferences such as appearance, language, tags, presets, and view choices use `UserDefaults`. Dev, Beta, and Final use separate bundle identifiers, so their preferences and bookmarks never overlap.
-- Snapshots are JSON and retain at most ten entries.
+- Snapshots are JSON. Automatic scan snapshots retain the two newest entries per saved folder; manually saved snapshots retain up to ten entries.
 - Presets, alert rules, smart collections, and backup configurations are local JSON files in the app's Application Support area. Dev uses `FileAtlas-dev`, Beta uses `FileAtlas-beta`, and Final uses `FileAtlas`; snapshots, index caches, and encrypted-backup Keychain entries are isolated by the same channel.
 - Index backups are JSON metadata exports. Full backups are ZIP archives of one or more selected files/folders; compression and a SHA-256 manifest are optional. Encrypted backup passwords belong in Keychain, never in JSON.
 - Exports are CSV, PDF, and XLSX. CSV uses UTF-8 with BOM and semicolon separation; XLSX is generated without an external library.
@@ -77,7 +77,7 @@ These formats can contain file names and paths. They are user data: never use re
 
 ## Known Constraints and Current State
 
-- Release `v1.11.0-beta.3` includes channel-separated local storage and 26 automated tests. Its first launch uses a separate Beta data area; later updates within the same channel retain that channel's data. Both PDF manuals include this setup guidance.
+- Release `v1.11.0` includes channel-separated local storage, 27 automated tests, a stable snapshot-comparison view, and automatic snapshot retention of the two newest states per saved folder. Its first launch uses a separate Final data area; later updates within the same channel retain that channel's data. Both PDF manuals include this setup guidance.
 
 - The app's base Xcode marketing version is `1.0`; the release build supplies the requested marketing version. `CFBundleVersion` comes from the project's `CURRENT_PROJECT_VERSION` (currently `1`). Confirm both bundle version fields before publishing.
 - The UI test target exists, but a current repeatable UI-test result is not recorded in repository documentation. Treat it as unverified until run with user-approved UI automation.

@@ -1304,7 +1304,7 @@ final class IndexViewModel {
         let roots = roots ?? scanRoots
         guard !roots.isEmpty, !isScanning else { return }
         cancelScan()
-        let baselineSnapshot = latestSnapshot(matching: roots)
+        let baselineSnapshots = latestAutomaticSnapshots(for: roots)
         selectedScanRoot = roots.count == 1 ? roots[0] : nil
 
         if rememberInQuickAccess {
@@ -1417,7 +1417,7 @@ final class IndexViewModel {
                     self.scanErrors.append(contentsOf: pendingFailures)
                 }
                 self.storeIndexedEntries(for: roots, entries: marked)
-                self.saveAutomaticSnapshot(entries: marked, roots: roots, baseline: baselineSnapshot)
+                self.saveAutomaticSnapshots(entries: marked, roots: roots, baselines: baselineSnapshots)
                 self.evaluateAlertRules(in: marked)
                 self.isScanning = false
                 self.scanTask = nil
@@ -1673,28 +1673,47 @@ final class IndexViewModel {
         latestScanSummary = nil
     }
 
-    private func latestSnapshot(matching roots: [URL]) -> Snapshot? {
-        let rootPaths = Set(roots.map { Self.normalizedPath(for: $0) })
-        return snapshotStore.loadAll().first { snapshot in
-            Set(snapshot.rootPaths.map { Self.normalizedPath(for: URL(fileURLWithPath: $0)) }) == rootPaths
-        }
+    private func latestAutomaticSnapshots(for roots: [URL]) -> [String: Snapshot] {
+        let snapshots = snapshotStore.loadAll()
+        return Dictionary(uniqueKeysWithValues: roots.compactMap { root in
+            guard let snapshot = SnapshotStore.latestAutomaticSnapshot(for: root, from: snapshots) else {
+                return nil
+            }
+            return (Self.normalizedPath(for: root), snapshot)
+        })
     }
 
     private func snapshotRootsForCurrentEntries() -> [URL] {
         selectedScanRoot.map { [$0] } ?? scanRoots
     }
 
-    private func saveAutomaticSnapshot(entries: [FileEntry], roots: [URL], baseline: Snapshot?) {
-        let snapshot = Snapshot(
-            date: Date(),
-            rootPaths: roots.map { $0.path(percentEncoded: false) },
-            entries: entries
-        )
-        _ = try? snapshotStore.save(snapshot)
-        if let baseline {
-            let diff = snapshotStore.diff(current: entries, baseline: baseline)
-            latestScanSummary = ScanChangeSummary(diff: diff)
+    private func saveAutomaticSnapshots(entries: [FileEntry], roots: [URL], baselines: [String: Snapshot]) {
+        var diffs: [SnapshotDiff] = []
+
+        for root in roots {
+            let rootEntries = entries.filter { Self.isPath($0.path, inside: root) }
+            let rootKey = Self.normalizedPath(for: root)
+            let snapshot = Snapshot(
+                date: Date(),
+                rootPaths: [root.path(percentEncoded: false)],
+                entries: rootEntries,
+                source: .automatic
+            )
+
+            guard (try? snapshotStore.save(snapshot)) != nil,
+                  let baseline = baselines[rootKey]
+            else { continue }
+            diffs.append(snapshotStore.diff(current: rootEntries, baseline: baseline))
         }
+
+        guard diffs.count == roots.count else { return }
+        latestScanSummary = ScanChangeSummary(
+            diff: SnapshotDiff(
+                added: diffs.flatMap(\.added).sorted { $0.entry.name < $1.entry.name },
+                removed: diffs.flatMap(\.removed).sorted { $0.entry.name < $1.entry.name },
+                changed: diffs.flatMap(\.changed).sorted { $0.entry.name < $1.entry.name }
+            )
+        )
     }
 
     // MARK: - Aufräumwarteschlange

@@ -17,7 +17,7 @@ This page lists the stable features in detail. For installation and everyday use
 ## Analysis and comparison
 
 - Detects duplicates through size grouping and SHA-256 content hashing. Comparisons stay within each saved location by default; cross-location comparison is optional.
-- Stores up to ten JSON snapshots per location, compares them with the current scan, and summarizes what changed after a subsequent scan.
+- Keeps the two newest automatic JSON snapshots per location, compares the latest one with the current scan, and summarizes what changed after a subsequent scan. Manually saved snapshots remain available separately.
 - Compares two folders directly.
 - Opens a separate, resizable Storage Analysis window with a file-type map, the largest indexed items, duplicate space, and health indicators for unavailable locations, missing backup destinations, and due backups.
 - Groups visually similar local images with Apple's on-device Vision feature prints on a bounded set of up to 250 images. Images are never uploaded.

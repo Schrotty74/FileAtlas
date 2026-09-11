@@ -9,7 +9,8 @@ import Foundation
 
 nonisolated struct SnapshotStore {
 
-    private static let maxSnapshots = 10
+    private static let maxManualSnapshots = 10
+    private static let maxAutomaticSnapshotsPerRootSet = 2
 
     /// Isoliert lokale Daten zwischen der Entwicklungs-, Beta- und Final-App.
     /// Der Wert folgt der Bundle-ID, damit auch unabhängig installierte Builds
@@ -88,14 +89,20 @@ nonisolated struct SnapshotStore {
         return d
     }
 
-    /// Speichert einen Snapshot und löscht den ältesten, falls > 10 vorhanden.
+    /// Speichert einen Snapshot und beschränkt automatische Vergleichsbilder
+    /// auf die zwei neuesten je Ordnerauswahl.
     @discardableResult
     func save(_ snapshot: Snapshot) throws -> URL {
         let url = Self.snapshotsDirectory
             .appendingPathComponent("\(snapshot.id.uuidString).json")
         let data = try Self.encoder.encode(snapshot)
         try data.write(to: url, options: .atomic)
-        pruneOldSnapshots()
+        switch snapshot.source {
+        case .automatic:
+            pruneAutomaticSnapshots(matching: snapshot.rootPaths)
+        case .manual:
+            pruneManualSnapshots()
+        }
         return url
     }
 
@@ -133,6 +140,17 @@ nonisolated struct SnapshotStore {
             .max { $0.date < $1.date }
     }
 
+    static func latestAutomaticSnapshot(for root: URL, from snapshots: [Snapshot]) -> Snapshot? {
+        let rootPath = normalizedRootPath(root)
+        return snapshots
+            .filter { snapshot in
+                snapshot.source == .automatic
+                    && snapshot.rootPaths.count == 1
+                    && snapshot.rootPaths.first.map { normalizedRootPath(URL(fileURLWithPath: $0)) == rootPath } == true
+            }
+            .max { $0.date < $1.date }
+    }
+
     private static func normalizedRootPath(_ url: URL) -> String {
         var path = url.standardizedFileURL.resolvingSymlinksInPath().path(percentEncoded: false)
         while path.count > 1 && path.hasSuffix("/") {
@@ -141,14 +159,37 @@ nonisolated struct SnapshotStore {
         return path
     }
 
-    private func pruneOldSnapshots() {
-        let all = loadAll()
-        guard all.count > Self.maxSnapshots else { return }
-        for old in all.dropFirst(Self.maxSnapshots) {
+    private func pruneManualSnapshots() {
+        let manualSnapshots = loadAll().filter { $0.source == .manual }
+        guard manualSnapshots.count > Self.maxManualSnapshots else { return }
+        for old in manualSnapshots.dropFirst(Self.maxManualSnapshots) {
             let url = Self.snapshotsDirectory
                 .appendingPathComponent("\(old.id.uuidString).json")
             try? FileManager.default.removeItem(at: url)
         }
+    }
+
+    private func pruneAutomaticSnapshots(matching rootPaths: [String]) {
+        let snapshotsToPrune = Self.automaticSnapshotsToPrune(matching: rootPaths, from: loadAll())
+        for old in snapshotsToPrune {
+            let url = Self.snapshotsDirectory
+                .appendingPathComponent("\(old.id.uuidString).json")
+            try? FileManager.default.removeItem(at: url)
+        }
+    }
+
+    static func automaticSnapshots(matching rootPaths: [String], from snapshots: [Snapshot]) -> [Snapshot] {
+        let normalizedRoots = Set(rootPaths.map { normalizedRootPath(URL(fileURLWithPath: $0)) })
+        return snapshots
+            .filter { snapshot in
+                snapshot.source == .automatic
+                    && Set(snapshot.rootPaths.map { normalizedRootPath(URL(fileURLWithPath: $0)) }) == normalizedRoots
+            }
+            .sorted { $0.date > $1.date }
+    }
+
+    static func automaticSnapshotsToPrune(matching rootPaths: [String], from snapshots: [Snapshot]) -> [Snapshot] {
+        Array(automaticSnapshots(matching: rootPaths, from: snapshots).dropFirst(maxAutomaticSnapshotsPerRootSet))
     }
 
     // MARK: - Vergleich

@@ -17,7 +17,7 @@ Diese Seite beschreibt die stabilen Funktionen ausführlich. Installation und t�
 ## Analyse und Vergleich
 
 - Erkennt Duplikate über Größengruppierung und SHA-256-Inhaltshashes. Vergleiche bleiben standardmäßig innerhalb jedes gespeicherten Orts; ein ortsübergreifender Vergleich ist optional.
-- Speichert bis zu zehn JSON-Snapshots pro Ort, vergleicht sie mit dem aktuellen Scan und fasst Änderungen nach einem weiteren Scan zusammen.
+- Behält pro Ort die zwei neuesten automatischen JSON-Snapshots, vergleicht den neuesten mit dem aktuellen Scan und fasst Änderungen nach einem weiteren Scan zusammen. Manuell gespeicherte Snapshots bleiben separat verfügbar.
 - Vergleicht zwei Ordner direkt.
 - Öffnet ein separates, größenveränderbares Fenster für die Speicheranalyse mit Dateityp-Karte, den größten indizierten Einträgen, Duplikatspeicher und Statushinweisen für nicht verfügbare Orte, fehlende Backup-Ziele und fällige Backups.
 - Gruppiert lokal ähnliche Bilder mit Apples Vision-Feature-Prints auf dem Gerät in einer begrenzten Auswahl von bis zu 250 Bildern. Bilder werden niemals hochgeladen.
