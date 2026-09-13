@@ -10,6 +10,3 @@ significant implementation or workflow changes.
 No unresolved functional defect is documented in the repository at this review.
 Do not convert an unverified observation into a known bug; reproduce it first
 and record the smallest useful evidence.
-
-Automatic scan snapshots retain the two newest states per saved folder. Manual
-snapshots remain separate comparison points.
