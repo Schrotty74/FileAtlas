@@ -22,10 +22,8 @@ Prüfe den aktuellen Git-Stand und die betroffenen Quelldateien, bevor du Änder
 
 FileAtlas-spezifisch:
 
-- Bei sichtbaren Verhaltensänderungen `PROJECT_CONTEXT.md` und `NEXT_STEPS.md` aktualisieren. Wenn die öffentliche Dokumentation betroffen ist, auch beide READMEs und beide PDF-Handbücher nach den vorhandenen Projektregeln aktualisieren.
-- Bestehende Apple-Framework-Architektur erhalten und Änderungen eng begrenzen.
-- UI-Tests können einen macOS-Berechtigungs- oder Passwortdialog für UI-Automation auslösen; vor deren Ausführung darauf hinweisen und die vorhandenen Projektregeln beachten.
-- Bash-Skripte mit der im Projekt dokumentierten Bash-Umgebung ausführen.
+
+- Die verbindlichen Dokumentations-, UI-Test- und Skriptregeln stehen in `PROJECT_CONTEXT.md`.
 
 Aktueller Auftrag:
 
